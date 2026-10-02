@@ -1,0 +1,167 @@
+{
+  "version": "1.0.0",
+  "policy_name": "QA_INTELLIGENCE_TASK_CHECKPOINT",
+  "quality_gate_tier": "PRODUCTION_STRICT",
+  "completion_states": [
+    "NOT_STARTED",
+    "IN_PROGRESS",
+    "VALIDATION",
+    "BLOCKED",
+    "FAILED",
+    "PASSED"
+  ],
+  "terminal_complete_state": "PASSED",
+  "failure_behavior": {
+    "action": "BLOCK_TASK_COMPLETION",
+    "exit_code_on_failure": 1,
+    "allow_override": false
+  },
+  "universal_checks": [
+    {
+      "id": "U1_ACCEPTANCE_CRITERIA",
+      "name": "Acceptance Criteria",
+      "description": "All explicit task deliverables, models, and endpoints outlined in docs/ROADMAP.md are implemented",
+      "mandatory": true
+    },
+    {
+      "id": "U2_FOCUSED_TESTS",
+      "name": "Focused Tests",
+      "description": "Dedicated automated test file(s) covering new capabilities pass 100%",
+      "mandatory": true
+    },
+    {
+      "id": "U3_FULL_REGRESSION",
+      "name": "Full Regression",
+      "description": "Full hermetic Pytest test suite passes with 0 failures and 100% pass rate",
+      "mandatory": true
+    },
+    {
+      "id": "U4_CODE_HYGIENE_LINT",
+      "name": "Lint & Code Hygiene",
+      "description": "Linters and type validation pass with 0 errors where applicable",
+      "mandatory": true
+    },
+    {
+      "id": "U5_QUALITY_GATE",
+      "name": "Production Quality Gate",
+      "description": "Multi-signal PRODUCTION_STRICT Quality Gate evaluates to APPROVED with 0 policy violations",
+      "mandatory": true
+    },
+    {
+      "id": "U6_SECURITY_REGRESSION",
+      "name": "Security & PCI DSS",
+      "description": "Zero critical OWASP flaws and zero unmasked cardholder PAN or CVV storage",
+      "mandatory": true
+    },
+    {
+      "id": "U7_DATA_SAFETY",
+      "name": "Data Safety & Production Isolation",
+      "description": "All test executions use isolated local databases; zero mutations to live production cloud infrastructure",
+      "mandatory": true
+    },
+    {
+      "id": "U8_ARCHITECTURE_COMPLIANCE",
+      "name": "Architecture Compliance",
+      "description": "AI provider abstraction (offline mock provider works 100%) and domain-pack decoupling preserved",
+      "mandatory": true
+    },
+    {
+      "id": "U9_GIT_HYGIENE",
+      "name": "Git Hygiene",
+      "description": "git diff --check passes with 0 whitespace errors and git status confirms a clean working tree",
+      "mandatory": true
+    },
+    {
+      "id": "U10_DOCUMENTATION_ROADMAP",
+      "name": "Documentation & Roadmap",
+      "description": "docs/ROADMAP.md task status, checkpoint notes, and test counts accurately synchronized",
+      "mandatory": true
+    },
+    {
+      "id": "U11_ZERO_BLOCKERS",
+      "name": "Zero Unresolved Blockers",
+      "description": "Zero unresolved blocker items, syntax errors, or broken contracts directly related to the task",
+      "mandatory": true
+    }
+  ],
+  "conditional_checks": [
+    {
+      "id": "C1_PLAYWRIGHT_E2E",
+      "name": "Playwright E2E Suite",
+      "triggers": ["frontend/**", "tests/ui/**", "playwright.config.ts"],
+      "description": "Playwright browser test suite with automated REST teardown passes 100%",
+      "command": "npx playwright test"
+    },
+    {
+      "id": "C2_API_CONTRACT",
+      "name": "OpenAPI Contract Validation",
+      "triggers": ["backend/app/routers/**", "backend/app/schemas/**", "tests/contract/**"],
+      "description": "OpenAPI 3.1.0 schema conformance verified without broken contract models",
+      "command": "pytest tests/contract/test_openapi_contract.py"
+    },
+    {
+      "id": "C3_RAG_EVALUATION",
+      "name": "AI / RAG Quality Metrics",
+      "triggers": ["ai-engine/**", "domains/**/knowledge.py", "tests/ai/**"],
+      "description": "RAG groundedness >= 0.85, context relevance >= 0.80, citation accuracy >= 0.85, truthful refusal >= 0.90",
+      "command": "pytest tests/ai/test_production_rag.py tests/ai/test_rag_quality_gate.py"
+    },
+    {
+      "id": "C4_SECURITY_DAST",
+      "name": "Automated DAST Security Scan",
+      "triggers": ["backend/app/**", "qa-engine/security_scanner.py", "tests/security/**"],
+      "description": "DAST scanner confirms status SECURE on baseline gate suite with 100% compliance",
+      "command": "python qa-engine/security_scanner.py --mode gate"
+    },
+    {
+      "id": "C5_PERFORMANCE_BENCHMARK",
+      "name": "Performance Latency Benchmarks",
+      "triggers": ["backend/app/routers/flights.py", "tests/performance/**"],
+      "description": "Flight search p95 latency asserts under 250ms threshold",
+      "command": "pytest tests/performance/test_performance_benchmarks.py"
+    },
+    {
+      "id": "C6_DATABASE_MIGRATIONS",
+      "name": "Database Invariants & Migrations",
+      "triggers": ["backend/app/models/**", "backend/alembic/**", "tests/database/**"],
+      "description": "Database transactions, foreign keys, and atomic inventory lock invariants verified",
+      "command": "pytest tests/database/test_database_invariants.py"
+    },
+    {
+      "id": "C7_FRONTEND_LINT_BUILD",
+      "name": "Frontend Lint and Build",
+      "triggers": ["frontend/**"],
+      "description": "Frontend ESLint and TypeScript compilation pass with 0 errors",
+      "command": "npm run lint --prefix frontend && npm run build --prefix frontend"
+    },
+    {
+      "id": "C8_BACKEND_TESTS",
+      "name": "Backend Python Test Suite",
+      "triggers": ["backend/**", "qa-engine/**", "ai-engine/**", "domains/**", "tests/**"],
+      "description": "Pytest backend test suite passes 100%",
+      "command": "pytest"
+    }
+  ],
+  "required_evidence": [
+    "pytest_report_xml",
+    "quality_gate_summary_md",
+    "git_clean_status"
+  ],
+  "verified_checkpoint": {
+    "task": "Phase 1B.5 — Quality Gate & Checkpoint Sign-Off",
+    "status": "PASSED",
+    "evaluated_at": "2026-10-02T11:21:13Z",
+    "terminal_complete_state": "PASSED",
+    "evidence": {
+      "backend_pytest": "367/367 passed (100% pass rate)",
+      "playwright_e2e": "60/60 passed (100% Chromium across all 5 domains)",
+      "frontend_lint": "0 errors, 0 warnings (ESLint clean)",
+      "frontend_build": "0 errors (Vite production build passed in 217ms)",
+      "security_dast": "Status SECURE (5/5 baseline probes passed, 100% compliance)",
+      "quality_gate_policy": "PRODUCTION_STRICT APPROVED (0 violations)",
+      "database_invariants": "18/18 passed (schema, transactions, tenant isolation, and migrations)",
+      "git_diff_hygiene": "0 whitespace errors (git diff --check clean)"
+    },
+    "sign_off": "PHASE 1B.5 COMPLETE — READY FOR RELEASE PREPARATION"
+  }
+}

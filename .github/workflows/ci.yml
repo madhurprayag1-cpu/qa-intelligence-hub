@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: qa_intelligence
+          POSTGRES_USER: ${{ secrets.CI_POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Run Alembic migrations and seed data
+        env:
+          DATABASE_URL: postgresql+psycopg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/qa_intelligence
+        run: |
+          cd backend
+          alembic upgrade head
+          python -m app.db.seed
+          python -m app.db.seed_airports
+          python -m app.db.seed_flights
+      - name: Run Pytest test suite with JUnit XML
+        env:
+          DATABASE_URL: postgresql+psycopg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/qa_intelligence
+          PYTHONPATH: backend:qa-engine:ai-engine
+        run: |
+          mkdir -p test-results
+          python -m pytest -v --junitxml=test-results/pytest-report.xml
+
+      - name: Run Automated DAST Security Scan
+        env:
+          PYTHONPATH: backend:qa-engine:ai-engine
+        run: |
+          python qa-engine/security_scanner.py --mode gate --output-json test-results/security-dast-report.json
+
+      - name: Evaluate Release Quality Gate
+        env:
+          PYTHONPATH: backend:qa-engine:ai-engine
+        run: |
+          python qa-engine/cli_gate.py \
+            --policy PRODUCTION_STRICT \
+            --junit-xml test-results/pytest-report.xml \
+            --security-json test-results/security-dast-report.json \
+            --output-markdown test-results/quality-gate-summary.md
+          cat test-results/quality-gate-summary.md >> $GITHUB_STEP_SUMMARY
+
+
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Lint frontend
+        run: |
+          cd frontend
+          npm run lint
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: qa_intelligence
+          POSTGRES_USER: ${{ secrets.CI_POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install backend dependencies & run migrations
+        env:
+          DATABASE_URL: postgresql+psycopg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/qa_intelligence
+        run: |
+          pip install -r backend/requirements.txt
+          cd backend
+          alembic upgrade head
+          python -m app.db.seed
+          python -m app.db.seed_airports
+          python -m app.db.seed_flights
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Install Playwright and browser dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run Playwright E2E Suite
+        env:
+          DATABASE_URL: postgresql+psycopg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/qa_intelligence
+        run: npm run test:e2e
+
+      - name: Evaluate E2E Release Quality Gate
+        if: ${{ !cancelled() }}
+        env:
+          PYTHONPATH: backend:qa-engine:ai-engine
+        run: |
+          python qa-engine/cli_gate.py \
+            --policy PRODUCTION_STRICT \
+            --playwright-json test-results/playwright-report.json \
+            --output-markdown test-results/e2e-quality-gate-summary.md || GATE_EXIT=$?
+          if [ -f test-results/e2e-quality-gate-summary.md ]; then
+            cat test-results/e2e-quality-gate-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
+          exit ${GATE_EXIT:-0}
+
+      - name: Upload Playwright Artifacts
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

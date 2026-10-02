@@ -1,0 +1,13 @@
+{
+  "name": "qa-intelligence-hub",
+  "private": true,
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  },
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed"
+  }
+}
