@@ -122,6 +122,7 @@ jobs:
           python -m app.db.seed
           python -m app.db.seed_airports
           python -m app.db.seed_flights
+          python -m app.db.seed_fintech_e2e --e2e
       - name: Install frontend dependencies
         run: |
           cd frontend
