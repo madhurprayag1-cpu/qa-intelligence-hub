@@ -31,7 +31,7 @@ def upgrade() -> None:
         sa.Column("ssn_masked", sa.String(length=20), nullable=True),
         sa.Column("phone_masked", sa.String(length=30), nullable=True),
         sa.Column("email", sa.String(length=255), nullable=True),
-        sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_healthcare_patients_owner_user_id", "healthcare_patients", ["owner_user_id"])
@@ -92,7 +92,7 @@ def upgrade() -> None:
         sa.Column("currency", sa.String(length=3), nullable=False, server_default="USD"),
         sa.Column("balance", sa.Numeric(precision=14, scale=2), nullable=False, server_default=sa.text("0.00")),
         sa.Column("kyc_tier", sa.String(length=30), nullable=False, server_default="TIER_2_VERIFIED"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_fintech_accounts_owner_user_id", "fintech_accounts", ["owner_user_id"])
@@ -134,7 +134,7 @@ def upgrade() -> None:
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column("stock_quantity", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("weight_kg", sa.Numeric(precision=6, scale=2), nullable=False, server_default=sa.text("0.50")),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_ecommerce_products_category", "ecommerce_products", ["category"])
@@ -197,8 +197,8 @@ def upgrade() -> None:
         sa.Column("minutes_used", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("sms_used", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("data_used_mb", sa.Numeric(precision=10, scale=2), nullable=False, server_default=sa.text("0.00")),
-        sa.Column("roaming_allowed", sa.Boolean(), nullable=False, server_default=sa.text("0")),
-        sa.Column("kyc_verified", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("roaming_allowed", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("kyc_verified", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_telecom_subscribers_owner_user_id", "telecom_subscribers", ["owner_user_id"])
@@ -223,7 +223,7 @@ def upgrade() -> None:
         sa.Column("duration_seconds", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("bytes_transferred", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("rated_amount", sa.Numeric(precision=10, scale=2), nullable=False, server_default=sa.text("0.00")),
-        sa.Column("billed", sa.Boolean(), nullable=False, server_default=sa.text("0")),
+        sa.Column("billed", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
     op.create_index("ix_telecom_cdrs_msisdn", "telecom_cdrs", ["msisdn"])
