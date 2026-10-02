@@ -322,6 +322,7 @@ test.describe("E-Commerce Retail Workflow E2E Suite", () => {
     await ecPage.goto();
 
     await expect(ecPage.cartSection).toBeVisible();
+    await expect(ecPage.productList.locator('[data-testid^="product-card-"]').first()).toBeVisible({ timeout: 10000 });
     const cartRows = ecPage.page.locator('[data-testid^="cart-row-"]');
     while (await cartRows.count() > 0) {
       const firstRow = cartRows.first();

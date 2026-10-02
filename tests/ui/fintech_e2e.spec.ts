@@ -208,6 +208,10 @@ test.describe("FinTech Core Banking E2E Suite", () => {
     await ftPage.goto();
 
     await expect(ftPage.accountsList).toBeVisible({ timeout: 10000 });
+    await expect
+      .poll(() => ftPage.selectTransferSource.locator("option").count(), { timeout: 10000 })
+      .toBeGreaterThanOrEqual(2);
+    await expect(ftPage.submitTransferBtn).toBeEnabled();
 
     // The deliberate simulation double-debits the source account. The result
     // must expose the transaction and resulting balance rather than merely any
