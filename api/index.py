@@ -17,4 +17,19 @@ for _p in [str(_ROOT), str(_BACKEND), str(_QA_ENGINE), str(_AI_ENGINE)]:
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from app.main import app
+try:
+    from app.main import app
+except Exception as _err:
+    import traceback
+    from fastapi import FastAPI
+    from fastapi.responses import JSONResponse
+
+    _tb = traceback.format_exc()
+    app = FastAPI(title="Diagnostic App")
+
+    @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+    async def _catch_all(path: str):
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(_err), "traceback": _tb, "sys_path": sys.path},
+        )
