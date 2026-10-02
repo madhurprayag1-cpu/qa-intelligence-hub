@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:18
+        image: postgres:16
         env:
           POSTGRES_DB: qa_intelligence
           POSTGRES_USER: ${{ secrets.CI_POSTGRES_USER }}
@@ -91,7 +91,7 @@ jobs:
     needs: [backend, frontend]
     services:
       postgres:
-        image: postgres:18
+        image: postgres:16
         env:
           POSTGRES_DB: qa_intelligence
           POSTGRES_USER: ${{ secrets.CI_POSTGRES_USER }}
