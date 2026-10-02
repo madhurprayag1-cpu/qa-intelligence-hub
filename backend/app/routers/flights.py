@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends
+from datetime import date
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, aliased
 
@@ -8,6 +9,18 @@ from app.models.airport import Airport
 from app.models.flight import Flight
 
 router = APIRouter(prefix="/flights", tags=["flights"])
+
+
+@router.get("/search")
+async def search_flights_alias(
+    request: Request,
+    origin: str = Query(..., min_length=3, max_length=3),
+    destination: str = Query(..., min_length=3, max_length=3),
+    travel_date: date | None = None,
+    db: Session = Depends(get_db),
+):
+    from app.routers.flight_search import search_flights
+    return await search_flights(request, origin, destination, travel_date, db)
 
 
 @router.get("")
