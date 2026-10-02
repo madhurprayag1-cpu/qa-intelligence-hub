@@ -28,7 +28,7 @@ When receiving a brief instruction (e.g., `"Continue the next roadmap task"` or 
    - Inspect `docs/ROADMAP.md` to identify the current phase, completed milestones, and the next uncompleted task.
     - Review [AGENTS.md](../AGENTS.md) for overarching architectural constraints.
     - Inspect [docs/ARCHITECTURE.md](ARCHITECTURE.md) and [docs/DEPLOYMENT.md](DEPLOYMENT.md) for topology and system contracts.
-   - Inspect git state (`git status`, `git log -3 --oneline`) to verify branch cleanliness.
+   - Inspect git state (`git status`, `git log -3 --oneline`) and report pre-existing/untracked work accurately; do not require or claim a clean tree by altering user work.
    - Locate existing related implementations and test suites before writing new code.
 2. **Anti-Assumption Rule**:
    - Never assume a feature or API is missing without searching the codebase first.
@@ -113,10 +113,10 @@ graph TD
 6. **IF PASSED: UPDATE ROADMAP**:
     - Only when `FINAL STATUS: PASSED` is achieved, mark the task `[x]` in [docs/ROADMAP.md](ROADMAP.md).
    - Update `📍 Checkpoint Status` at the bottom of the roadmap.
-7. **COMMIT & HYGIENE**:
+7. **HYGIENE & AUTHORIZED GIT ACTIONS**:
    - Run `git diff --check` to verify zero formatting/whitespace errors.
-   - Verify working tree is clean with `git status`.
-   - Commit with conventional commit message (`feat:`, `test:`, `docs:`, `fix:`, `ci:`).
+    - Review `git status`, preserving and reporting pre-existing or unrelated changes.
+    - Commit only when the active objective explicitly authorizes it and higher-priority repository instructions permit it. If authorized, use a conventional commit message (`feat:`, `test:`, `docs:`, `fix:`, `ci:`).
 8. **REPORT**:
    - Output the standard checkpoint report format.
 
@@ -154,7 +154,7 @@ When given `"Continue the next roadmap task"`:
 2. Navigate to the earliest phase containing incomplete items `[ ]`.
 3. Check **Prerequisites**: Verify that all preceding tasks required for this task are complete.
 4. Review the task's **Acceptance Criteria** and **Required Tests**.
-5. Execute the task following the **Task Completion & Definition-of-Done Discipline** (`IMPLEMENT → VALIDATE → RUN TASK CHECKPOINT → IF PASSED: UPDATE ROADMAP → COMMIT → REPORT`).
+5. Execute the task following the **Task Completion & Definition-of-Done Discipline** (`IMPLEMENT → VALIDATE → RUN TASK CHECKPOINT → IF PASSED: UPDATE ROADMAP → AUTHORIZED GIT ACTIONS → REPORT`).
 6. Do **NOT** mark the task complete `[x]` until `qa-engine/task_checkpoint.py` reports `FINAL STATUS: PASSED`.
 7. Update the `📍 Checkpoint Status` section at the end of `docs/ROADMAP.md`.
 

@@ -49,16 +49,40 @@ def load_checkpoint_config(config_path: Optional[str | Path] = None) -> Dict[str
     """Load machine-readable policy from .qa/task-checkpoint.json."""
     default_path = _REPO_ROOT / ".qa" / "task-checkpoint.json"
     target = Path(config_path) if config_path else default_path
-    if target.exists():
-        try:
-            return json.loads(target.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {
-        "policy_name": "QA_INTELLIGENCE_TASK_CHECKPOINT",
-        "quality_gate_tier": "PRODUCTION_STRICT",
-        "terminal_complete_state": "PASSED",
+    try:
+        config = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Unable to load checkpoint policy from {target}: {exc}") from exc
+
+    if not isinstance(config, dict):
+        raise ValueError(f"Checkpoint policy at {target} must contain a JSON object")
+
+    required_fields = {
+        "policy_name",
+        "quality_gate_tier",
+        "terminal_complete_state",
+        "universal_checks",
+        "conditional_checks",
     }
+    missing_fields = sorted(required_fields.difference(config))
+    if missing_fields:
+        raise ValueError(
+            f"Checkpoint policy at {target} is missing required fields: {', '.join(missing_fields)}"
+        )
+    if config["quality_gate_tier"] not in PRESET_POLICIES:
+        raise ValueError(
+            f"Checkpoint policy at {target} specifies unknown quality gate tier "
+            f"{config['quality_gate_tier']!r}"
+        )
+    if config["terminal_complete_state"] != "PASSED":
+        raise ValueError(
+            f"Checkpoint policy at {target} must use PASSED as its terminal completion state"
+        )
+    if not isinstance(config["universal_checks"], list) or not isinstance(
+        config["conditional_checks"], list
+    ):
+        raise ValueError(f"Checkpoint policy check definitions at {target} must be JSON arrays")
+    return config
 
 
 @dataclass
@@ -373,7 +397,7 @@ def evaluate_task_checkpoint(
 
     # U9: Git
     if git_clean is None:
-        # Check git status if in a git repo
+        # Git status must be successfully evaluated; an unavailable check is not clean.
         try:
             res = subprocess.run(
                 ["git", "status", "--porcelain"],
@@ -382,16 +406,23 @@ def evaluate_task_checkpoint(
                 text=True,
                 check=False,
             )
-            g_clean = len(res.stdout.strip()) == 0
-        except Exception:
-            g_clean = True
+            g_clean = res.returncode == 0 and len(res.stdout.strip()) == 0
+            git_detail = (
+                "Clean working tree"
+                if g_clean
+                else "Git status reported changes or returned a non-zero exit code"
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            g_clean = False
+            git_detail = f"Git status could not be evaluated: {exc}"
     else:
         g_clean = git_clean
+        git_detail = "Clean working tree" if g_clean else "Uncommitted changes or whitespace errors"
 
     git_item = CheckpointItem(
         name="Git",
         status="PASSED" if g_clean else "FAILED",
-        detail="Clean working tree" if g_clean else "Uncommitted changes or whitespace errors",
+        detail=git_detail,
     )
 
     # U10: Documentation
@@ -467,8 +498,6 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
     parser.add_argument("--total", type=int, default=None, help="Total tests manual override")
     parser.add_argument("--passed", type=int, default=None, help="Passed tests manual override")
     parser.add_argument("--failed", type=int, default=None, help="Failed tests manual override")
-    parser.add_argument("--git-clean", action="store_true", default=None, help="Override git cleanliness check to PASSED")
-    parser.add_argument("--skip-git-check", action="store_true", default=False, help="Skip git working tree cleanliness check")
     parser.add_argument("--output-json", type=str, default=None, help="Path to save JSON checkpoint report")
     parser.add_argument("--output-text", type=str, default=None, help="Path to save formatted text report")
 
@@ -476,8 +505,6 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
 
     changed = [f.strip() for f in args.changed_files.split(",") if f.strip()] if args.changed_files else None
     blockers = [b.strip() for b in args.blockers.split(",") if b.strip()] if args.blockers else None
-    git_override = True if (args.git_clean or args.skip_git_check) else None
-
     report = evaluate_task_checkpoint(
         task_name=args.task,
         changed_files=changed,
@@ -485,7 +512,6 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
         playwright_json=args.playwright_json,
         security_json=args.security_json,
         rag_json=args.rag_json,
-        git_clean=git_override,
         blockers=blockers,
         total_override=args.total,
         passed_override=args.passed,

@@ -247,30 +247,66 @@
 
 ## 📍 Checkpoint Status
 
-### CURRENT STATUS
-* **Phase**: **Phase 1B — Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E [COMPLETE]**
-* **Active Baseline**:
-  - Production Domains: **5 Production Packs** (`airline`, `healthcare`, `fintech`, `ecommerce`, `telecom`) with full UI & API persistence
-  - Intentional Defects: **29 Documented Defects** across all 5 domains
-  - Automated Tests: **367 passed** (Pytest) + **60 passed** (Playwright E2E Chromium) = **427 automated tests**
-  - Portfolio Demonstration: `python qa-engine/portfolio_demo.py` (7/7 modules passed across all 5 domains)
-  - Security Status: DAST scanner gate mode SECURE (100% compliance rate, 0 vulnerabilities, 0 PCI DSS violations)
-  - Quality Gate: `PRODUCTION_STRICT` policy APPROVED with 0 violations
-  - Operating Protocol: [docs/AI_WORKFLOW.md](docs/AI_WORKFLOW.md), [docs/TASK_COMPLETION_CHECKLIST.md](docs/TASK_COMPLETION_CHECKLIST.md), and [.qa/task-checkpoint.json](.qa/task-checkpoint.json) active
+### Canonical Project State — 2026-10-02
 
-### NEXT TASK
-* **Phase 2 Release Preparation & Deployment Verification**
-  - Production deployment validation (Render backend / Vercel frontend), git history review, and live release governance.
+This section is the authoritative summary of roadmap position. Historical phase
+checkpoints above remain historical evidence and do not certify the current
+working tree or current production deployment.
 
-### COMPLETED
-* [x] Phase 1: Core System Under Test & Foundational Test Architecture
-* [x] Phase 1B: Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E
-* [x] Phase 2: RAG Pipeline & AI Quality Evaluation Engine
-* [x] Phase 3: Autonomous Agentic QA Workflows
-* [x] Phase 4: Production Quality Gates, Contract/Security Testing & CI/CD
-* [x] Phase 5: Production Deployment, UI Dashboard & Live Verification
-* [x] Phase 6: Autonomous Quality Intelligence & Continuous Self-Healing
-* [x] Phase 7: Multi-Domain Platform Expansion (Airline, Healthcare, FinTech)
-* [x] Phase 8: Portfolio Demonstration & Maintenance
-* [x] Phase 9: Interview-Content Separation Audit
-* [x] Phase 10: Five-Domain Production Architecture (E-Commerce & Telecom)
+* **Last completed roadmap milestone:** Phase 1B — Multi-Domain Persistence,
+  Interactive UI & Full-Pyramid E2E. Its completion is recorded in the Phase 1B
+  section above and in the historical checkpoint artifacts; current test and
+  deployment readiness have not been re-established by this state reconciliation.
+* **Current remaining milestone:** Release Preparation & Deployment Verification
+  (**NOT STARTED**; this work was listed as “Phase 2” in the prior checkpoint
+  summary, but that number conflicts with the already completed Phase 2 RAG
+  milestone and is not reused here).
+* **Next task:** Establish a verified release candidate and reconcile deployment
+  topology and repository history before any deployment action.
+* **Remaining work and acceptance criteria:**
+  1. Reconcile the intended deployment topology against tracked deployment
+     configuration and document the selected target; no production change in
+     this task.
+  2. Review current branch/history and establish a reproducible release
+     revision without discarding local or untracked work.
+  3. Run current required regression, UI, build, quality, and security checks;
+     retain fresh reports associated with the exact revision.
+  4. Verify migration readiness, production configuration, authorization, and
+     rollback plan before any deployment. Stop for missing credentials,
+     external approval, destructive action, or unresolved security boundary.
+  5. Deploy only when explicitly authorized and all mandatory gates pass; then
+     perform documented read-only production verification and record evidence.
+  6. Update this roadmap and owning documentation only from verified results;
+      mark this release-preparation milestone complete only after its acceptance criteria and checkpoint
+     pass.
+* **Verified evidence at this reconciliation:** Repository inspection confirms
+  the Phase 1B implementation files and historical checkpoint/report artifacts
+  exist. Those artifacts report 367 pytest and 60 Playwright passes and a
+  `PRODUCTION_STRICT` approval on 2026-10-02, but they are historical and are
+  not a fresh run against this revision. The historical Phase 5 section records
+  a Vercel deployment at commit `4136487`; repository-local inspection did not
+  verify the currently serving deployment or establish that historical commit
+  as the current release revision. Read-only GET checks on 2026-10-02 to the
+  documented Vercel alias returned the frontend HTML, a healthy `/health` JSON
+  response, and an OpenAPI 3.1.0 document (API version `0.1.0`). However,
+  `/health` reports `environment: development`; the serving revision, active
+  production topology, and production readiness remain unverified. These HTTP
+  observations are reachability evidence only, not a release/security gate.
+* **Current quality/security gate:** NOT RUN for this reconciliation; no current
+  release approval is asserted. Historical verification artifacts remain
+  historical and are not current checkpoint state.
+* **Deployment state:** Historical Vercel deployment documented. The current
+  documented alias is reachable and its health endpoint reports healthy, but
+  labels its environment `development`. Active production topology, deployed
+  revision, migration state, and production readiness are **UNVERIFIED**. No
+  deployment was performed for this state update.
+* **Blockers:** No fresh full release validation or live production verification
+  is recorded for the current checkout. The working tree has pre-existing
+  untracked local files, so a clean-tree checkpoint cannot currently pass.
+
+### Completed milestones
+
+Phases 1, 1B, 2 (RAG), 3–10 are recorded as completed in the milestone sections
+above. Their completion statements and metrics describe the evidence captured
+for those milestones, not current validation. Phase 5's deployment evidence is
+historical and is not a current deployment attestation.

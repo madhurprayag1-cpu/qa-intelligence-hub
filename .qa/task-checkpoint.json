@@ -147,21 +147,18 @@
     "quality_gate_summary_md",
     "git_clean_status"
   ],
-  "verified_checkpoint": {
-    "task": "Phase 1B.5 — Quality Gate & Checkpoint Sign-Off",
-    "status": "PASSED",
-    "evaluated_at": "2026-10-02T11:21:13Z",
-    "terminal_complete_state": "PASSED",
-    "evidence": {
-      "backend_pytest": "367/367 passed (100% pass rate)",
-      "playwright_e2e": "60/60 passed (100% Chromium across all 5 domains)",
-      "frontend_lint": "0 errors, 0 warnings (ESLint clean)",
-      "frontend_build": "0 errors (Vite production build passed in 217ms)",
-      "security_dast": "Status SECURE (5/5 baseline probes passed, 100% compliance)",
-      "quality_gate_policy": "PRODUCTION_STRICT APPROVED (0 violations)",
-      "database_invariants": "18/18 passed (schema, transactions, tenant isolation, and migrations)",
-      "git_diff_hygiene": "0 whitespace errors (git diff --check clean)"
-    },
-    "sign_off": "PHASE 1B.5 COMPLETE — READY FOR RELEASE PREPARATION"
+  "current_state": {
+    "purpose": "Canonical roadmap position; this is not a test result or release approval.",
+    "current_milestone": "Release Preparation & Deployment Verification",
+    "current_milestone_status": "NOT_STARTED",
+    "last_completed_milestone": "Phase 1B — Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E",
+    "next_task": "Establish a verified release candidate and reconcile deployment topology and repository history before any deployment action",
+    "verification_status": "NOT_RUN_FOR_CURRENT_CHECKOUT",
+    "deployment_status": "DOCUMENTED_ALIAS_REACHABLE_HEALTH_REPORTS_DEVELOPMENT_ENVIRONMENT_PRODUCTION_READINESS_UNVERIFIED",
+    "blockers": [
+      "Fresh full release validation and deployment-revision verification have not been established for the current checkout; documented alias health reports environment=development.",
+      "Pre-existing untracked local files prevent a clean-working-tree checkpoint."
+    ],
+    "historical_evidence_reference": "Historical Phase 1B checkpoint artifacts and Phase 5 deployment record in docs/ROADMAP.md; not current approval."
   }
 }

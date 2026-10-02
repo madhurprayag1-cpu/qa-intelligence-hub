@@ -48,6 +48,15 @@ def test_load_checkpoint_config():
     assert "U7_DATA_SAFETY" in u_ids
 
 
+@pytest.mark.parametrize("contents", ["{invalid json", "[]", '{"policy_name": "incomplete"}'])
+def test_load_checkpoint_config_fails_closed_for_invalid_policy(tmp_path, contents):
+    config_path = tmp_path / "task-checkpoint.json"
+    config_path.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Unable to load|must contain|required fields"):
+        load_checkpoint_config(config_path)
+
+
 def test_conditional_trigger_mapping():
     """Verify conditional check triggers accurately map changed files."""
     config = load_checkpoint_config()
@@ -233,17 +242,21 @@ def test_to_formatted_text_output_structure():
     assert output.strip().endswith("PASSED")
 
 
-def test_checkpoint_cli_execution_passed(tmp_path):
+def test_checkpoint_cli_execution_passed(tmp_path, monkeypatch):
     """Verify run_cli returns exit code 0 when checkpoint passes."""
     out_json = tmp_path / "checkpoint.json"
     out_txt = tmp_path / "checkpoint.txt"
 
+    class CleanGitResult:
+        returncode = 0
+        stdout = ""
+
+    monkeypatch.setattr("task_checkpoint.subprocess.run", lambda *args, **kwargs: CleanGitResult())
     args = [
         "--task", "Task 6.5: DAST Gate",
         "--total", "100",
         "--passed", "100",
         "--failed", "0",
-        "--skip-git-check",
         "--output-json", str(out_json),
         "--output-text", str(out_txt),
     ]
@@ -264,7 +277,6 @@ def test_checkpoint_cli_execution_failed():
         "--total", "100",
         "--passed", "95",
         "--failed", "5",
-        "--skip-git-check",
     ]
     exit_code = run_checkpoint_cli(args)
     assert exit_code == 1
@@ -277,7 +289,52 @@ def test_cli_gate_integration_with_task_checkpoint():
         "--total", "100",
         "--passed", "100",
         "--failed", "0",
-        "--skip-git-check",
     ]
     exit_code = run_gate_cli(args)
-    assert exit_code == 0
+    assert exit_code == 1
+    with pytest.raises(SystemExit) as exc_info:
+        run_gate_cli(["--task-checkpoint", "No git bypass", "--skip-git-check"])
+    assert exc_info.value.code == 2
+
+
+def test_checkpoint_fails_when_git_status_cannot_be_evaluated(monkeypatch):
+    def raise_git_unavailable(*args, **kwargs):
+        raise FileNotFoundError("git executable unavailable")
+
+    monkeypatch.setattr("task_checkpoint.subprocess.run", raise_git_unavailable)
+    report = evaluate_task_checkpoint(
+        task_name="Git failure behavior",
+        changed_files=["docs/ROADMAP.md"],
+        total_override=10,
+        passed_override=10,
+        failed_override=0,
+    )
+
+    assert report.git.status == "FAILED"
+    assert "could not be evaluated" in report.git.detail
+    assert report.final_status == "FAILED"
+
+
+def test_checkpoint_fails_when_git_status_returns_error(monkeypatch):
+    class FailedGitResult:
+        returncode = 128
+        stdout = ""
+
+    monkeypatch.setattr("task_checkpoint.subprocess.run", lambda *args, **kwargs: FailedGitResult())
+    report = evaluate_task_checkpoint(
+        task_name="Git non-zero behavior",
+        changed_files=["docs/ROADMAP.md"],
+        total_override=10,
+        passed_override=10,
+        failed_override=0,
+    )
+
+    assert report.git.status == "FAILED"
+    assert report.final_status == "FAILED"
+
+
+def test_checkpoint_cli_does_not_accept_git_skip_option():
+    with pytest.raises(SystemExit) as exc_info:
+        run_checkpoint_cli(["--task", "No git bypass", "--skip-git-check"])
+
+    assert exc_info.value.code == 2

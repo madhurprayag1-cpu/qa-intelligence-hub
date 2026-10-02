@@ -12,7 +12,7 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Test Automation Coverage**: **427 automated tests** (367 backend + 60 Playwright) spanning an 11-layer test pyramid (Unit, API, Database Invariants, OpenAPI Contracts, AI/RAG Evaluation, Specialist Agents, DAST Security, Performance Benchmarking, Regression Impact Selector, Multi-Domain Architecture, and Playwright E2E UI) executing with a **100% pass rate**.
+> **Historical validation snapshot (October 2, 2026)**: Repository checkpoint artifacts record **367 backend tests + 60 Playwright tests** passing at that time. This is historical evidence, not a current validation result or release approval. See the canonical current state and remaining work in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 > **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
@@ -173,6 +173,11 @@ npm run dev
 ---
 
 ## 🌐 Production Deployment
+
+The roadmap records a historical production deployment, but the currently
+serving topology, deployed revision, and production health have not been
+verified by the current project checkpoint. Do not interpret the configuration
+options below as a statement of the active production topology.
 
 The platform is architected for zero-cost / low-overhead public cloud deployment:
 

@@ -217,12 +217,6 @@ def run_cli(args_list: Optional[list[str]] = None) -> int:
         help="Execute Task Completion / DoD checkpoint verification for the specified task",
     )
     parser.add_argument(
-        "--skip-git-check",
-        action="store_true",
-        default=False,
-        help="Skip git working tree cleanliness check during task checkpoint",
-    )
-    parser.add_argument(
         "--security-json",
         type=str,
         default=None,
@@ -292,7 +286,6 @@ def run_cli(args_list: Optional[list[str]] = None) -> int:
             total_override=args.total,
             passed_override=args.passed,
             failed_override=args.failed,
-            git_clean=True if args.skip_git_check else None,
         )
         print("\n" + cp_report.to_formatted_text() + "\n")
         if args.output_markdown:
