@@ -28,6 +28,8 @@ from task_checkpoint import (
     evaluate_task_checkpoint,
     is_check_triggered,
     load_checkpoint_config,
+    select_next_milestone,
+    assess_ci_artifacts,
     run_cli as run_checkpoint_cli,
 )
 
@@ -338,3 +340,195 @@ def test_checkpoint_cli_does_not_accept_git_skip_option():
         run_checkpoint_cli(["--task", "No git bypass", "--skip-git-check"])
 
     assert exc_info.value.code == 2
+
+
+def _selector_fixture(tmp_path, monkeypatch, *, status_output="", evidence=None, blockers=None):
+    root = tmp_path
+    (root / "docs").mkdir()
+    (root / ".qa").mkdir()
+    roadmap = "## Phase 1 — Previous [100% Complete]\n* **Checkpoint**: COMPLETE.\n\n## Release Preparation & Deployment Verification\n"
+    (root / "docs" / "ROADMAP.md").write_text(roadmap, encoding="utf-8")
+    config = {
+        "policy_name": "QA_INTELLIGENCE_TASK_CHECKPOINT",
+        "quality_gate_tier": "PRODUCTION_STRICT",
+        "terminal_complete_state": "PASSED",
+        "universal_checks": [],
+        "conditional_checks": [],
+        "required_evidence": ["pytest_report_xml", "quality_gate_summary_md", "git_clean_status"],
+        "current_state": {
+            "current_milestone": "Release Preparation & Deployment Verification",
+            "current_milestone_status": "NOT_STARTED",
+            "last_completed_milestone": "Phase 1 — Previous",
+            "blockers": blockers or [],
+        },
+    }
+    config_path = root / ".qa" / "task-checkpoint.json"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+
+    class GitResult:
+        returncode = 0
+        stdout = "a" * 40 + "\n"
+
+    class StatusResult:
+        returncode = 0
+        stdout = status_output
+
+    def fake_run(args, **kwargs):
+        return GitResult() if args[1] == "rev-parse" else StatusResult()
+
+    monkeypatch.setattr("task_checkpoint.subprocess.run", fake_run)
+    result = select_next_milestone(
+        roadmap_path=root / "docs" / "ROADMAP.md",
+        config_path=config_path,
+        repo_root=root,
+        evidence=evidence,
+    )
+    return result, config_path
+
+
+def test_selector_current_release_milestone_is_not_started_and_blocked_without_evidence(tmp_path, monkeypatch):
+    result, _ = _selector_fixture(tmp_path, monkeypatch)
+    assert result["milestone"] == "Release Preparation & Deployment Verification"
+    assert result["status"] == "NOT_STARTED"
+    assert result["eligibility"] == "BLOCKED"
+    assert result["eligible"] is False
+
+
+def test_selector_missing_evidence_is_blocked(tmp_path, monkeypatch):
+    result, _ = _selector_fixture(tmp_path, monkeypatch)
+    assert result["eligibility"] == "BLOCKED"
+    assert all(value == "MISSING" for value in result["evidence"].values())
+
+
+def test_selector_stale_evidence_is_not_eligible(tmp_path, monkeypatch):
+    evidence = {
+        key: {"status": "PASSED", "revision": "old-revision"}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(tmp_path, monkeypatch, evidence=evidence)
+    assert result["eligibility"] == "STALE/UNVERIFIED"
+    assert result["eligible"] is False
+
+
+def test_selector_valid_prerequisites_and_revision_evidence_are_eligible(tmp_path, monkeypatch):
+    evidence = {
+        key: {"status": "PASSED", "revision": "a" * 40}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(tmp_path, monkeypatch, evidence=evidence)
+    assert result["eligibility"] == "NOT_STARTED"
+    assert result["eligible"] is True
+
+
+def test_selector_reports_dirty_worktree_without_modifying_it(tmp_path, monkeypatch):
+    dirty = " M .gitignore\n?? .qa/local-report.txt\n"
+    result, config_path = _selector_fixture(tmp_path, monkeypatch, status_output=dirty)
+    original_config = config_path.read_text(encoding="utf-8")
+    assert result["git"]["status"] == "DIRTY"
+    assert result["git"]["changes"] == dirty.splitlines()
+    assert config_path.exists()
+    assert config_path.read_text(encoding="utf-8") == original_config
+    assert result["eligibility"] == "BLOCKED"
+
+
+def test_selector_does_not_accept_unrevisioned_or_inferred_evidence(tmp_path, monkeypatch):
+    evidence = {
+        "pytest_report_xml": {"status": "PASSED", "revision": "a" * 40},
+        "quality_gate_summary_md": {"status": "PASSED"},
+        "git_clean_status": {"status": "PASSED", "revision": "a" * 40},
+    }
+    result, _ = _selector_fixture(tmp_path, monkeypatch, evidence=evidence)
+    assert result["evidence"]["quality_gate_summary_md"] == "STALE"
+    assert result["eligible"] is False
+
+
+@pytest.mark.parametrize(
+    ("marker", "complete"),
+    [
+        ("[100% Complete]", True),
+        ("[COMPLETED]", True),
+        ("[NOT_STARTED]", False),
+        ("[FAILED]", False),
+        ("[STALE/UNVERIFIED]", False),
+        ("", False),
+    ],
+)
+def test_selector_prerequisite_requires_explicit_roadmap_completion(tmp_path, monkeypatch, marker, complete):
+    _selector_fixture(tmp_path, monkeypatch)
+    roadmap_path = tmp_path / "docs" / "ROADMAP.md"
+    roadmap = roadmap_path.read_text(encoding="utf-8")
+    roadmap_path.write_text(
+        roadmap.replace("Phase 1 — Previous [100% Complete]", f"Phase 1 — Previous {marker}")
+        .replace("* **Checkpoint**: COMPLETE.", "* **Checkpoint**: COMPLETE." if complete else "* **Checkpoint**: NOT_STARTED."),
+        encoding="utf-8",
+    )
+    result = select_next_milestone(
+        roadmap_path=roadmap_path,
+        config_path=tmp_path / ".qa" / "task-checkpoint.json",
+        repo_root=tmp_path,
+        evidence={
+            key: {"status": "PASSED", "revision": "a" * 40}
+            for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+        },
+    )
+    prerequisite_blocked = any("not verifiably marked complete" in blocker for blocker in result["blockers"])
+    assert prerequisite_blocked is (not complete)
+
+
+def test_ci_evidence_requires_all_reports_and_successful_jobs(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    root.mkdir()
+    artifact = tmp_path / "artifacts"
+    (artifact / "backend").mkdir(parents=True)
+    (artifact / "e2e").mkdir()
+    (artifact / "frontend" / "dist").mkdir(parents=True)
+    (artifact / "frontend" / "dist" / "index.html").write_text("built", encoding="utf-8")
+    revision = "b" * 40
+
+    class GitResult:
+        returncode = 0
+        stdout = revision + "\n"
+
+    class StatusResult:
+        returncode = 0
+        stdout = ""
+
+    monkeypatch.setattr(
+        "task_checkpoint.subprocess.run",
+        lambda args, **kwargs: GitResult() if args[1] == "rev-parse" else StatusResult(),
+    )
+    (artifact / "backend" / "pytest-report.xml").write_text(
+        '<testsuites tests="1" failures="0" errors="0" skipped="0"/>', encoding="utf-8"
+    )
+    (artifact / "backend" / "security-dast-report.json").write_text(
+        json.dumps({"status": "SECURE", "total_scans": 1, "passed_scans": 1,
+                    "failed_scans": 0, "vulnerabilities_count": 0,
+                    "critical_vulnerabilities": 0, "pci_dss_violations": 0,
+                    "compliance_rate": 1.0, "findings": []}), encoding="utf-8"
+    )
+    approved_summary = "APPROVED\n| evaluated | Evaluated at `now` |"
+    (artifact / "backend" / "quality-gate-summary.md").write_text(
+        "### 🛡️ Release Quality Gate: 🟢 **APPROVED** (`PRODUCTION_STRICT` Policy)\n"
+        "All quality gate invariants satisfied.\n" + approved_summary,
+        encoding="utf-8",
+    )
+    (artifact / "e2e" / "playwright-report.json").write_text(
+        json.dumps({"stats": {"expected": 1, "unexpected": 0, "skipped": 0, "flaky": 0}}), encoding="utf-8"
+    )
+    (artifact / "e2e" / "e2e-quality-gate-summary.md").write_text(
+        "### 🛡️ Release Quality Gate: 🟢 **APPROVED** (`PRODUCTION_STRICT` Policy)\n"
+        "All quality gate invariants satisfied.\n" + approved_summary,
+        encoding="utf-8",
+    )
+    jobs = {"backend": "success", "frontend": "success", "e2e": "success"}
+    result = assess_ci_artifacts(artifact, revision, jobs, repo_root=root)
+    assert result["status"] == "PASSED"
+    assert set(result["ci_evidence"]) >= {"pytest_report_xml", "quality_gate_summary_md"}
+
+    (artifact / "e2e" / "e2e-quality-gate-summary.md").unlink()
+    partial = assess_ci_artifacts(artifact, revision, jobs, repo_root=root)
+    assert partial["status"] == "BLOCKED"
+    stale = assess_ci_artifacts(artifact, "c" * 40, jobs, repo_root=root)
+    assert stale["status"] == "STALE/UNVERIFIED"
+    failed = assess_ci_artifacts(artifact, revision, {**jobs, "frontend": "failure"}, repo_root=root)
+    assert failed["status"] == "FAILED"

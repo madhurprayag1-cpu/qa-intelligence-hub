@@ -64,6 +64,15 @@ jobs:
             --output-markdown test-results/quality-gate-summary.md
           cat test-results/quality-gate-summary.md >> $GITHUB_STEP_SUMMARY
 
+      - name: Upload backend checkpoint evidence
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: ci-evidence-backend
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
 
 
   frontend:
@@ -85,6 +94,15 @@ jobs:
         run: |
           cd frontend
           npm run build
+
+      - name: Upload frontend build evidence
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: ci-evidence-frontend
+          path: frontend/dist/
+          if-no-files-found: warn
+          retention-days: 14
 
   e2e:
     runs-on: ubuntu-latest
@@ -154,8 +172,44 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-artifacts
-          path: |
-            playwright-report/
-            test-results/
+          name: ci-evidence-e2e
+          path: test-results/
           retention-days: 14
+
+  checkpoint:
+    if: ${{ always() }}
+    needs: [backend, frontend, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ci-evidence-backend
+          path: ${{ runner.temp }}/ci-evidence/backend
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ci-evidence-e2e
+          path: ${{ runner.temp }}/ci-evidence/e2e
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ci-evidence-frontend
+          path: ${{ runner.temp }}/ci-evidence/frontend/dist
+      - name: Validate revision-bound CI evidence and roadmap checkpoint
+        env:
+          CI_REVISION: ${{ github.sha }}
+          CI_BACKEND_RESULT: ${{ needs.backend.result }}
+          CI_FRONTEND_RESULT: ${{ needs.frontend.result }}
+          CI_E2E_RESULT: ${{ needs.e2e.result }}
+        run: |
+          python qa-engine/task_checkpoint.py \
+            --ci-evidence-dir "$RUNNER_TEMP/ci-evidence" \
+            --revision "$CI_REVISION" \
+            --job-results "backend=$CI_BACKEND_RESULT,frontend=$CI_FRONTEND_RESULT,e2e=$CI_E2E_RESULT"

@@ -85,6 +85,315 @@ def load_checkpoint_config(config_path: Optional[str | Path] = None) -> Dict[str
     return config
 
 
+def _roadmap_milestone_is_complete(roadmap: str, milestone: str) -> bool:
+    """Recognize only explicit completion markers in the milestone's own section."""
+    lines = roadmap.splitlines()
+    for index, line in enumerate(lines):
+        if line.startswith(f"## {milestone}"):
+            section = [line]
+            for following in lines[index + 1:]:
+                if following.startswith("## "):
+                    break
+                section.append(following)
+            if any(marker in line for marker in ("[NOT_STARTED]", "[FAILED]", "[STALE/UNVERIFIED]")):
+                return False
+            if "[100% Complete]" in line or "[COMPLETED]" in line:
+                return any(
+                    item.strip().startswith("* **Checkpoint**:")
+                    and item.strip().endswith("COMPLETE.")
+                    for item in section
+                )
+            for item in section:
+                checkpoint = item.strip()
+                if checkpoint.startswith("* **Checkpoint**:"):
+                    return checkpoint.endswith("COMPLETE.")
+            return False
+    return False
+
+
+def select_next_milestone(
+    roadmap_path: Optional[str | Path] = None,
+    config_path: Optional[str | Path] = None,
+    evidence: Optional[Dict[str, Any]] = None,
+    repo_root: Optional[str | Path] = None,
+) -> Dict[str, Any]:
+    """Read roadmap/checkpoint state and report the next milestone without mutation.
+
+    Optional evidence must be keyed by the existing required_evidence names. Each
+    evidence entry must report status PASSED and the exact current Git revision.
+    """
+    root = Path(repo_root) if repo_root else _REPO_ROOT
+    roadmap_file = Path(roadmap_path) if roadmap_path else root / "docs" / "ROADMAP.md"
+    try:
+        roadmap = roadmap_file.read_text(encoding="utf-8")
+        config = load_checkpoint_config(config_path or root / ".qa" / "task-checkpoint.json")
+    except (OSError, ValueError) as exc:
+        return {
+            "milestone": None,
+            "status": "BLOCKED",
+            "eligibility": "BLOCKED",
+            "eligible": False,
+            "prerequisites": [],
+            "required_evidence": [],
+            "blockers": [f"Canonical roadmap/checkpoint state unavailable: {exc}"],
+            "git": {"status": "UNVERIFIED", "revision": None, "changes": []},
+        }
+
+    state = config.get("current_state")
+    if not isinstance(state, dict):
+        state = {}
+    milestone = state.get("current_milestone")
+    if not isinstance(milestone, str) or not milestone.strip() or milestone not in roadmap:
+        return {
+            "milestone": milestone,
+            "status": "BLOCKED",
+            "eligibility": "BLOCKED",
+            "eligible": False,
+            "prerequisites": [],
+            "required_evidence": config.get("required_evidence", []),
+            "blockers": ["Checkpoint milestone is missing from canonical roadmap state."],
+            "git": {"status": "UNVERIFIED", "revision": None, "changes": []},
+        }
+
+    try:
+        revision_result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True,
+            text=True, check=False,
+        )
+        status_result = subprocess.run(
+            ["git", "status", "--porcelain"], cwd=root, capture_output=True,
+            text=True, check=False,
+        )
+        if revision_result.returncode or status_result.returncode:
+            raise OSError("git revision/status command failed")
+        revision = revision_result.stdout.strip()
+        changes = [line for line in status_result.stdout.splitlines() if line.strip()]
+        git_state = {"status": "DIRTY" if changes else "CLEAN", "revision": revision, "changes": changes}
+    except (OSError, subprocess.SubprocessError) as exc:
+        revision = None
+        changes = []
+        git_state = {"status": "UNVERIFIED", "revision": None, "changes": []}
+
+    prereq_name = state.get("last_completed_milestone")
+    prerequisites = [prereq_name] if isinstance(prereq_name, str) and prereq_name else []
+    blockers = list(state.get("blockers", [])) if isinstance(state.get("blockers", []), list) else []
+    if not prerequisites or prerequisites[0] not in roadmap:
+        blockers.append("Last completed milestone prerequisite is absent from canonical roadmap.")
+    elif not _roadmap_milestone_is_complete(roadmap, prerequisites[0]):
+        blockers.append("Last completed milestone is not verifiably marked complete in the roadmap.")
+    if git_state["status"] == "UNVERIFIED":
+        blockers.append("Git revision/worktree status could not be verified.")
+
+    required = config.get("required_evidence", [])
+    evidence = evidence if isinstance(evidence, dict) else {}
+    evidence_results = {}
+    stale = []
+    missing = []
+    failed_evidence = []
+    for name in required:
+        item = evidence.get(name)
+        if not isinstance(item, dict):
+            missing.append(name)
+            evidence_results[name] = "MISSING"
+        elif item.get("revision") != revision:
+            stale.append(name)
+            evidence_results[name] = "STALE"
+        elif name == "git_clean_status" and changes:
+            failed_evidence.append(name)
+            evidence_results[name] = "FAILED"
+            blockers.append("Working tree is dirty; clean-worktree evidence cannot pass.")
+        elif item.get("status") != "PASSED":
+            evidence_results[name] = "FAILED" if item.get("status") == "FAILED" else "UNVERIFIED"
+            if evidence_results[name] == "FAILED":
+                failed_evidence.append(name)
+                blockers.append(f"Required evidence failed: {name}.")
+            else:
+                missing.append(name)
+        else:
+            evidence_results[name] = "PASSED"
+
+    canonical_status = state.get("current_milestone_status", "NOT_STARTED")
+    allowed = {"PASSED", "NOT_STARTED", "BLOCKED", "FAILED", "STALE/UNVERIFIED"}
+    if canonical_status not in allowed:
+        canonical_status = "STALE/UNVERIFIED"
+        blockers.append("Checkpoint milestone status is not a recognized canonical state.")
+    evidence_complete = bool(required) and all(
+        evidence_results.get(name) == "PASSED" for name in required
+    )
+    if canonical_status == "FAILED" or failed_evidence:
+        eligibility = "FAILED"
+    elif canonical_status == "BLOCKED":
+        eligibility = "BLOCKED"
+    elif stale:
+        eligibility = "STALE/UNVERIFIED"
+        blockers.extend(f"Evidence is stale for current revision: {name}." for name in stale)
+    elif missing or not evidence_complete:
+        eligibility = "BLOCKED"
+        blockers.extend(f"Required evidence missing or unverified: {name}." for name in missing)
+    elif canonical_status == "PASSED" and not blockers:
+        eligibility = "PASSED"
+    elif blockers:
+        eligibility = "BLOCKED"
+    else:
+        eligibility = "NOT_STARTED"
+
+    eligible = eligibility == "NOT_STARTED" and not blockers
+    return {
+        "milestone": milestone,
+        "status": canonical_status,
+        "eligibility": eligibility,
+        "eligible": eligible,
+        "prerequisites": prerequisites,
+        "required_evidence": required,
+        "evidence": evidence_results,
+        "blockers": list(dict.fromkeys(blockers)),
+        "git": git_state,
+    }
+
+
+def collect_ci_evidence(
+    artifact_dir: str | Path,
+    expected_revision: str,
+    job_results: Dict[str, str],
+    repo_root: Optional[str | Path] = None,
+) -> Dict[str, Any]:
+    """Validate existing CI reports and return evidence keyed by configured owners.
+
+    Report files remain the source evidence; this function creates no state file.
+    Job results and revision are supplied by the CI runner and must be explicit.
+    """
+    root = Path(repo_root) if repo_root else _REPO_ROOT
+    artifact = Path(artifact_dir)
+    required_jobs = {"backend", "frontend", "e2e"}
+    if not isinstance(job_results, dict) or not required_jobs.issubset(job_results):
+        return {"status": "BLOCKED", "revision": expected_revision, "blockers": [
+            "CI job results missing: " + ", ".join(sorted(required_jobs - set(job_results or {})))
+        ], "evidence": {}}
+
+    try:
+        current_revision = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, capture_output=True,
+            text=True, check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"status": "BLOCKED", "revision": expected_revision,
+                "blockers": [f"Unable to verify checked-out revision: {exc}"], "evidence": {}}
+    if not expected_revision or expected_revision != current_revision:
+        return {"status": "STALE/UNVERIFIED", "revision": expected_revision,
+                "blockers": ["CI evidence revision does not match checked-out HEAD."], "evidence": {}}
+
+    failed_jobs = sorted(job for job in required_jobs if job_results[job] != "success")
+    if failed_jobs:
+        return {"status": "FAILED", "revision": current_revision,
+                "blockers": ["Required CI jobs did not succeed: " + ", ".join(failed_jobs)],
+                "evidence": {}}
+
+    report_specs = {
+        "pytest_report_xml": ("backend", "pytest-report.xml"),
+        "security_dast_report": ("backend", "security-dast-report.json"),
+        "quality_gate_summary_md": ("backend", "quality-gate-summary.md"),
+        "playwright_report_json": ("e2e", "playwright-report.json"),
+        "e2e_quality_gate_summary_md": ("e2e", "e2e-quality-gate-summary.md"),
+        "frontend_build": ("frontend", "dist"),
+    }
+    evidence: Dict[str, Any] = {}
+    blockers = []
+    for key, (job_dir, filename) in report_specs.items():
+        path = artifact / job_dir / filename
+        if filename == "dist":
+            passed = path.is_dir() and any(path.rglob("*"))
+            evidence[key] = {"status": "PASSED" if passed else "FAILED", "revision": current_revision}
+            if not passed:
+                blockers.append("Frontend build output missing or empty.")
+            continue
+        if not path.is_file() or path.stat().st_size == 0:
+            blockers.append(f"Required CI report missing or empty: {filename}.")
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+            if filename.endswith(".xml"):
+                parsed = parse_junit_xml(str(path))
+                passed = parsed.total_tests > 0 and parsed.failed_tests == 0 and parsed.passed_tests == parsed.total_tests
+            elif filename == "security-dast-report.json":
+                raw_report = json.loads(content)
+                parsed = parse_security_scan_json(str(path))
+                passed = (
+                    raw_report.get("status") == "SECURE"
+                    and parsed.total_tests > 0
+                    and parsed.failed_tests == 0
+                    and parsed.security_vulnerabilities == 0
+                    and parsed.critical_security_vulnerabilities == 0
+                    and parsed.pci_dss_violations == 0
+                    and parsed.security_compliance_rate == 1.0
+                )
+            elif filename == "playwright-report.json":
+                raw_report = json.loads(content)
+                parsed = parse_playwright_json(str(path))
+                passed = (
+                    "stats" in raw_report
+                    and parsed.total_tests > 0
+                    and parsed.failed_tests == 0
+                    and parsed.skipped_tests == 0
+                    and parsed.flaky_tests == 0
+                )
+            else:
+                passed = (
+                    "**APPROVED**" in content
+                    and "**BLOCKED**" not in content
+                    and "All quality gate invariants satisfied" in content
+                    and "Evaluated at `" in content
+                )
+        except (OSError, ValueError, json.JSONDecodeError, subprocess.SubprocessError) as exc:
+            blockers.append(f"CI report is invalid ({filename}): {exc}")
+            continue
+        evidence[key] = {"status": "PASSED" if passed else "FAILED", "revision": current_revision}
+        if not passed:
+            blockers.append(f"CI report did not pass: {filename}.")
+
+    status = "FAILED" if any(item.get("status") == "FAILED" for item in evidence.values()) else (
+        "BLOCKED" if blockers else "PASSED"
+    )
+    if status == "PASSED":
+        try:
+            worktree = subprocess.run(
+                ["git", "status", "--porcelain"], cwd=root, capture_output=True,
+                text=True, check=True,
+            ).stdout.strip()
+            evidence["git_clean_status"] = {
+                "status": "PASSED" if not worktree else "FAILED",
+                "revision": current_revision,
+            }
+            if worktree:
+                status = "FAILED"
+                blockers.append("CI checkpoint worktree is dirty.")
+        except (OSError, subprocess.SubprocessError) as exc:
+            status = "BLOCKED"
+            blockers.append(f"Unable to verify CI checkpoint worktree: {exc}")
+    return {"status": status, "revision": current_revision, "evidence": evidence, "blockers": blockers}
+
+
+def assess_ci_artifacts(
+    artifact_dir: str | Path,
+    expected_revision: str,
+    job_results: Dict[str, str],
+    repo_root: Optional[str | Path] = None,
+) -> Dict[str, Any]:
+    """Combine artifact validation with the read-only milestone selector."""
+    collected = collect_ci_evidence(artifact_dir, expected_revision, job_results, repo_root)
+    selection = select_next_milestone(
+        evidence=collected.get("evidence", {}), repo_root=repo_root,
+    )
+    blockers = list(dict.fromkeys([*collected.get("blockers", []), *selection["blockers"]]))
+    return {
+        "status": collected["status"],
+        "revision": collected.get("revision"),
+        "ci_evidence": collected.get("evidence", {}),
+        "selection": selection,
+        "blockers": blockers,
+        "eligible": collected["status"] == "PASSED" and selection["eligible"],
+    }
+
+
 @dataclass
 class CheckpointItem:
     name: str
@@ -488,7 +797,20 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="QA Intelligence Hub — Task Completion / DoD Checkpoint Validator"
     )
-    parser.add_argument("--task", type=str, required=True, help="Roadmap task name or identifier")
+    parser.add_argument(
+        "--select-next", action="store_true",
+        help="Read roadmap/checkpoint state and report the next milestone without changes",
+    )
+    parser.add_argument(
+        "--ci-evidence-dir", type=str, default=None,
+        help="Validate existing CI report artifacts and assess milestone eligibility",
+    )
+    parser.add_argument("--revision", type=str, default=None, help="CI revision SHA being verified")
+    parser.add_argument(
+        "--job-results", type=str, default=None,
+        help="Comma-separated backend=success,frontend=success,e2e=success results",
+    )
+    parser.add_argument("--task", type=str, default=None, help="Roadmap task name or identifier")
     parser.add_argument("--junit-xml", type=str, default=None, help="Path to pytest JUnit XML report")
     parser.add_argument("--playwright-json", type=str, default=None, help="Path to Playwright JSON report")
     parser.add_argument("--security-json", type=str, default=None, help="Path to Security DAST JSON report")
@@ -502,6 +824,37 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
     parser.add_argument("--output-text", type=str, default=None, help="Path to save formatted text report")
 
     args = parser.parse_args(args_list)
+
+    if args.ci_evidence_dir:
+        if args.select_next or args.task or args.revision is None or args.job_results is None or any((
+            args.junit_xml, args.playwright_json, args.security_json, args.rag_json,
+            args.changed_files, args.blockers, args.total is not None,
+            args.passed is not None, args.failed is not None,
+            args.output_json, args.output_text,
+        )):
+            parser.error("--ci-evidence-dir requires --revision and --job-results and cannot be combined with other modes")
+        parsed_results = {}
+        for pair in args.job_results.split(","):
+            if "=" not in pair:
+                parser.error("--job-results entries must use job=result format")
+            job, result = pair.split("=", 1)
+            parsed_results[job.strip()] = result.strip()
+        result = assess_ci_artifacts(args.ci_evidence_dir, args.revision, parsed_results)
+        print(json.dumps(result, indent=2))
+        return 0 if result["eligible"] else 1
+
+    if args.select_next:
+        if args.task or any((args.junit_xml, args.playwright_json, args.security_json,
+                             args.rag_json, args.changed_files, args.blockers,
+                             args.total is not None, args.passed is not None,
+                             args.failed is not None, args.output_json, args.output_text)):
+            parser.error("--select-next cannot be combined with checkpoint evaluation arguments")
+        result = select_next_milestone()
+        print(json.dumps(result, indent=2))
+        return 0 if result["eligible"] else 1
+
+    if not args.task:
+        parser.error("--task is required unless --select-next is specified")
 
     changed = [f.strip() for f in args.changed_files.split(",") if f.strip()] if args.changed_files else None
     blockers = [b.strip() for b in args.blockers.split(",") if b.strip()] if args.blockers else None

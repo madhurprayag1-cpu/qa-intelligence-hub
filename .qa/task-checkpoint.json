@@ -144,7 +144,11 @@
   ],
   "required_evidence": [
     "pytest_report_xml",
+    "security_dast_report",
     "quality_gate_summary_md",
+    "playwright_report_json",
+    "e2e_quality_gate_summary_md",
+    "frontend_build",
     "git_clean_status"
   ],
   "current_state": {
