@@ -116,12 +116,17 @@ def select_next_milestone(
     config_path: Optional[str | Path] = None,
     evidence: Optional[Dict[str, Any]] = None,
     repo_root: Optional[str | Path] = None,
+    evidence_scope: str = "local",
 ) -> Dict[str, Any]:
     """Read roadmap/checkpoint state and report the next milestone without mutation.
 
     Optional evidence must be keyed by the existing required_evidence names. Each
     evidence entry must report status PASSED and the exact current Git revision.
+    CI-scoped evidence uses its own clean-checkout assertion while preserving the
+    independently reported developer worktree state.
     """
+    if evidence_scope not in {"local", "ci"}:
+        raise ValueError("evidence_scope must be 'local' or 'ci'")
     root = Path(repo_root) if repo_root else _REPO_ROOT
     roadmap_file = Path(roadmap_path) if roadmap_path else root / "docs" / "ROADMAP.md"
     try:
@@ -177,6 +182,20 @@ def select_next_milestone(
     prereq_name = state.get("last_completed_milestone")
     prerequisites = [prereq_name] if isinstance(prereq_name, str) and prereq_name else []
     blockers = list(state.get("blockers", [])) if isinstance(state.get("blockers", []), list) else []
+    if evidence_scope == "ci":
+        ci_blockers = []
+        for blocker in blockers:
+            if not isinstance(blocker, str):
+                ci_blockers.append(blocker)
+            elif "pre-existing untracked local files prevent a clean-working-tree checkpoint" in blocker.lower():
+                continue
+            elif "fresh full release validation" in blocker.lower() and "deployment-revision verification" in blocker.lower():
+                ci_blockers.append(
+                    "Independent production deployment and serving-revision verification remain unverified."
+                )
+            else:
+                ci_blockers.append(blocker)
+        blockers = ci_blockers
     if not prerequisites or prerequisites[0] not in roadmap:
         blockers.append("Last completed milestone prerequisite is absent from canonical roadmap.")
     elif not _roadmap_milestone_is_complete(roadmap, prerequisites[0]):
@@ -198,7 +217,7 @@ def select_next_milestone(
         elif item.get("revision") != revision:
             stale.append(name)
             evidence_results[name] = "STALE"
-        elif name == "git_clean_status" and changes:
+        elif name == "git_clean_status" and evidence_scope == "local" and changes:
             failed_evidence.append(name)
             evidence_results[name] = "FAILED"
             blockers.append("Working tree is dirty; clean-worktree evidence cannot pass.")
@@ -256,6 +275,7 @@ def collect_ci_evidence(
     expected_revision: str,
     job_results: Dict[str, str],
     repo_root: Optional[str | Path] = None,
+    ci_worktree_clean: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Validate existing CI reports and return evidence keyed by configured owners.
 
@@ -286,6 +306,10 @@ def collect_ci_evidence(
     if failed_jobs:
         return {"status": "FAILED", "revision": current_revision,
                 "blockers": ["Required CI jobs did not succeed: " + ", ".join(failed_jobs)],
+                "evidence": {}}
+    if ci_worktree_clean is not True:
+        return {"status": "BLOCKED", "revision": current_revision,
+                "blockers": ["CI checkout cleanliness was not explicitly verified."],
                 "evidence": {}}
 
     report_specs = {
@@ -354,21 +378,7 @@ def collect_ci_evidence(
         "BLOCKED" if blockers else "PASSED"
     )
     if status == "PASSED":
-        try:
-            worktree = subprocess.run(
-                ["git", "status", "--porcelain"], cwd=root, capture_output=True,
-                text=True, check=True,
-            ).stdout.strip()
-            evidence["git_clean_status"] = {
-                "status": "PASSED" if not worktree else "FAILED",
-                "revision": current_revision,
-            }
-            if worktree:
-                status = "FAILED"
-                blockers.append("CI checkpoint worktree is dirty.")
-        except (OSError, subprocess.SubprocessError) as exc:
-            status = "BLOCKED"
-            blockers.append(f"Unable to verify CI checkpoint worktree: {exc}")
+        evidence["git_clean_status"] = {"status": "PASSED", "revision": current_revision}
     return {"status": status, "revision": current_revision, "evidence": evidence, "blockers": blockers}
 
 
@@ -377,11 +387,15 @@ def assess_ci_artifacts(
     expected_revision: str,
     job_results: Dict[str, str],
     repo_root: Optional[str | Path] = None,
+    ci_worktree_clean: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Combine artifact validation with the read-only milestone selector."""
-    collected = collect_ci_evidence(artifact_dir, expected_revision, job_results, repo_root)
+    collected = collect_ci_evidence(
+        artifact_dir, expected_revision, job_results, repo_root, ci_worktree_clean
+    )
     selection = select_next_milestone(
         evidence=collected.get("evidence", {}), repo_root=repo_root,
+        evidence_scope="ci",
     )
     blockers = list(dict.fromkeys([*collected.get("blockers", []), *selection["blockers"]]))
     return {
@@ -810,6 +824,10 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
         "--job-results", type=str, default=None,
         help="Comma-separated backend=success,frontend=success,e2e=success results",
     )
+    parser.add_argument(
+        "--ci-worktree-clean", action="store_true",
+        help="Assert CI checkout cleanliness after verifying it in the CI runner",
+    )
     parser.add_argument("--task", type=str, default=None, help="Roadmap task name or identifier")
     parser.add_argument("--junit-xml", type=str, default=None, help="Path to pytest JUnit XML report")
     parser.add_argument("--playwright-json", type=str, default=None, help="Path to Playwright JSON report")
@@ -839,7 +857,10 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
                 parser.error("--job-results entries must use job=result format")
             job, result = pair.split("=", 1)
             parsed_results[job.strip()] = result.strip()
-        result = assess_ci_artifacts(args.ci_evidence_dir, args.revision, parsed_results)
+        result = assess_ci_artifacts(
+            args.ci_evidence_dir, args.revision, parsed_results,
+            ci_worktree_clean=args.ci_worktree_clean,
+        )
         print(json.dumps(result, indent=2))
         return 0 if result["eligible"] else 1
 

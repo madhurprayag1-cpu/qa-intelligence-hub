@@ -209,7 +209,9 @@ jobs:
           CI_FRONTEND_RESULT: ${{ needs.frontend.result }}
           CI_E2E_RESULT: ${{ needs.e2e.result }}
         run: |
+          test -z "$(git status --porcelain)"
           python qa-engine/task_checkpoint.py \
             --ci-evidence-dir "$RUNNER_TEMP/ci-evidence" \
             --revision "$CI_REVISION" \
-            --job-results "backend=$CI_BACKEND_RESULT,frontend=$CI_FRONTEND_RESULT,e2e=$CI_E2E_RESULT"
+            --job-results "backend=$CI_BACKEND_RESULT,frontend=$CI_FRONTEND_RESULT,e2e=$CI_E2E_RESULT" \
+            --ci-worktree-clean

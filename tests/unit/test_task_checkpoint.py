@@ -350,7 +350,7 @@ def test_checkpoint_cli_does_not_accept_git_skip_option():
     assert exc_info.value.code == 2
 
 
-def _selector_fixture(tmp_path, monkeypatch, *, status_output="", evidence=None, blockers=None):
+def _selector_fixture(tmp_path, monkeypatch, *, status_output="", evidence=None, blockers=None, evidence_scope="local"):
     root = tmp_path
     (root / "docs").mkdir()
     (root / ".qa").mkdir()
@@ -390,6 +390,7 @@ def _selector_fixture(tmp_path, monkeypatch, *, status_output="", evidence=None,
         config_path=config_path,
         repo_root=root,
         evidence=evidence,
+            evidence_scope=evidence_scope,
     )
     return result, config_path
 
@@ -437,6 +438,51 @@ def test_selector_reports_dirty_worktree_without_modifying_it(tmp_path, monkeypa
     assert config_path.exists()
     assert config_path.read_text(encoding="utf-8") == original_config
     assert result["eligibility"] == "BLOCKED"
+
+
+def test_selector_ci_evidence_uses_ci_cleanliness_without_claiming_local_tree_is_clean(tmp_path, monkeypatch):
+    dirty = " M .gitignore\n?? .qa/local-report.txt\n"
+    revision = "a" * 40
+    evidence = {
+        key: {"status": "PASSED", "revision": revision}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(
+        tmp_path,
+        monkeypatch,
+        status_output=dirty,
+        evidence=evidence,
+        blockers=[
+            "Pre-existing untracked local files prevent a clean-working-tree checkpoint.",
+            "Fresh full release validation and deployment-revision verification have not been established for the current checkout; production verification remains unverified.",
+        ],
+        evidence_scope="ci",
+    )
+
+    assert result["git"]["status"] == "DIRTY"
+    assert result["evidence"]["git_clean_status"] == "PASSED"
+    assert "Pre-existing untracked local files prevent a clean-working-tree checkpoint." not in result["blockers"]
+    assert any("production deployment and serving-revision verification" in blocker for blocker in result["blockers"])
+    assert result["blockers"].count("Pre-existing untracked local files prevent a clean-working-tree checkpoint.") == 0
+    assert result["eligible"] is False
+
+
+def test_selector_local_scope_still_rejects_ci_clean_evidence_for_dirty_worktree(tmp_path, monkeypatch):
+    revision = "a" * 40
+    evidence = {
+        key: {"status": "PASSED", "revision": revision}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(
+        tmp_path,
+        monkeypatch,
+        status_output="?? .qa/local-report.txt\\n",
+        evidence=evidence,
+    )
+
+    assert result["git"]["status"] == "DIRTY"
+    assert result["evidence"]["git_clean_status"] == "FAILED"
+    assert result["eligible"] is False
 
 
 def test_selector_does_not_accept_unrevisioned_or_inferred_evidence(tmp_path, monkeypatch):
@@ -529,14 +575,39 @@ def test_ci_evidence_requires_all_reports_and_successful_jobs(tmp_path, monkeypa
         encoding="utf-8",
     )
     jobs = {"backend": "success", "frontend": "success", "e2e": "success"}
-    result = assess_ci_artifacts(artifact, revision, jobs, repo_root=root)
+    result = assess_ci_artifacts(artifact, revision, jobs, repo_root=root, ci_worktree_clean=True)
     assert result["status"] == "PASSED"
     assert set(result["ci_evidence"]) >= {"pytest_report_xml", "quality_gate_summary_md"}
 
     (artifact / "e2e" / "e2e-quality-gate-summary.md").unlink()
-    partial = assess_ci_artifacts(artifact, revision, jobs, repo_root=root)
+    partial = assess_ci_artifacts(artifact, revision, jobs, repo_root=root, ci_worktree_clean=True)
     assert partial["status"] == "BLOCKED"
-    stale = assess_ci_artifacts(artifact, "c" * 40, jobs, repo_root=root)
+    stale = assess_ci_artifacts(artifact, "c" * 40, jobs, repo_root=root, ci_worktree_clean=True)
     assert stale["status"] == "STALE/UNVERIFIED"
-    failed = assess_ci_artifacts(artifact, revision, {**jobs, "frontend": "failure"}, repo_root=root)
+    failed = assess_ci_artifacts(
+        artifact, revision, {**jobs, "frontend": "failure"},
+        repo_root=root, ci_worktree_clean=True,
+    )
     assert failed["status"] == "FAILED"
+
+
+def test_ci_evidence_fails_closed_when_ci_worktree_cleanliness_is_unverified(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    root.mkdir()
+    revision = "b" * 40
+
+    class GitResult:
+        returncode = 0
+        stdout = revision + "\n"
+
+    monkeypatch.setattr("task_checkpoint.subprocess.run", lambda *args, **kwargs: GitResult())
+    result = assess_ci_artifacts(
+        tmp_path / "missing-artifacts",
+        revision,
+        {"backend": "success", "frontend": "success", "e2e": "success"},
+        repo_root=root,
+    )
+
+    assert result["status"] == "BLOCKED"
+    assert result["eligible"] is False
+    assert "CI checkout cleanliness was not explicitly verified." in result["blockers"]
