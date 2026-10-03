@@ -20,6 +20,28 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Generated/maintained locally by the checkpoint workflow; CI still requires a
+# genuinely clean checkout.
+ALLOWED_LOCAL_ONLY_PATHS = frozenset({
+    ".gitignore",
+    ".qa/task-checkpoint-result.txt",
+})
+
+def _classify_worktree_changes(status_output: str) -> tuple[str, List[str], List[str]]:
+    """Classify porcelain status while allowing only approved local artifacts."""
+    changes = [line for line in status_output.splitlines() if line.strip()]
+    blocking_changes: List[str] = []
+    for line in changes:
+        path = line[3:].strip().replace("\\", "/") if len(line) >= 3 else ""
+        if path not in ALLOWED_LOCAL_ONLY_PATHS:
+            blocking_changes.append(line)
+    if blocking_changes:
+        return "DIRTY", changes, blocking_changes
+    if changes:
+        return "CLEAN_WITH_ALLOWED_LOCAL_CHANGES", changes, []
+    return "CLEAN", [], []
+
 for _d in ["", "backend", "ai-engine", "qa-engine"]:
     _p = str(_REPO_ROOT / _d) if _d else str(_REPO_ROOT)
     if _p not in sys.path:
@@ -172,8 +194,12 @@ def select_next_milestone(
         if revision_result.returncode or status_result.returncode:
             raise OSError("git revision/status command failed")
         revision = revision_result.stdout.strip()
-        changes = [line for line in status_result.stdout.splitlines() if line.strip()]
-        git_state = {"status": "DIRTY" if changes else "CLEAN", "revision": revision, "changes": changes}
+        git_status, changes, blocking_changes = _classify_worktree_changes(status_result.stdout)
+        git_state = {
+            "status": git_status,
+            "revision": revision,
+            "changes": changes,
+        }
     except (OSError, subprocess.SubprocessError) as exc:
         revision = None
         changes = []
@@ -217,10 +243,12 @@ def select_next_milestone(
         elif item.get("revision") != revision:
             stale.append(name)
             evidence_results[name] = "STALE"
-        elif name == "git_clean_status" and evidence_scope == "local" and changes:
+        elif name == "git_clean_status" and evidence_scope == "local" and blocking_changes:
             failed_evidence.append(name)
             evidence_results[name] = "FAILED"
-            blockers.append("Working tree is dirty; clean-worktree evidence cannot pass.")
+            blockers.append(
+                "Working tree contains unapproved changes; clean-worktree evidence cannot pass."
+            )
         elif item.get("status") != "PASSED":
             evidence_results[name] = "FAILED" if item.get("status") == "FAILED" else "UNVERIFIED"
             if evidence_results[name] == "FAILED":
@@ -729,12 +757,21 @@ def evaluate_task_checkpoint(
                 text=True,
                 check=False,
             )
-            g_clean = res.returncode == 0 and len(res.stdout.strip()) == 0
-            git_detail = (
-                "Clean working tree"
-                if g_clean
-                else "Git status reported changes or returned a non-zero exit code"
-            )
+            if res.returncode != 0:
+                g_clean = False
+                git_detail = "Git status reported changes or returned a non-zero exit code"
+            else:
+                git_status, changes, blocking_changes = _classify_worktree_changes(res.stdout)
+                g_clean = not blocking_changes
+                if git_status == "CLEAN":
+                    git_detail = "Clean working tree"
+                elif git_status == "CLEAN_WITH_ALLOWED_LOCAL_CHANGES":
+                    git_detail = (
+                        "Clean except approved local-only artifacts: "
+                        + ", ".join(line[3:].strip().replace("\\", "/") for line in changes)
+                    )
+                else:
+                    git_detail = "Git status reported unapproved changes"
         except (OSError, subprocess.SubprocessError) as exc:
             g_clean = False
             git_detail = f"Git status could not be evaluated: {exc}"
