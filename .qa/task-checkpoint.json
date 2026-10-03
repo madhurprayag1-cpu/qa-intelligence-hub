@@ -184,19 +184,19 @@
   ],
   "current_state": {
     "purpose": "Canonical roadmap position; this is not a test result or release approval.",
-    "current_milestone": "Release Preparation & Deployment Verification",
+    "current_milestone": "Final Release Hardening & Portfolio Completion",
     "current_milestone_status": "VALIDATION",
     "last_completed_milestone": "Phase 1B — Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E",
-    "next_task": "Deploy the exact verified release revision to Vercel and perform read-only production verification",
-    "verification_status": "CURRENT_REVISION_VALIDATED_BY_CI",
-    "deployment_status": "PENDING_FINAL_SHA_DEPLOYMENT",
-    "blockers": [
-      "Final Vercel deployment and independent read-only production verification remain pending."
-    ],
+    "next_task": "Complete documentation and repository governance finalization, then perform any required final release verification",
+    "verification_status": "CURRENT_REVISION_VALIDATED_BY_CI_AND_PRODUCTION_SMOKE",
+    "deployment_status": "PRODUCTION_DEPLOYMENT_VERIFIED",
+    "blockers": [],
     "historical_evidence_reference": "Historical phase checkpoints remain historical; current release validation is recorded against verified_revision and CI run above.",
-    "verified_revision": "78a8ab993a9e6e117f23dff2dd652aa2c147f72f",
-    "ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37118227911",
+    "verified_revision": "5307d78084549c8f06b004afd90a4b61e632ece8",
+    "ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37118883580",
     "ci_conclusion": "success",
-    "e2e_result": "60/60 passed; 0 skipped; 0 unexpected; 0 flaky"
+    "e2e_result": "60/60 passed; 0 skipped; 0 unexpected; 0 flaky",
+    "production_url": "https://qa-intelligence-hub-flax.vercel.app",
+    "production_verification": "Read-only checks passed for /health, /flights, valid /search/flights, /docs, /openapi.json, and the frontend root; no production mutations performed."
   }
 }
