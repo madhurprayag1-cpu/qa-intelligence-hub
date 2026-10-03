@@ -249,37 +249,51 @@
 
 ### Canonical Project State — 2026-10-03
 
-This section is the authoritative summary of roadmap position. Historical phase
-checkpoints above remain historical evidence and do not certify the current
-production deployment.
+This section is the authoritative summary of the **current** roadmap position.
+Historical phase checkpoints above remain historical evidence and do not
+override the current release validation recorded here.
 
-* **Last completed roadmap milestone:** Phase 1B — Multi-Domain Persistence,
-  Interactive UI & Full-Pyramid E2E.
-* **Current remaining milestone:** Release Preparation & Deployment Verification
-  (**VALIDATION**).
-* **Verified release candidate revision:** `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`.
-  This is the exact merged `main` revision validated by GitHub Actions run #32.
-* **Current validation evidence:** GitHub Actions run #32 completed successfully
+* **Implementation status:** The planned five-domain QA Intelligence Hub
+  architecture and major QA/AI capabilities are implemented and documented:
+  Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and
+  Telecom/5G, with AI/RAG, specialist agents, MCP, security, performance,
+  regression intelligence, quality gates, CI/CD, and the Portfolio Demo CLI.
+* **Last completed implementation milestone:** Phase 1B — Multi-Domain
+  Persistence, Interactive UI & Full-Pyramid E2E.
+* **Current stage:** **Final Release Hardening & Portfolio Completion**.
+  Feature expansion is not the current objective; remaining work is focused on
+  documentation synchronization, repository governance, reproducibility, and
+  release evidence.
+* **Verified release revision:** `5307d78084549c8f06b004afd90a4b61e632ece8`.
+* **Latest CI validation:** GitHub Actions **run #34** completed successfully
   for the exact revision above. Backend, frontend, E2E, and checkpoint jobs all
-  passed. The E2E artifact is revision-bound and records **60/60 Playwright
-  tests passed**, with 0 skipped, 0 unexpected, and 0 flaky tests.
-* **Backend release validation:** Full Pytest regression passed, automated DAST
-  passed, and the `PRODUCTION_STRICT` quality gate passed.
-* **Frontend release validation:** ESLint and production build passed.
-* **Checkpoint validation:** CI checkout was clean and the revision-bound
-  checkpoint validation passed.
-* **Next task:** Create no further tracked release-candidate changes; deploy the
-  exact verified revision `78a8ab993a9e6e117f23dff2dd652aa2c147f72f` to Vercel
-  and perform documented read-only production verification.
-* **Deployment state:** **PENDING_FINAL_SHA_DEPLOYMENT**. No production deployment
-  is being claimed by this checkpoint.
-* **Acceptance criteria remaining:** The exact final revision must be deployed,
-  its serving revision must be independently verified, and the documented
-  read-only production smoke checks must pass with no production mutations.
-* **Current quality/security gate:** **PASSED FOR REVISION
-  `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`** based on CI run #32.
-* **Blockers:** Final Vercel deployment and independent read-only production
-  verification remain pending. No other release-validation blocker is recorded.
+  passed.
+* **Test evidence:** The validated project baseline is **367 backend Pytest
+  tests + 60 Playwright E2E tests (427 automated tests total)**. Historical
+  phase counts above remain historical and should not be interpreted as the
+  current count.
+* **Quality/security validation:** Backend regression, automated DAST,
+  PRODUCTION_STRICT quality-gate evaluation, frontend lint/build, Playwright
+  E2E, and revision-bound checkpoint validation passed in the release CI
+  evidence.
+* **Production deployment:** Vercel production deployment is **READY** and
+  serves the exact revision above. Canonical production alias:
+  `https://qa-intelligence-hub-flax.vercel.app`.
+* **Read-only production verification:** `/health`, `/flights`, valid
+  `/search/flights`, `/docs`, `/openapi.json`, and the frontend root were
+  verified successfully. No production database mutations were performed.
+  Vercel runtime-error monitoring reported no runtime errors in the selected
+  verification window.
+* **Repository governance:** Main-branch protection is being configured with
+  pull-request, required CI status-check, deletion protection, force-push
+  protection, and conversation-resolution controls. The workflow itself does
+  not require application or CI configuration changes for this governance
+  layer.
+* **Remaining work:** Keep README/roadmap evidence synchronized, complete
+  repository governance/security hygiene, and perform any final release
+  verification required after governance changes.
+* **Current blocker:** No application or deployment blocker is recorded.
+  Documentation/governance finalization is the remaining project work.
 
 ### Completed milestones
 
