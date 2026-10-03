@@ -284,8 +284,16 @@ def test_checkpoint_cli_execution_failed():
     assert exit_code == 1
 
 
-def test_cli_gate_integration_with_task_checkpoint():
+def test_cli_gate_integration_with_task_checkpoint(monkeypatch):
     """Verify qa-engine/cli_gate.py --task-checkpoint executes the DoD checkpoint."""
+    class DirtyGitStatus:
+        returncode = 0
+        stdout = " M .gitignore\n"
+
+    monkeypatch.setattr(
+        "task_checkpoint.subprocess.run",
+        lambda *args, **kwargs: DirtyGitStatus(),
+    )
     args = [
         "--task-checkpoint", "Task 6.5: DAST Gate",
         "--total", "100",
