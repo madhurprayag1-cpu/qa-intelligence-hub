@@ -12,7 +12,21 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Historical validation snapshot (October 2, 2026)**: Repository checkpoint artifacts record **367 backend tests + 60 Playwright tests** passing at that time. This is historical evidence, not a current validation result or release approval. See the canonical current state and remaining work in [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Current verified release state (October 3, 2026)**: The latest GitHub Actions CI run **#34** passed successfully for commit **`5307d78084549c8f06b004afd90a4b61e632ece8`**. The validated pipeline includes backend, frontend, Playwright E2E, and checkpoint jobs. The production Vercel deployment is **READY** and is serving this exact commit. See [docs/ROADMAP.md](docs/ROADMAP.md) for the canonical project state.
+
+## Current Project Status
+
+| Area | Current verified state |
+|---|---|
+| **Architecture** | Five isolated production domain packs: Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, Telecom/5G |
+| **Automated validation** | **367 backend Pytest tests + 60 Playwright E2E tests**; latest release CI passed |
+| **CI/CD** | GitHub Actions run **#34** — backend, frontend, E2E, and checkpoint jobs all passed |
+| **Release revision** | `5307d78084549c8f06b004afd90a4b61e632ece8` |
+| **Production** | Vercel deployment **READY**, serving the exact release revision |
+| **Production smoke verification** | Read-only checks passed for `/health`, `/flights`, valid `/search/flights`, `/docs`, `/openapi.json`, and the frontend root |
+| **Current stage** | Release hardening, repository governance, and portfolio documentation synchronization |
+
+This repository is now in **finalization rather than feature-expansion mode**. The implementation scope covers the five-domain QA platform, AI/RAG and agentic capabilities, security/performance testing, quality gates, CI/CD, and public deployment. Remaining work is focused on keeping documentation and repository governance synchronized with the verified implementation.
 
 > **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
@@ -174,10 +188,27 @@ npm run dev
 
 ## 🌐 Production Deployment
 
-The roadmap records a historical production deployment, but the currently
-serving topology, deployed revision, and production health have not been
-verified by the current project checkpoint. Do not interpret the configuration
-options below as a statement of the active production topology.
+### Current verified production state
+
+- **Platform:** Vercel
+- **Production alias:** [qa-intelligence-hub-flax.vercel.app](https://qa-intelligence-hub-flax.vercel.app)
+- **Deployment state:** **READY**
+- **Serving revision:** `5307d78084549c8f06b004afd90a4b61e632ece8`
+- **GitHub CI:** Run **#34**, completed successfully
+- **Verification mode:** Read-only production smoke verification; no production database mutations were performed
+
+Verified production endpoints include:
+
+- `/health` → HTTP 200, healthy API response
+- `/flights` → HTTP 200
+- `/search/flights` → valid query returned HTTP 200
+- `/docs` → HTTP 200
+- `/openapi.json` → HTTP 200
+- `/` → HTTP 200 frontend response
+
+The available Vercel runtime-error view reported **no runtime errors in the selected verification window**. Browser-console verification is not represented as an independent claim here.
+
+### Deployment architecture
 
 The platform is architected for zero-cost / low-overhead public cloud deployment:
 
