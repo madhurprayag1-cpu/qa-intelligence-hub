@@ -591,6 +591,72 @@ def test_ci_evidence_requires_all_reports_and_successful_jobs(tmp_path, monkeypa
     assert failed["status"] == "FAILED"
 
 
+def test_ci_checkpoint_cli_passes_valid_evidence_with_production_blocker(tmp_path, monkeypatch, capsys):
+    revision = "d" * 40
+    expected_blocker = "Independent production deployment and serving-revision verification remain unverified."
+
+    monkeypatch.setattr(
+        "task_checkpoint.assess_ci_artifacts",
+        lambda *args, **kwargs: {
+            "status": "PASSED",
+            "revision": revision,
+            "ci_evidence": {"git_clean_status": {"status": "PASSED", "revision": revision}},
+            "selection": {"milestone": "Release Preparation & Deployment Verification"},
+            "blockers": [expected_blocker],
+            "eligible": False,
+        },
+    )
+
+    exit_code = run_checkpoint_cli([
+        "--ci-evidence-dir", str(tmp_path / "ci-evidence"),
+        "--revision", revision,
+        "--job-results", "backend=success,frontend=success,e2e=success",
+        "--ci-worktree-clean",
+    ])
+
+    output = json.loads(capsys.readouterr().out)
+    assert exit_code == 0
+    assert output["status"] == "PASSED"
+    assert output["eligible"] is False
+    assert expected_blocker in output["blockers"]
+
+
+@pytest.mark.parametrize("evidence_status", ["BLOCKED", "FAILED", "STALE/UNVERIFIED"])
+def test_ci_checkpoint_cli_fails_when_evidence_is_not_valid(
+    tmp_path, monkeypatch, capsys, evidence_status
+):
+    revision = "e" * 40
+    monkeypatch.setattr(
+        "task_checkpoint.assess_ci_artifacts",
+        lambda *args, **kwargs: {
+            "status": evidence_status,
+            "revision": revision,
+            "ci_evidence": {},
+            "selection": {"milestone": "Release Preparation & Deployment Verification"},
+            "blockers": ["CI evidence validation failed."],
+            "eligible": False,
+        },
+    )
+
+    exit_code = run_checkpoint_cli([
+        "--ci-evidence-dir", str(tmp_path / "ci-evidence"),
+        "--revision", revision,
+        "--job-results", "backend=success,frontend=success,e2e=success",
+        "--ci-worktree-clean",
+    ])
+
+    output = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert output["status"] == evidence_status
+    assert output["eligible"] is False
+
+
+def test_ci_checkpoint_cli_fails_when_required_evidence_arguments_are_missing():
+    with pytest.raises(SystemExit) as exc_info:
+        run_checkpoint_cli(["--ci-evidence-dir", "missing-artifacts"])
+    assert exc_info.value.code == 2
+
+
 def test_ci_evidence_fails_closed_when_ci_worktree_cleanliness_is_unverified(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     root.mkdir()

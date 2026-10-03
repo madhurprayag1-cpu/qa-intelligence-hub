@@ -862,7 +862,8 @@ def run_cli(args_list: Optional[List[str]] = None) -> int:
             ci_worktree_clean=args.ci_worktree_clean,
         )
         print(json.dumps(result, indent=2))
-        return 0 if result["eligible"] else 1
+        # CI evidence may pass while production verification still blocks release eligibility.
+        return 0 if result["status"] == "PASSED" else 1
 
     if args.select_next:
         if args.task or any((args.junit_xml, args.playwright_json, args.security_json,
