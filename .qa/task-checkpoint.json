@@ -88,56 +88,87 @@
     {
       "id": "C1_PLAYWRIGHT_E2E",
       "name": "Playwright E2E Suite",
-      "triggers": ["frontend/**", "tests/ui/**", "playwright.config.ts"],
+      "triggers": [
+        "frontend/**",
+        "tests/ui/**",
+        "playwright.config.ts"
+      ],
       "description": "Playwright browser test suite with automated REST teardown passes 100%",
       "command": "npx playwright test"
     },
     {
       "id": "C2_API_CONTRACT",
       "name": "OpenAPI Contract Validation",
-      "triggers": ["backend/app/routers/**", "backend/app/schemas/**", "tests/contract/**"],
+      "triggers": [
+        "backend/app/routers/**",
+        "backend/app/schemas/**",
+        "tests/contract/**"
+      ],
       "description": "OpenAPI 3.1.0 schema conformance verified without broken contract models",
       "command": "pytest tests/contract/test_openapi_contract.py"
     },
     {
       "id": "C3_RAG_EVALUATION",
       "name": "AI / RAG Quality Metrics",
-      "triggers": ["ai-engine/**", "domains/**/knowledge.py", "tests/ai/**"],
+      "triggers": [
+        "ai-engine/**",
+        "domains/**/knowledge.py",
+        "tests/ai/**"
+      ],
       "description": "RAG groundedness >= 0.85, context relevance >= 0.80, citation accuracy >= 0.85, truthful refusal >= 0.90",
       "command": "pytest tests/ai/test_production_rag.py tests/ai/test_rag_quality_gate.py"
     },
     {
       "id": "C4_SECURITY_DAST",
       "name": "Automated DAST Security Scan",
-      "triggers": ["backend/app/**", "qa-engine/security_scanner.py", "tests/security/**"],
+      "triggers": [
+        "backend/app/**",
+        "qa-engine/security_scanner.py",
+        "tests/security/**"
+      ],
       "description": "DAST scanner confirms status SECURE on baseline gate suite with 100% compliance",
       "command": "python qa-engine/security_scanner.py --mode gate"
     },
     {
       "id": "C5_PERFORMANCE_BENCHMARK",
       "name": "Performance Latency Benchmarks",
-      "triggers": ["backend/app/routers/flights.py", "tests/performance/**"],
+      "triggers": [
+        "backend/app/routers/flights.py",
+        "tests/performance/**"
+      ],
       "description": "Flight search p95 latency asserts under 250ms threshold",
       "command": "pytest tests/performance/test_performance_benchmarks.py"
     },
     {
       "id": "C6_DATABASE_MIGRATIONS",
       "name": "Database Invariants & Migrations",
-      "triggers": ["backend/app/models/**", "backend/alembic/**", "tests/database/**"],
+      "triggers": [
+        "backend/app/models/**",
+        "backend/alembic/**",
+        "tests/database/**"
+      ],
       "description": "Database transactions, foreign keys, and atomic inventory lock invariants verified",
       "command": "pytest tests/database/test_database_invariants.py"
     },
     {
       "id": "C7_FRONTEND_LINT_BUILD",
       "name": "Frontend Lint and Build",
-      "triggers": ["frontend/**"],
+      "triggers": [
+        "frontend/**"
+      ],
       "description": "Frontend ESLint and TypeScript compilation pass with 0 errors",
       "command": "npm run lint --prefix frontend && npm run build --prefix frontend"
     },
     {
       "id": "C8_BACKEND_TESTS",
       "name": "Backend Python Test Suite",
-      "triggers": ["backend/**", "qa-engine/**", "ai-engine/**", "domains/**", "tests/**"],
+      "triggers": [
+        "backend/**",
+        "qa-engine/**",
+        "ai-engine/**",
+        "domains/**",
+        "tests/**"
+      ],
       "description": "Pytest backend test suite passes 100%",
       "command": "pytest"
     }
@@ -154,15 +185,18 @@
   "current_state": {
     "purpose": "Canonical roadmap position; this is not a test result or release approval.",
     "current_milestone": "Release Preparation & Deployment Verification",
-    "current_milestone_status": "NOT_STARTED",
+    "current_milestone_status": "VALIDATION",
     "last_completed_milestone": "Phase 1B — Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E",
-    "next_task": "Establish a verified release candidate and reconcile deployment topology and repository history before any deployment action",
-    "verification_status": "NOT_RUN_FOR_CURRENT_CHECKOUT",
-    "deployment_status": "DOCUMENTED_ALIAS_REACHABLE_HEALTH_REPORTS_DEVELOPMENT_ENVIRONMENT_PRODUCTION_READINESS_UNVERIFIED",
+    "next_task": "Deploy the exact verified release revision to Vercel and perform read-only production verification",
+    "verification_status": "CURRENT_REVISION_VALIDATED_BY_CI",
+    "deployment_status": "PENDING_FINAL_SHA_DEPLOYMENT",
     "blockers": [
-      "Fresh full release validation and deployment-revision verification have not been established for the current checkout; documented alias health reports environment=development.",
-      "Pre-existing untracked local files prevent a clean-working-tree checkpoint."
+      "Final Vercel deployment and independent read-only production verification remain pending."
     ],
-    "historical_evidence_reference": "Historical Phase 1B checkpoint artifacts and Phase 5 deployment record in docs/ROADMAP.md; not current approval."
+    "historical_evidence_reference": "Historical phase checkpoints remain historical; current release validation is recorded against verified_revision and CI run above.",
+    "verified_revision": "78a8ab993a9e6e117f23dff2dd652aa2c147f72f",
+    "ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37118227911",
+    "ci_conclusion": "success",
+    "e2e_result": "60/60 passed; 0 skipped; 0 unexpected; 0 flaky"
   }
 }
