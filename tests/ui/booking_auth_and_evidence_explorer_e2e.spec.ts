@@ -72,12 +72,18 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
     // 1. Go to QA Platform
     await page.locator('[data-testid="tab-qa-platform"]').click();
 
-    // 2. Click the top "Automated Test Cases" stat card
+    // 2. Assert the browser uses same-origin API routing in production-like hosting.
+    const apiRequest = page.waitForRequest((request) => request.url().includes("/qa/tests"));
+    await page.locator('[data-testid="qa-subtab-tests"]').click();
+    const request = await apiRequest;
+    expect(new URL(request.url()).origin).toBe(new URL(page.url()).origin);
+
+    // 3. Click the top "Automated Test Cases" stat card
     const statCard = page.locator('[data-testid="stat-card-automated-tests"]');
     await expect(statCard).toBeVisible();
     await statCard.click();
 
-    // 3. Verify Test Explorer opens
+    // 4. Verify Test Explorer opens
     await expect(page.locator('[data-testid="test-explorer-container"]')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('[data-testid="test-evidence-table"]')).toBeVisible({ timeout: 15000 });
 
@@ -117,6 +123,23 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
     await expect(page.locator('[data-testid="test-evidence-modal"]')).toBeVisible();
     await expect(page.locator("#evidence-modal-title")).toBeVisible();
     await expect(page.locator(".evidence-body")).toBeVisible();
+  });
+
+  test("TEST 6A: API failure is shown as unavailable, never as zero tests", async ({ page }) => {
+    await page.route("**/qa/tests**", async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Evidence service unavailable" }),
+      });
+    });
+
+    await page.locator('[data-testid="tab-qa-platform"]').click();
+    await page.locator('[data-testid="qa-subtab-tests"]').click();
+
+    await expect(page.locator('[data-testid="test-explorer-unavailable"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="test-explorer-error"]')).toContainText("Failed to fetch QA tests");
+    await expect(page.locator('[data-testid="test-empty-state"]')).toHaveCount(0);
   });
 
   test("TEST 6: Verify expected vs actual assertion details in evidence drawer", async ({ page }) => {
