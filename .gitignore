@@ -54,6 +54,8 @@ allure-report/
 .qa/*-result.txt
 .qa/*-scan.json
 .qa/evidence/RUN-*.json
+.qa/autonomous/events/
+.qa/autonomous/locks/
 
 # ==============================
 # AI / RAG Generated Data

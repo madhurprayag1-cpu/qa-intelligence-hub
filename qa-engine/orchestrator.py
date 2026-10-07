@@ -446,11 +446,43 @@ MasterAgentOrchestrator = MasterOrchestrator
 
 async def main():
     parser = argparse.ArgumentParser(description="Autonomous QA Intelligence Hub Master Orchestrator")
+    parser.add_argument("--goal", help="Execute high-level engineering goal (e.g., GOAL-AUTO-001)")
     parser.add_argument("--e2e", action="store_true", help="Include Playwright E2E suite")
     parser.add_argument("--policy", default="PRODUCTION_STRICT", help="Quality Gate policy tier")
     parser.add_argument("--remediate", help="Defect ID to remediate (DEF-001 through DEF-005)")
     parser.add_argument("--json", action="store_true", help="Output full report as JSON")
     args = parser.parse_args()
+
+    if args.goal:
+        from autonomous.factory import AutonomousExecutionEngine
+        engine = AutonomousExecutionEngine()
+        goal_rep = engine.run_goal(goal_id=args.goal)
+        if args.json:
+            print(json.dumps(goal_rep.to_dict(), indent=2))
+        else:
+            print("\n=======================================================")
+            print(">> AUTONOMOUS CLOSED-LOOP QA FACTORY REPORT")
+            print("=======================================================")
+            print(f"Goal ID:                {goal_rep.goal_id}")
+            print(f"Objective:              {goal_rep.objective}")
+            print(f"Run ID:                 {goal_rep.run_id}")
+            print(f"Final Verdict:          {goal_rep.verdict}")
+            print(f"Lifecycle State:        {goal_rep.lifecycle_state}")
+            print(f"Progress:               {goal_rep.progress_pct}%")
+            print(f"Total Duration:         {goal_rep.total_duration_sec}s")
+            print(f"Tasks Completed:        {goal_rep.completed_tasks}/{goal_rep.total_tasks}")
+            print(f"Criteria Satisfied:     {goal_rep.acceptance_criteria_met}/{goal_rep.total_acceptance_criteria}")
+            print(f"Retries Performed:      {goal_rep.retries_performed}")
+            print(f"Total Capabilities:     {goal_rep.test_count}")
+            print(f"Security Status:        {goal_rep.security_status}")
+            print(f"Quality Gate Status:    {goal_rep.quality_gate_status}")
+            print("-------------------------------------------------------")
+            print("Task Execution Breakdown:")
+            for ts in goal_rep.task_summaries:
+                icon = "[PASS]" if ts["status"] == "PASSED" else f"[{ts['status']}]"
+                print(f"  {icon:<8} {ts['task_id']:<24} {ts['agent_id']:<18} ({ts['name']})")
+            print("=======================================================\n")
+        return
 
     orchestrator = MasterOrchestrator()
     report = await orchestrator.execute_autonomous_loop(
