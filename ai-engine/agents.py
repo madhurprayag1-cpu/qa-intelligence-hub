@@ -318,19 +318,19 @@ class RequirementAgent(BaseAgent):
             {
                 "scenario_id": f"{requirement_id}-TS-001",
                 "type": "POSITIVE",
-                "objective": f"Validate happy path for '{task}'.",
+                "objective": f"Positive: Validate happy path for '{task}'.",
                 "required_layers": ["API", "UI", "REGRESSION"],
             },
             {
                 "scenario_id": f"{requirement_id}-TS-002",
                 "type": "NEGATIVE",
-                "objective": f"Validate invalid and unauthorized behavior for '{task}'.",
+                "objective": f"Negative: Validate invalid and unauthorized behavior for '{task}'.",
                 "required_layers": ["API", "SECURITY"],
             },
             {
                 "scenario_id": f"{requirement_id}-TS-003",
                 "type": "BOUNDARY",
-                "objective": f"Validate boundary, timeout, concurrency, and data-integrity behavior for '{task}'.",
+                "objective": f"Boundary: Validate boundary, timeout, concurrency, and data-integrity behavior for '{task}'.",
                 "required_layers": ["API", "DATABASE", "PERFORMANCE"],
             },
         ]
