@@ -316,7 +316,6 @@ def test_requirement_trace_persistence_and_engineering_plan(client: TestClient):
     assert "SECURITY" in test_plan_data["required_layers"]
 
 
-test_marker_removed__DO_NOT_USE
 # kept synchronous because TestClient calls are synchronous
 def test_production_observation_creates_incident_and_supports_resolution(client: TestClient):
     response = await client.post(
