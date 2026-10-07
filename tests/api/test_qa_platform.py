@@ -316,8 +316,9 @@ def test_requirement_trace_persistence_and_engineering_plan(client: TestClient):
     assert "SECURITY" in test_plan_data["required_layers"]
 
 
-@pytest.mark.anyio
-async def test_production_observation_creates_incident_and_supports_resolution(client: TestClient):
+test_marker_removed__DO_NOT_USE
+# kept synchronous because TestClient calls are synchronous
+def test_production_observation_creates_incident_and_supports_resolution(client: TestClient):
     response = await client.post(
         "/qa/production/observations",
         json={
@@ -338,7 +339,7 @@ async def test_production_observation_creates_incident_and_supports_resolution(c
     assert data["incident_created"] is True
     assert data["incident_id"]
 
-    incidents = await client.get("/qa/production/incidents?status=OPEN")
+    incidents = client.get("/qa/production/incidents?status=OPEN")
     assert incidents.status_code == 200
     incident_list = incidents.json()
     assert incident_list["total"] >= 1
