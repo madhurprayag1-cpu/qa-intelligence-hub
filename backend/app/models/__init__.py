@@ -23,6 +23,11 @@ from app.models.telecom import (
     TelecomSubscriberModel,
     TelecomCDRModel,
 )
+from app.models.lifecycle import (
+    RequirementTraceModel,
+    ProductionObservationModel,
+    ProductionIncidentModel,
+)
 
 __all__ = [
     "Airline",
@@ -42,4 +47,7 @@ __all__ = [
     "EcomReturnModel",
     "TelecomSubscriberModel",
     "TelecomCDRModel",
+    "RequirementTraceModel",
+    "ProductionObservationModel",
+    "ProductionIncidentModel",
 ]
