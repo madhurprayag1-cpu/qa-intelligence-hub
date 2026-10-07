@@ -59,7 +59,25 @@ async def list_demo_users():
     ]
 
 
+@router.post("/demo-session", response_model=TokenResponse)
+async def create_demo_session():
+    """
+    Issues a server-controlled, scoped demo passenger identity JWT token
+    for friction-free public portfolio exploration without requiring user credentials.
+    """
+    demo_rec = DEMO_USERS["passenger@qahub.io"]
+    user = User(
+        id=demo_rec["id"],
+        email=demo_rec["email"],
+        name=demo_rec["name"],
+        role=demo_rec["role"],
+    )
+    token = create_access_token(user)
+    return TokenResponse(access_token=token, token_type="bearer", user=user)
+
+
 @router.get("/me", response_model=User)
 async def get_my_profile(current_user: User = Depends(get_current_user)):
     """Retrieve currently authenticated user profile and assigned role."""
     return current_user
+

@@ -157,10 +157,8 @@ test.describe("Telecom 5G/BSS Workflow E2E Suite", () => {
     await tcPage.selectSubStatus.selectOption("SUSPENDED");
     await tcPage.submitTransitionBtn.click();
 
-    const successVisible = await tcPage.successBanner.isVisible().catch(() => false);
-    const errorVisible = await tcPage.errorBanner.isVisible().catch(() => false);
     // Either transition succeeded or a handled error surfaced
-    expect(successVisible || errorVisible).toBeTruthy();
+    await expect(tcPage.successBanner.or(tcPage.errorBanner)).toBeVisible({ timeout: 10000 });
   });
 
   // -------------------------------------------------------------------

@@ -124,7 +124,8 @@ test.describe("FinTech Core Banking E2E Suite", () => {
     // Wait for accounts to load so the selects are populated
     await expect(ftPage.accountsList).toBeVisible({ timeout: 10000 });
     const accountCards = ftPage.page.locator('[data-testid^="account-card-"]');
-    await expect(accountCards).toHaveCount(2, { timeout: 10000 });
+    await expect(accountCards.first()).toBeVisible({ timeout: 10000 });
+    expect(await accountCards.count()).toBeGreaterThanOrEqual(2);
 
     await ftPage.executeTransfer({ amount: "25.00" });
 

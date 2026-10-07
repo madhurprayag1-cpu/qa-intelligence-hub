@@ -1,11 +1,11 @@
 {
   "title": "Release: GOAL-AUTO-001 - Complete the remaining production-readiness work for QA Intelligence Hub.",
-  "source_branch": "feature/remove-demo-auth-theme-toggle",
+  "source_branch": "feature/booking-auth-and-test-evidence-explorer",
   "target_branch": "main",
-  "commit_sha": "27848c25e9a88f17e6925b3e63c4d1032b1bc697",
+  "commit_sha": "5dc450c4944869b7a49c7294ecc0f4a300eef5ba",
   "run_id": "RUN-TEST-002",
   "goal_id": "GOAL-AUTO-001",
-  "created_at": "2026-10-07T11:54:59.367308+00:00",
+  "created_at": "2026-10-07T14:56:54.116687+00:00",
   "acceptance_criteria_satisfied": 20,
   "total_acceptance_criteria": 20,
   "checks_summary": {

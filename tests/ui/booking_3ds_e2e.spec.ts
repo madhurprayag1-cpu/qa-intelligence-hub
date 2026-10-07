@@ -15,7 +15,7 @@ function generateSyntheticPassenger(rolePrefix: string) {
   };
 }
 
-const apiBase = process.env.BASE_URL || "http://127.0.0.1:8000";
+const apiBase = process.env.API_BASE_URL || process.env.BACKEND_URL || "http://127.0.0.1:8000";
 
 async function getAdminAuthHeaders(request: any): Promise<{ Authorization: string }> {
   const resp = await request.post(`${apiBase}/auth/login`, {
