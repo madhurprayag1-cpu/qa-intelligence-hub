@@ -212,7 +212,7 @@ def get_test_layers(include_all: bool = False):
                 {"id": "ai", "name": "AI & RAG Platform", "path": "tests/ai/", "test_count": by_layer.get("AI_RAG", 67), "description": "Provider abstraction, groundedness evaluator, hallucination detection, 10D RAG dataset, and MCP tool protocols", "layer_type": "AI Reliability"},
                 {"id": "agents", "name": "Specialist Agents", "path": "tests/agents/", "test_count": by_layer.get("AGENTS", 44), "description": "Defect RCA agent benchmark accuracy and Security Testing Agent attack vector probes", "layer_type": "Agentic Evaluation"},
                 {"id": "domain", "name": "Domain Packs", "path": "domains/", "test_count": by_layer.get("DOMAIN_PACK", 83), "description": "Multi-industry domain validation: Airline NDC, Healthcare HL7/FHIR, Fintech ISO20022, Ecommerce, Telecom", "layer_type": "Domain Engineering"},
-                {"id": "ui", "name": "Playwright UI & E2E", "path": "tests/ui/", "test_count": by_layer.get("UI_E2E", 60), "description": "Playwright browser automation: bookings, payment flows, self-healing, multi-domain E2E journeys", "layer_type": "End-to-End UI"},
+                {"id": "ui", "name": "Playwright UI & E2E", "path": "tests/ui/", "test_count": by_layer.get("UI_E2E", 66), "description": "Playwright browser automation: bookings, payment flows, self-healing, multi-domain E2E journeys", "layer_type": "End-to-End UI"},
                 {"id": "performance", "name": "Performance Benchmarks", "path": "tests/performance/", "test_count": by_layer.get("PERFORMANCE", 6), "description": "Latency percentiles (p95 < 250ms), concurrent load throughput, and observability overhead", "layer_type": "Performance SLA"},
             ]
             return {

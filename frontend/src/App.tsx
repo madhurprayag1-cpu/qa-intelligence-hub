@@ -24,8 +24,6 @@ import {
   getBookingById,
   getBookingByReference,
   getPayment,
-  login,
-  logout,
   processPayment,
   queryRAG,
   runRCA,
@@ -68,11 +66,35 @@ import { EcommerceView } from "./components/EcommerceView";
 import { TelecomView } from "./components/TelecomView";
 
 export type SUTDomain = "airline" | "healthcare" | "fintech" | "ecommerce" | "telecom";
+export type Theme = "dark" | "light";
+
+function getInitialTheme(): Theme {
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("qa_hub_theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {
+      // Ignore storage errors in restricted contexts
+    }
+  }
+  return "dark";
+}
 
 export function App() {
-  const [demoEmail, setDemoEmail] = useState("passenger@qahub.io");
-  const [demoPassword, setDemoPassword] = useState("");
-  const [authenticatedUser, setAuthenticatedUser] = useState<{ name: string; email: string } | null>(null);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("qa_hub_theme", theme);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
   // Navigation & Multi-Domain
   const [activeDomain, setActiveDomain] = useState<SUTDomain>("airline");
   const [activeTab, setActiveTab] = useState<"flights" | "manage" | "qa-platform">("flights");
@@ -559,10 +581,6 @@ export function App() {
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFlight) return;
-    if (!authenticatedUser) {
-      setError("Sign in with a demo passenger account before booking.");
-      return;
-    }
     setError(null);
     setLoading(true);
     try {
@@ -588,28 +606,7 @@ export function App() {
     }
   };
 
-  const handleDemoLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      const user = await login(demoEmail, demoPassword);
-      setAuthenticatedUser(user);
-      setPassengerEmail(user.email);
-      setPassengerName(user.name);
-      setDemoPassword("");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    }
-  };
 
-  const handleDemoLogout = () => {
-    logout();
-    setAuthenticatedUser(null);
-    setCurrentBooking(null);
-    setPaymentResult(null);
-    setLookupBooking(null);
-    setLookupPayment(null);
-  };
 
   const handleProcessPayment = async () => {
     if (!currentBooking) return;
@@ -713,19 +710,27 @@ export function App() {
             </div>
           </div>
 
-          <div className="header-status" style={{ display: "flex", gap: "10px" }}>
-            {authenticatedUser ? (
-              <div className="status-pill" data-testid="auth-status">
-                <span>{authenticatedUser.email}</span>
-                <button type="button" onClick={handleDemoLogout} data-testid="logout-btn">Sign out</button>
-              </div>
-            ) : (
-              <form onSubmit={handleDemoLogin} aria-label="Demo sign in" data-testid="demo-login-form">
-                <input aria-label="Demo email" type="email" value={demoEmail} onChange={(e) => setDemoEmail(e.target.value)} />
-                <input aria-label="Demo password" type="password" value={demoPassword} onChange={(e) => setDemoPassword(e.target.value)} />
-                <button type="submit" data-testid="login-btn">Sign in</button>
-              </form>
-            )}
+          <div className="header-status" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              data-testid="theme-toggle-btn"
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <>
+                  <span className="theme-toggle-icon" aria-hidden="true">☀️</span>
+                  <span className="theme-toggle-text">Light Mode</span>
+                </>
+              ) : (
+                <>
+                  <span className="theme-toggle-icon" aria-hidden="true">🌙</span>
+                  <span className="theme-toggle-text">Dark Mode</span>
+                </>
+              )}
+            </button>
             <div className="status-pill" data-testid="health-status-pill">
               <span className={`status-dot ${health?.status === "healthy" ? "online" : "offline"}`} />
               <span>{health ? `Backend: ${health.status.toUpperCase()}` : "Connecting..."}</span>
@@ -1080,7 +1085,7 @@ export function App() {
             )}
 
             {/* STEP 2: PASSENGER DETAILS FORM */}
-            {selectedFlight && !currentBooking && authenticatedUser && (
+            {selectedFlight && !currentBooking && (
               <div className="card fade-in">
                 <div className="card-header">
                   <div>
@@ -1285,9 +1290,7 @@ export function App() {
                 </form>
               </div>
             )}
-            {selectedFlight && !currentBooking && !authenticatedUser && (
-              <div className="card" role="status">Sign in with a demo passenger account to continue booking.</div>
-            )}
+
 
             {/* STEP 3: PAYMENT & 3DS CHALLENGE SIMULATOR */}
             {currentBooking && !paymentResult && (
