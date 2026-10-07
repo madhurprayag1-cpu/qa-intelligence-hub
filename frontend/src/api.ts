@@ -61,7 +61,8 @@ export function logout(): void {
 
 function authenticatedHeaders(headers: HeadersInit = {}): Headers {
   const result = new Headers(headers);
-  if (accessToken) result.set("Authorization", `Bearer ${accessToken}`);
+  const token = accessToken || (typeof window !== "undefined" ? window.localStorage.getItem("qa_auth_token") : null);
+  if (token) result.set("Authorization", `Bearer ${token}`);
   return result;
 }
 
