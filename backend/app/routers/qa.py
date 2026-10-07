@@ -35,7 +35,7 @@ from quality_gate import (
     QualityGateInput,
     evaluate_policy_gate,
 )
-from agents import ReportingAgent, UIHealingAgent
+from agents import ReportingAgent, UIHealingAgent, RequirementAgent
 from load_generator import execute_load_test
 from app.models.quality_gate_run import QualityGateRunModel
 from app.core.evidence_explorer import (
@@ -348,6 +348,46 @@ def execute_test_runner(
         results=results,
         quality_gate=gate_summary,
     )
+
+
+class RequirementAnalysisRequest(BaseModel):
+    requirement: str = Field(..., min_length=5, description="Business requirement to analyze")
+    requirement_id: Optional[str] = None
+    domain: str = "cross-domain"
+    impacted_components: Optional[List[str]] = None
+
+
+@router.post("/requirements/analyze")
+async def analyze_requirement(req: RequirementAnalysisRequest):
+    """Produce reviewable requirement -> acceptance criteria -> test scenario traceability."""
+    agent = RequirementAgent()
+    run = await agent.execute(
+        req.requirement,
+        context={
+            "requirement_id": req.requirement_id,
+            "domain": req.domain,
+            "impacted_components": req.impacted_components,
+        },
+    )
+    if run.status != "COMPLETED" or not run.output:
+        raise HTTPException(status_code=500, detail="Requirement analysis failed")
+    try:
+        result = json.loads(run.output)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"Requirement analysis produced invalid JSON: {exc}") from exc
+    return {
+        **result,
+        "run_id": run.run_id,
+        "agent_id": run.agent_id,
+        "events": [
+            {
+                "timestamp": e.timestamp,
+                "event_type": e.event_type,
+                "description": e.description,
+            }
+            for e in run.events
+        ],
+    }
 
 
 @router.post("/reporting/release-report")
