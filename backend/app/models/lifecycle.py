@@ -56,3 +56,17 @@ class ProductionIncidentModel(Base):
     source_sha: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+
+def ensure_lifecycle_tables(engine) -> None:
+    """Idempotently provision only additive lifecycle tables when a deployment has
+    not applied the forward migration yet. This is a safety net, not a replacement
+    for Alembic; the migration remains the source of truth for revision history.
+    """
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    for model in (RequirementTraceModel, ProductionObservationModel, ProductionIncidentModel):
+        if not inspector.has_table(model.__tablename__):
+            model.__table__.create(bind=engine, checkfirst=True)
