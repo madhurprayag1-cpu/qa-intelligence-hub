@@ -245,3 +245,36 @@ def test_get_latest_evidence(client: TestClient):
         assert "test_id" in first_rec
         assert "status" in first_rec
         assert "evidence" in first_rec
+
+
+def test_requirement_analysis_traceability_endpoint(client: TestClient):
+    response = client.post(
+        "/qa/requirements/analyze",
+        json={
+            "requirement_id": "REQ-API-001",
+            "requirement": "Support secure passenger self-service cancellation",
+            "domain": "airline",
+            "impacted_components": ["API", "UI", "database", "security"],
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["requirement_id"] == "REQ-API-001"
+    assert data["traceability_status"] == "READY_FOR_IMPLEMENTATION"
+    assert len(data["acceptance_criteria"]) == 3
+    assert len(data["test_scenarios"]) == 3
+    assert {s["type"] for s in data["test_scenarios"]} == {"POSITIVE", "NEGATIVE", "BOUNDARY"}
+    assert data["run_id"].startswith("RUN-")
+
+
+def test_runtime_metrics_endpoint(client: TestClient):
+    health = client.get("/health")
+    assert health.status_code == 200
+    response = client.get("/qa/runtime/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["scope"] == "process_instance"
+    assert data["total_requests"] >= 1
+    assert data["error_requests_5xx"] >= 0
+    assert 0.0 <= data["error_rate"] <= 1.0
+    assert data["p95_latency_ms"] >= 0.0

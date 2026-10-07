@@ -293,23 +293,81 @@ class RequirementAgent(BaseAgent):
         run = self.plan(task)
         run.status = "RUNNING"
 
-        scenarios = [
-            f"Positive: Validate happy path for requirement '{task}'",
-            f"Negative: Test invalid inputs and unauthorized requests for '{task}'",
-            f"Boundary: Verify seat/date limits and timeout edge cases for '{task}'",
+        ctx = context or {}
+        requirement_id = ctx.get("requirement_id") or f"REQ-{secrets.token_hex(4).upper()}"
+        domain = ctx.get("domain", "cross-domain")
+        impacted_components = ctx.get(
+            "impacted_components",
+            ["API", "UI", "database", "security", "regression"],
+        )
+        acceptance_criteria = [
+            {
+                "id": f"{requirement_id}-AC-001",
+                "description": f"Happy-path behavior for requirement '{task}' succeeds.",
+            },
+            {
+                "id": f"{requirement_id}-AC-002",
+                "description": f"Invalid, unauthorized, and negative inputs for '{task}' are rejected safely.",
+            },
+            {
+                "id": f"{requirement_id}-AC-003",
+                "description": f"Boundary, timeout, and data-integrity cases for '{task}' are handled deterministically.",
+            },
         ]
+        scenarios = [
+            {
+                "scenario_id": f"{requirement_id}-TS-001",
+                "type": "POSITIVE",
+                "objective": f"Positive: Validate happy path for '{task}'.",
+                "required_layers": ["API", "UI", "REGRESSION"],
+            },
+            {
+                "scenario_id": f"{requirement_id}-TS-002",
+                "type": "NEGATIVE",
+                "objective": f"Negative: Validate invalid and unauthorized behavior for '{task}'.",
+                "required_layers": ["API", "SECURITY"],
+            },
+            {
+                "scenario_id": f"{requirement_id}-TS-003",
+                "type": "BOUNDARY",
+                "objective": f"Boundary: Validate boundary, timeout, concurrency, and data-integrity behavior for '{task}'.",
+                "required_layers": ["API", "DATABASE", "PERFORMANCE"],
+            },
+        ]
+        traceability = {
+            "requirement_id": requirement_id,
+            "requirement": task,
+            "domain": domain,
+            "impacted_components": impacted_components,
+            "acceptance_criteria": acceptance_criteria,
+            "test_scenarios": scenarios,
+            "traceability_status": "READY_FOR_IMPLEMENTATION",
+        }
+
+        run.events.append(
+            AgentEvent(
+                timestamp=datetime.utcnow().isoformat(),
+                event_type="REQUIREMENT_ANALYZED",
+                description=f"Analyzed {requirement_id} with {len(acceptance_criteria)} acceptance criteria.",
+                metadata={
+                    "requirement_id": requirement_id,
+                    "domain": domain,
+                    "impacted_components": impacted_components,
+                },
+            )
+        )
 
         run.events.append(
             AgentEvent(
                 timestamp=datetime.utcnow().isoformat(),
                 event_type="SCENARIOS_GENERATED",
                 description=f"Generated {len(scenarios)} test scenarios",
-                metadata={"count": len(scenarios)},
+                metadata={"count": len(scenarios), "requirement_id": requirement_id},
             )
         )
 
         run.status = "COMPLETED"
-        run.output = "\n".join(scenarios)
+        run.output = json.dumps(traceability, indent=2)
         return run
 
 

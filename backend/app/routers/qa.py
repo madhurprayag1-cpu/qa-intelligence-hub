@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.core.observability import RuntimeMetrics
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(_REPO_ROOT / "qa-engine") not in sys.path:
@@ -35,7 +36,7 @@ from quality_gate import (
     QualityGateInput,
     evaluate_policy_gate,
 )
-from agents import ReportingAgent, UIHealingAgent
+from agents import ReportingAgent, UIHealingAgent, RequirementAgent
 from load_generator import execute_load_test
 from app.models.quality_gate_run import QualityGateRunModel
 from app.core.evidence_explorer import (
@@ -350,6 +351,46 @@ def execute_test_runner(
     )
 
 
+class RequirementAnalysisRequest(BaseModel):
+    requirement: str = Field(..., min_length=5, description="Business requirement to analyze")
+    requirement_id: Optional[str] = None
+    domain: str = "cross-domain"
+    impacted_components: Optional[List[str]] = None
+
+
+@router.post("/requirements/analyze")
+async def analyze_requirement(req: RequirementAnalysisRequest):
+    """Produce reviewable requirement -> acceptance criteria -> test scenario traceability."""
+    agent = RequirementAgent()
+    run = await agent.execute(
+        req.requirement,
+        context={
+            "requirement_id": req.requirement_id,
+            "domain": req.domain,
+            "impacted_components": req.impacted_components,
+        },
+    )
+    if run.status != "COMPLETED" or not run.output:
+        raise HTTPException(status_code=500, detail="Requirement analysis failed")
+    try:
+        result = json.loads(run.output)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail=f"Requirement analysis produced invalid JSON: {exc}") from exc
+    return {
+        **result,
+        "run_id": run.run_id,
+        "agent_id": run.agent_id,
+        "events": [
+            {
+                "timestamp": e.timestamp,
+                "event_type": e.event_type,
+                "description": e.description,
+            }
+            for e in run.events
+        ],
+    }
+
+
 @router.post("/reporting/release-report")
 async def generate_release_report(req: GenerateReleaseReportRequest):
     """Invokes specialist ReportingAgent to synthesize executive release sign-off notes."""
@@ -425,6 +466,12 @@ async def run_stress_test(req: PerformanceStressTestRequest):
         concurrency=req.concurrency,
     )
     return res.to_dict()
+
+
+@router.get("/runtime/metrics")
+def get_runtime_metrics():
+    """Return explicitly process-scoped runtime telemetry for diagnostics."""
+    return RuntimeMetrics.snapshot()
 
 
 @router.get("/ai/providers/status")
@@ -799,3 +846,18 @@ def get_run_tests(
         limit=limit,
     )
 
+
+
+@router.get("/release/serving-revision")
+def get_serving_revision():
+    """Read-only deployment identity for independent production release verification."""
+    from app.core.config import settings
+    return {
+        "status": "ok",
+        "application_version": settings.app_version,
+        "environment": settings.environment,
+        "serving_sha": os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("GITHUB_SHA"),
+        "vercel_environment": os.getenv("VERCEL_ENV"),
+        "vercel_url": os.getenv("VERCEL_URL"),
+        "vercel_region": os.getenv("VERCEL_REGION"),
+    }

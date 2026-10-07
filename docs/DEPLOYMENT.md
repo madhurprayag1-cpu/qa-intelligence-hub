@@ -82,7 +82,7 @@ Deploy both the Vite React SPA frontend and the FastAPI Python serverless backen
    - `DATABASE_URL` = `<your-neon-pooled-connection-string>`
    - `AI_PROVIDER` = `gemini` (or `mock`)
    - `GEMINI_API_KEY` = `<your-gemini-key>` *(optional)*
-   - `VITE_API_BASE_URL` = `""` *(empty string enables same-origin relative API calls)*
+   - `VITE_API_BASE_URL` = optional; in production the frontend resolves to the same-origin Vercel host when this variable is absent
 4. Click **Deploy**. Vercel compiles both the frontend into `frontend/dist` and the Python serverless function at `api/index.py`.
 
 ---
@@ -96,7 +96,7 @@ Deploy both the Vite React SPA frontend and the FastAPI Python serverless backen
 | `GEMINI_API_KEY` | If provider is `gemini` | `AIzaSy...` | Google Gemini API key |
 | `ANTHROPIC_API_KEY` | If provider is `claude` | `sk-ant-...` | Anthropic Claude API key |
 | `OPENAI_API_KEY` | If provider is `openai` | `sk-...` | OpenAI API key |
-| `VITE_API_BASE_URL` | No (Frontend only) | `http://127.0.0.1:8000` | Backend API URL for client requests |
+| `VITE_API_BASE_URL` | No (Frontend only) | Local fallback only | Optional API base; production uses same-origin when absent |
 | `QA_DOMAIN` | No | `airline` (or `healthcare`, `fintech`, `ecommerce`, `telecom`) | Active domain pack (default: `airline`) |
 | `PORT` | Auto (Render/Cloud) | `8000` | HTTP listening port for Uvicorn |
 
@@ -183,3 +183,23 @@ When demonstrating or validating the platform end-to-end, follow this structured
   python qa-engine/portfolio_demo.py
   # Orchestrates all 7 QE capabilities (Domains, Factories, Defects, RAG, Agents, Selector, Quality Gate)
   ```
+
+
+## 8. Revision-Bound Release Verification
+
+Every production release must bind the Git SHA, CI run, Vercel deployment, and actual serving revision before certification.
+
+The live API exposes a read-only verification endpoint:
+
+`GET /qa/release/serving-revision`
+
+Required release evidence:
+
+- exact Git merge SHA;
+- successful main-branch CI run for that SHA;
+- Vercel production deployment for that SHA;
+- live `serving_sha` equal to the expected SHA;
+- read-only production smoke checks pass;
+- no required evidence is missing, stale, or contradictory.
+
+A deployment marked READY by Vercel without a matching live serving revision is **not** sufficient for production certification.

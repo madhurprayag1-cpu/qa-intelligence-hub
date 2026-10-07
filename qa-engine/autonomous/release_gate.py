@@ -19,9 +19,12 @@ Adheres strictly to MASTER PROMPT Sections 26, 27, 28, 29, 30, 31, 32, 33:
 """
 
 import json
+import os
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -387,52 +390,60 @@ class ReleasePromotionManager:
         self,
         merge_commit_sha: str,
         goal: GoalDefinition,
+        production_url: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Adheres to Section 29 (POST-MERGE VALIDATION) and Section 30 (DEPLOYMENT SAFETY).
+        """Verify the actual deployed revision and safe production read-only smoke checks.
 
-        Validates:
-        1. Capture merge commit SHA
-        2. Main-branch CI status
-        3. Deployment matches exact merge commit SHA (DEPLOYMENT_READY)
-        4. Production-safe smoke tests
-        5. Critical API endpoints & UI workflows
-        6. AI/RAG production behavior
-        7. Zero new production errors
+        A deployment provider reporting READY is not sufficient. The live serving
+        revision must equal the exact merge SHA and required production endpoints
+        must return successful responses.
         """
-        # Execute production smoke tests
         smoke_res = self.execute_smoke_tests()
-        smoke_ok = smoke_res.get("all_passed", False)
+        local_smoke_ok = smoke_res.get("all_passed", False)
 
-        # Simulated deployment revision check
-        deployment_revision = f"rev-{merge_commit_sha[:8]}"
-        deployment_ok = True
+        base_url = (production_url or os.getenv("PRODUCTION_BASE_URL") or "").rstrip("/")
+        remote = {
+            "configured": bool(base_url),
+            "base_url": base_url or None,
+            "serving_sha": None,
+            "deployment_environment": None,
+            "checks": {},
+            "all_passed": False,
+        }
 
-        # API & UI critical checks
-        from fastapi.testclient import TestClient
-        from app.main import app
-        client = TestClient(app)
+        if base_url:
+            for endpoint in ["/health", "/release/serving-revision", "/qa/tests", "/flights", "/search/flights?origin=ATH&destination=SKG"]:
+                url = f"{base_url}{endpoint}"
+                try:
+                    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+                    with urllib.request.urlopen(req, timeout=15) as response:
+                        raw = response.read().decode("utf-8", errors="replace")
+                        status = int(response.status)
+                    parsed = json.loads(raw) if raw else {}
+                    passed = 200 <= status < 300
+                    remote["checks"][endpoint] = {"status_code": status, "passed": passed}
+                    if endpoint == "/release/serving-revision" and isinstance(parsed, dict):
+                        remote["serving_sha"] = parsed.get("serving_sha")
+                        remote["deployment_environment"] = parsed.get("vercel_environment")
+                except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+                    remote["checks"][endpoint] = {"passed": False, "error": str(exc)}
 
-        api_checks = {}
-        for ep in ["/api/v1/flights/search", "/api/v1/bookings"]:
-            try:
-                # safe GET requests
-                res = client.get(ep)
-                api_checks[ep] = {"status_code": res.status_code, "ok": res.status_code in [200, 400, 422]}
-            except Exception as e:
-                api_checks[ep] = {"ok": False, "error": str(e)}
+            required_ok = all(item.get("passed") is True for item in remote["checks"].values())
+            remote["revision_matches"] = remote["serving_sha"] == merge_commit_sha
+            remote["all_passed"] = required_ok and remote["revision_matches"]
+        else:
+            remote["reason"] = "PRODUCTION_BASE_URL not configured; live serving revision cannot be independently verified."
 
-        rag_behavior_ok = True  # verified via 10D audit
-
-        post_merge_passed = smoke_ok and deployment_ok and rag_behavior_ok
+        deployment_ok = remote["all_passed"]
+        post_merge_passed = local_smoke_ok and deployment_ok
 
         return {
             "merge_commit_sha": merge_commit_sha,
-            "deployment_revision": deployment_revision,
-            "deployment_status": "READY" if deployment_ok else "FAILED",
-            "production_smoke_pass": smoke_ok,
+            "deployment_revision": remote.get("serving_sha"),
+            "deployment_status": "VERIFIED" if deployment_ok else "UNVERIFIED",
+            "production_smoke_pass": local_smoke_ok,
             "smoke_details": smoke_res,
-            "api_checks": api_checks,
-            "rag_behavior_ok": rag_behavior_ok,
+            "remote_production_verification": remote,
             "all_passed": post_merge_passed,
         }
 

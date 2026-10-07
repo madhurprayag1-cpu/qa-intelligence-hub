@@ -151,3 +151,16 @@ def test_negative_cases_and_error_handling(client: TestClient):
     )
     assert bad_token.status_code == 401
 
+
+
+def test_serving_revision_verification_endpoint(client: TestClient):
+    response = client.get("/qa/release/serving-revision")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "application_version" in data
+    assert "environment" in data
+    assert "serving_sha" in data
+    assert "vercel_environment" in data
+    assert "vercel_url" in data
+    assert "vercel_region" in data

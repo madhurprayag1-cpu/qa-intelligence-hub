@@ -177,9 +177,46 @@ def test_state_store_atomic_persistence():
         assert loaded["current_agent"] == "DiscoveryAgent"
 
 
-def test_release_promotion_gate_and_lifecycle():
+def test_release_promotion_gate_and_lifecycle(monkeypatch):
     from autonomous.release_gate import ReleasePromotionManager
     from autonomous.contracts import ReleaseLifecycleState
+
+    class FakeResponse:
+        def __init__(self, status_code, payload):
+            self.status = status_code
+            self._payload = payload
+
+        def read(self):
+            import json
+            return json.dumps(self._payload).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    import subprocess
+    expected_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+
+    def fake_urlopen(request, timeout=15):
+        url = request.full_url
+        if url.endswith("/release/serving-revision"):
+            return FakeResponse(200, {
+                "status": "ok",
+                "serving_sha": expected_sha,
+                "vercel_environment": "production",
+            })
+        if url.endswith("/qa/tests"):
+            return FakeResponse(200, {"total": 426, "passed": 426, "failed": 0})
+        if "/search/flights" in url:
+            return FakeResponse(200, [{"flight_id": 1}])
+        if url.endswith("/flights"):
+            return FakeResponse(200, [{"id": 1}])
+        return FakeResponse(200, {"status": "healthy"})
+
+    monkeypatch.setenv("PRODUCTION_BASE_URL", "https://unit-test.example")
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
 
     mgr = ReleasePromotionManager()
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -187,13 +224,11 @@ def test_release_promotion_gate_and_lifecycle():
         goal = engine.create_goal_auto_001()
         graph = engine.build_task_graph_for_goal(goal)
 
-        # Mark all tasks passed to simulate successful execution
         for t in graph.tasks.values():
             graph.mark_passed(t.task_id)
-        for c in goal.acceptance_criteria:
-            c.satisfied = True
+        for criterion in goal.acceptance_criteria:
+            criterion.satisfied = True
 
-        # Test with human approval mandated (default)
         report_human = mgr.execute_full_release_lifecycle(
             goal=goal,
             graph=graph,
@@ -204,7 +239,7 @@ def test_release_promotion_gate_and_lifecycle():
         assert report_human.lifecycle_state == ReleaseLifecycleState.PR_READY.value
         assert len(report_human.state_transitions) >= 3
 
-        # Test with autonomous merge permitted
+        monkeypatch.setenv("PRODUCTION_BASE_URL", "https://unit-test.example")
         report_auto = mgr.execute_full_release_lifecycle(
             goal=goal,
             graph=graph,
