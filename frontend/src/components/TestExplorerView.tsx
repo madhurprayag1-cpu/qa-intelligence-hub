@@ -146,9 +146,9 @@ export function TestExplorerView({ initialStatusFilter = "ALL", onSelectRun }: T
           aria-label="Filter all automated tests"
           style={{ cursor: "pointer" }}
         >
-          <span className="stat-label">Total Test Inventory</span>
-          <span className="stat-value">{testData?.total ?? 492}</span>
-          <span className="stat-detail">427 Pytest + 65 Playwright E2E</span>
+          <span className="stat-label">Verified Test Executions</span>
+          <span className="stat-value">{testData?.total ?? "—"}</span>
+          <span className="stat-detail">Latest execution evidence returned by the API</span>
         </div>
         <div
           className={`stat-card ${statusFilter === "PASSED" ? "active-stat-card" : ""}`}
@@ -161,9 +161,9 @@ export function TestExplorerView({ initialStatusFilter = "ALL", onSelectRun }: T
         >
           <span className="stat-label">Passed Tests</span>
           <span className="stat-value" style={{ color: "var(--success)" }}>
-            {testData?.passed ?? 492}
+            {testData?.passed ?? "—"}
           </span>
-          <span className="stat-detail">100% Genuine Verified Evidence</span>
+          <span className="stat-detail">Verified PASS records from latest run</span>
         </div>
         <div
           className={`stat-card ${statusFilter === "FAILED" ? "active-stat-card" : ""}`}
@@ -295,7 +295,7 @@ export function TestExplorerView({ initialStatusFilter = "ALL", onSelectRun }: T
           </div>
 
           <div style={{ marginLeft: "auto", fontSize: "13px", color: "var(--text-secondary)" }}>
-            Showing <strong>{currentItems.length}</strong> of <strong>{testData?.total ?? 0}</strong> tests
+            Showing <strong>{currentItems.length}</strong> of <strong>{testData?.total ?? 0}</strong> verified test executions
           </div>
         </div>
       </div>
@@ -308,16 +308,28 @@ export function TestExplorerView({ initialStatusFilter = "ALL", onSelectRun }: T
         </div>
       )}
 
-      {/* Loading state */}
+      {/* Loading / empty / error states */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "40px" }} data-testid="test-explorer-loading">
           <span className="spinner" />
           <p style={{ marginTop: "12px", color: "var(--text-secondary)" }}>Loading automated test evidence records...</p>
         </div>
+      ) : error ? (
+        <div className="card" style={{ textAlign: "center", padding: "40px" }} data-testid="test-explorer-unavailable">
+          <p style={{ fontSize: "16px", color: "var(--danger)", marginBottom: "8px" }}>
+            Test evidence is temporarily unavailable.
+          </p>
+          <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
+            The evidence API request failed. The UI will not report this as zero tests.
+          </p>
+          <button type="button" className="btn btn-secondary" onClick={() => loadTests(currentPage)}>
+            Retry
+          </button>
+        </div>
       ) : currentItems.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "40px" }} data-testid="test-empty-state">
           <p style={{ fontSize: "16px", color: "var(--text-secondary)", marginBottom: "12px" }}>
-            No automated test cases matched the selected criteria.
+            No verified test executions matched the selected criteria.
           </p>
           <button
             type="button"
