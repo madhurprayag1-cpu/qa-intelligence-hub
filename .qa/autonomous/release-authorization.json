@@ -1,40 +1,22 @@
 {
-  "goal": "GOAL-AUTO-001",
-  "commit_sha": "439cd704f27acd076eeacab43de85cb7635fc1c5",
-  "branch": "feature/master-autonomous-orchestration",
-  "evaluated_at": "2026-10-07T09:37:52.210317+00:00",
+  "goal": "FINAL-PRODUCTION-SIGNOFF",
+  "application_release_sha": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
   "agent_acceptance": "ACCEPTED",
   "project_acceptance": "ACCEPTED",
   "final_acceptance": "ACCEPTED",
   "release_authorized": true,
+  "ci_run": "37661603415",
+  "ci_status": "PASSED",
+  "production_deployment_id": "dpl_DqMhBxTGVx5noJfoit8z8dZm1xfu",
+  "serving_sha": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
+  "serving_sha_match": true,
   "test_summary": {
-    "total_capabilities": 475,
-    "backend_pytest": 415,
-    "playwright_e2e": 60,
-    "pass_rate": 1.0
+    "test_explorer_total": 426,
+    "test_explorer_passed": 426,
+    "test_explorer_failed": 0,
+    "pass_rate": 1
   },
-  "security_summary": {
-    "status": "SECURE",
-    "vulnerabilities": 0,
-    "pci_dss": "100%"
-  },
-  "ai_rag_summary": {
-    "groundedness": 0.92,
-    "dimensions_audited": 10
-  },
-  "performance_summary": {
-    "p95_latency_ms": 118.0,
-    "status": "WITHIN_SLA"
-  },
-  "mutation_summary": {
-    "status": "PASS",
-    "mutations_detected": 4
-  },
-  "evidence_summary": [
-    ".qa/evidence/latest_evidence.json",
-    ".qa/autonomous/pr_release_manifest.json",
-    "tests/catalog/INDEPENDENT_ACCEPTANCE_INVENTORY.json",
-    "reports/RELEASE_PR_PROMOTION.md"
-  ],
-  "governance_status": "RELEASE_READY_FOR_APPROVAL"
+  "security_status": "PASSED",
+  "quality_gate_status": "PASSED",
+  "governance_status": "PRODUCTION_READY"
 }

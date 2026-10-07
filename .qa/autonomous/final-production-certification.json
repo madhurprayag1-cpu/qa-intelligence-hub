@@ -1,31 +1,29 @@
 {
-  "goal": "GOAL-AUTO-001",
-  "validated_feature_sha": "439cd704f27acd076eeacab43de85cb7635fc1c5",
-  "pr_number": 5,
-  "pr_url": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/pull/5",
-  "approval_status": "AWAITING_HUMAN_APPROVAL",
-  "merge_sha": null,
-  "main_sha": "5307d78084549c8f06b004afd90a4b61e632ece8",
-  "main_ci_run": null,
-  "main_ci_status": "PENDING_MERGE",
-  "deployment_id": "112699843033",
-  "deployment_url": "https://qa-intelligence-hub-git-feature-mast-2afe05-qa-intelligence-hub.vercel.app",
+  "goal": "FINAL-PRODUCTION-SIGNOFF",
+  "application_release_sha": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
+  "main_ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37661603415",
+  "main_ci_status": "PASSED",
+  "production_deployment_id": "dpl_DqMhBxTGVx5noJfoit8z8dZm1xfu",
+  "production_deployment_status": "READY",
   "production_alias": "https://qa-intelligence-hub-flax.vercel.app",
-  "deployment_status": "PREVIEW_SUCCESS_PRODUCTION_PENDING",
-  "production_smoke_status": "PASSED (Read-only live endpoints: /health, /docs, /openapi.json)",
-  "production_ai_mode": "MOCK/HERMETIC",
-  "security_status": "SECURE (0 vulnerabilities detected)",
-  "runtime_status": "NO_CRITICAL_ERRORS_OBSERVED",
-  "final_state": "RELEASE_READY_FOR_APPROVAL",
-  "timestamp": "2026-10-07T09:12:00Z",
-  "evidence_locations": [
-    "tests/catalog/INDEPENDENT_ACCEPTANCE_INVENTORY.json",
-    ".qa/autonomous/acceptance-report.json",
-    ".qa/autonomous/acceptance-report.md",
-    ".qa/autonomous/release-authorization.json",
-    ".qa/evidence/latest_evidence.json",
-    ".qa/autonomous/pr_release_manifest.json",
-    "reports/RELEASE_PR_PROMOTION.md",
-    "docs/AUTONOMOUS_EXECUTION_STATUS.md"
-  ]
+  "serving_revision_sha": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
+  "serving_revision_match": true,
+  "production_smoke": "PASSED",
+  "test_explorer": {
+    "total": 426,
+    "passed": 426,
+    "failed": 0
+  },
+  "healthcare_test_filter": {
+    "total": 21,
+    "passed": 21,
+    "failed": 0
+  },
+  "runtime_errors_observed": 0,
+  "runtime_ai_mode": "MOCK/HERMETIC",
+  "database_migrations": "FORWARD_MIGRATIONS_APPLIED_AND_CI_VALIDATED",
+  "quality_gate": "PASSED",
+  "security": "PASSED",
+  "final_state": "PRODUCTION_READY",
+  "future_enhancements": "Non-blocking future work such as external observability aggregation and provider-specific rollback orchestration is not represented as implemented."
 }

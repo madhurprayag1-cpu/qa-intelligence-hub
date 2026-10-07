@@ -276,32 +276,37 @@ CI and production verification.
 * **Implemented roadmap through Phase 11:** all core QA Intelligence Hub platform
   capabilities, five domain packs, autonomous QA orchestration, structured test
   evidence, RAG/agent evaluation, security gates, and production deployment.
-* **Final production-grade lifecycle hardening:** completed in PR #9 with
-  requirement traceability, live serving-revision verification, process-scoped
-  runtime telemetry, isolated autonomous regression execution, and synchronized
-  production deployment documentation.
-* **Certified application release SHA:** `ef3895bb162ebd57945226c3f105488386dee303`.
-* **Main CI:** GitHub Actions run #49 passed for the exact application release
-  SHA. Backend, frontend, E2E, and checkpoint jobs all passed.
+* **Final lifecycle hardening:** requirement traceability, durable PostgreSQL
+  lifecycle records, engineering/test planning APIs, production observation and
+  incident/RCA workflows, live serving-revision verification, process-scoped
+  runtime telemetry, isolated autonomous regression execution, and forward
+  Alembic migrations are implemented and CI-validated.
+* **Current production release SHA:** `a0326fcb18556d0f1ee979c1bb7ba6a5331da755`.
+* **Main CI:** GitHub Actions run #55 passed for the exact current production
+  release SHA. Backend, frontend, E2E, and checkpoint jobs all passed.
 * **Production deployment:** Vercel deployment
-  `dpl_HXJ3kTmYWs6291ShUpfi8Efj2H3U` is READY for production and was built from
-  the certified application release SHA.
+  `dpl_DqMhBxTGVx5noJfoit8z8dZm1xfu` is READY for production and was built from
+  the current production release SHA.
 * **Serving-revision verification:** live `GET /qa/release/serving-revision`
-  returned serving SHA `ef3895bb162ebd57945226c3f105488386dee303`, matching the
-  certified application release SHA.
+  returned serving SHA `a0326fcb18556d0f1ee979c1bb7ba6a5331da755`, matching the
+  current production release SHA.
 * **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer,
   `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`,
-  `/docs`, and `/openapi.json` returned successful responses.
+  `/docs`, `/openapi.json`, `/qa/runtime/metrics`, and production incident
+  listing returned successful responses.
 * **Test Explorer production evidence:** `/qa/tests` returned 426 verified
   test executions with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21
   PASS.
-* **Runtime diagnostics:** `/qa/runtime/metrics` reported zero 5xx errors in
-  the observed production instance and no Vercel runtime errors were reported
-  during final verification.
+* **Runtime diagnostics:** no Vercel runtime errors were observed in the final
+  five-minute production verification window; runtime telemetry reported 0
+  observed 5xx errors in the active process instance.
+* **Database migrations:** Vercel builds run `alembic upgrade head` before the
+  application build, while CI independently applies migrations on a clean
+  PostgreSQL instance.
 * **AI mode:** production remains explicitly MOCK/HERMETIC; no live LLM
   provider is claimed by this certification.
-* **Final project state:** **PRODUCTION_READY** for the implemented product
-  scope, with CI and production serving-revision evidence aligned.
+* **Final project state:** **PRODUCTION_READY** for the implemented production
+  scope, with CI and live serving-revision evidence aligned.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
