@@ -288,7 +288,7 @@ def test_cli_gate_integration_with_task_checkpoint(monkeypatch):
     """Verify qa-engine/cli_gate.py --task-checkpoint executes the DoD checkpoint."""
     class DirtyGitStatus:
         returncode = 0
-        stdout = " M .gitignore\n"
+        stdout = "?? .qa/local-report.txt\n"
 
     monkeypatch.setattr(
         "task_checkpoint.subprocess.run",
@@ -306,6 +306,49 @@ def test_cli_gate_integration_with_task_checkpoint(monkeypatch):
         run_gate_cli(["--task-checkpoint", "No git bypass", "--skip-git-check"])
     assert exc_info.value.code == 2
 
+
+def test_checkpoint_allows_approved_local_only_artifacts(monkeypatch):
+    class AllowedGitStatus:
+        returncode = 0
+        stdout = " M .gitignore\n?? .qa/task-checkpoint-result.txt\n"
+
+    monkeypatch.setattr(
+        "task_checkpoint.subprocess.run",
+        lambda *args, **kwargs: AllowedGitStatus(),
+    )
+    report = evaluate_task_checkpoint(
+        task_name="Approved local artifacts",
+        changed_files=["qa-engine/task_checkpoint.py"],
+        total_override=10,
+        passed_override=10,
+        failed_override=0,
+    )
+
+    assert report.git.status == "PASSED"
+    assert "approved local-only artifacts" in report.git.detail
+    assert report.final_status == "PASSED"
+
+
+def test_checkpoint_rejects_approved_artifact_plus_unapproved_change(monkeypatch):
+    class MixedGitStatus:
+        returncode = 0
+        stdout = " M .gitignore\n?? .qa/local-report.txt\n"
+
+    monkeypatch.setattr(
+        "task_checkpoint.subprocess.run",
+        lambda *args, **kwargs: MixedGitStatus(),
+    )
+    report = evaluate_task_checkpoint(
+        task_name="Mixed local artifacts",
+        changed_files=["qa-engine/task_checkpoint.py"],
+        total_override=10,
+        passed_override=10,
+        failed_override=0,
+    )
+
+    assert report.git.status == "FAILED"
+    assert "unapproved changes" in report.git.detail
+    assert report.final_status == "FAILED"
 
 def test_checkpoint_fails_when_git_status_cannot_be_evaluated(monkeypatch):
     def raise_git_unavailable(*args, **kwargs):
@@ -439,6 +482,41 @@ def test_selector_reports_dirty_worktree_without_modifying_it(tmp_path, monkeypa
     assert config_path.read_text(encoding="utf-8") == original_config
     assert result["eligibility"] == "BLOCKED"
 
+
+def test_selector_allows_only_approved_local_artifacts(tmp_path, monkeypatch):
+    revision = "a" * 40
+    evidence = {
+        key: {"status": "PASSED", "revision": revision}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(
+        tmp_path,
+        monkeypatch,
+        status_output=" M .gitignore\n?? .qa/task-checkpoint-result.txt\n",
+        evidence=evidence,
+    )
+
+    assert result["git"]["status"] == "CLEAN_WITH_ALLOWED_LOCAL_CHANGES"
+    assert result["evidence"]["git_clean_status"] == "PASSED"
+    assert result["eligible"] is True
+
+
+def test_selector_rejects_unapproved_change_even_with_allowed_artifact(tmp_path, monkeypatch):
+    revision = "a" * 40
+    evidence = {
+        key: {"status": "PASSED", "revision": revision}
+        for key in ("pytest_report_xml", "quality_gate_summary_md", "git_clean_status")
+    }
+    result, _ = _selector_fixture(
+        tmp_path,
+        monkeypatch,
+        status_output=" M .gitignore\n?? .qa/local-report.txt\n",
+        evidence=evidence,
+    )
+
+    assert result["git"]["status"] == "DIRTY"
+    assert result["evidence"]["git_clean_status"] == "FAILED"
+    assert result["eligible"] is False
 
 def test_selector_ci_evidence_uses_ci_cleanliness_without_claiming_local_tree_is_clean(tmp_path, monkeypatch):
     dirty = " M .gitignore\n?? .qa/local-report.txt\n"

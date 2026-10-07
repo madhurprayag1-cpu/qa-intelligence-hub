@@ -267,62 +267,39 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-06
+### Canonical Project State — 2026-10-07 (GOAL-AUTO-001 Reconciled)
 
 This section is the authoritative summary of roadmap position. Historical phase
 checkpoints above remain historical evidence and do not certify the current
-working tree or current production deployment.
+production deployment.
 
 * **Last completed roadmap milestone:** Phase 1B — Multi-Domain Persistence,
-  Interactive UI & Full-Pyramid E2E. Its completion is recorded in the Phase 1B
-  section above and in the historical checkpoint artifacts; current test and
-  deployment readiness have not been re-established by this state reconciliation.
+  Interactive UI & Full-Pyramid E2E.
 * **Current remaining milestone:** Release Preparation & Deployment Verification
-  (**NOT STARTED**; this work was listed as “Phase 2” in the prior checkpoint
-  summary, but that number conflicts with the already completed Phase 2 RAG
-  milestone and is not reused here).
-* **Next task:** Establish a verified release candidate and reconcile deployment
-  topology and repository history before any deployment action.
-* **Remaining work and acceptance criteria:**
-  1. Reconcile the intended deployment topology against tracked deployment
-     configuration and document the selected target; no production change in
-     this task.
-  2. Review current branch/history and establish a reproducible release
-     revision without discarding local or untracked work.
-  3. Run current required regression, UI, build, quality, and security checks;
-     retain fresh reports associated with the exact revision.
-  4. Verify migration readiness, production configuration, authorization, and
-     rollback plan before any deployment. Stop for missing credentials,
-     external approval, destructive action, or unresolved security boundary.
-  5. Deploy only when explicitly authorized and all mandatory gates pass; then
-     perform documented read-only production verification and record evidence.
-  6. Update this roadmap and owning documentation only from verified results;
-      mark this release-preparation milestone complete only after its acceptance criteria and checkpoint
-     pass.
-* **Verified evidence at this reconciliation:** Repository inspection confirms
-  the Phase 1B implementation files and historical checkpoint/report artifacts
-  exist. Those artifacts report 367 pytest and 60 Playwright passes and a
-  `PRODUCTION_STRICT` approval on 2026-10-02, but they are historical and are
-  not a fresh run against this revision. The historical Phase 5 section records
-  a Vercel deployment at commit `4136487`; repository-local inspection did not
-  verify the currently serving deployment or establish that historical commit
-  as the current release revision. Read-only GET checks on 2026-10-02 to the
-  documented Vercel alias returned the frontend HTML, a healthy `/health` JSON
-  response, and an OpenAPI 3.1.0 document (API version `0.1.0`). However,
-  `/health` reports `environment: development`; the serving revision, active
-  production topology, and production readiness remain unverified. These HTTP
-  observations are reachability evidence only, not a release/security gate.
-* **Current quality/security gate:** NOT RUN for this reconciliation; no current
-  release approval is asserted. Historical verification artifacts remain
-  historical and are not current checkpoint state.
-* **Deployment state:** Historical Vercel deployment documented. The current
-  documented alias is reachable and its health endpoint reports healthy, but
-  labels its environment `development`. Active production topology, deployed
-  revision, migration state, and production readiness are **UNVERIFIED**. No
-  deployment was performed for this state update.
-* **Blockers:** No fresh full release validation or live production verification
-  is recorded for the current checkout. The working tree has pre-existing
-  untracked local files, so a clean-tree checkpoint cannot currently pass.
+  (**VALIDATION**).
+* **Verified release candidate revision:** `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`.
+  This is the exact merged `main` revision validated by GitHub Actions run #32.
+* **Current validation evidence:** GitHub Actions run #32 completed successfully
+  for the exact revision above. Backend, frontend, E2E, and checkpoint jobs all
+  passed. The E2E artifact is revision-bound and records **60/60 Playwright
+  tests passed**, with 0 skipped, 0 unexpected, and 0 flaky tests.
+* **Backend release validation:** Full Pytest regression passed, automated DAST
+  passed, and the `PRODUCTION_STRICT` quality gate passed.
+* **Frontend release validation:** ESLint and production build passed.
+* **Checkpoint validation:** CI checkout was clean and the revision-bound
+  checkpoint validation passed.
+* **Next task:** Create no further tracked release-candidate changes; deploy the
+  exact verified revision `78a8ab993a9e6e117f23dff2dd652aa2c147f72f` to Vercel
+  and perform documented read-only production verification.
+* **Deployment state:** **PENDING_FINAL_SHA_DEPLOYMENT**. No production deployment
+  is being claimed by this checkpoint.
+* **Acceptance criteria remaining:** The exact final revision must be deployed,
+  its serving revision must be independently verified, and the documented
+  read-only production smoke checks must pass with no production mutations.
+* **Current quality/security gate:** **PASSED FOR REVISION
+  `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`** based on CI run #32.
+* **Blockers:** Final Vercel deployment and independent read-only production
+  verification remain pending. No other release-validation blocker is recorded.
 
 ### Completed milestones
 
