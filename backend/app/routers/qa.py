@@ -799,3 +799,18 @@ def get_run_tests(
         limit=limit,
     )
 
+
+
+@router.get("/release/serving-revision")
+def get_serving_revision():
+    """Read-only deployment identity for independent production release verification."""
+    from app.core.config import settings
+    return {
+        "status": "ok",
+        "application_version": settings.app_version,
+        "environment": settings.environment,
+        "serving_sha": os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("GITHUB_SHA"),
+        "vercel_environment": os.getenv("VERCEL_ENV"),
+        "vercel_url": os.getenv("VERCEL_URL"),
+        "vercel_region": os.getenv("VERCEL_REGION"),
+    }
