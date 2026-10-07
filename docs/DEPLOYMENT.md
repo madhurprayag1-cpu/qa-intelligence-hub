@@ -203,3 +203,8 @@ Required release evidence:
 - no required evidence is missing, stale, or contradictory.
 
 A deployment marked READY by Vercel without a matching live serving revision is **not** sufficient for production certification.
+
+
+### Automated database migration policy
+
+Vercel deployments run `alembic upgrade head` before building the application so new additive lifecycle tables are present in both preview and production. Migrations must remain forward-only and backward-safe; destructive or data-loss migrations require explicit human approval before deployment. The CI backend job already applies all migrations from an empty PostgreSQL database as a required gate.
