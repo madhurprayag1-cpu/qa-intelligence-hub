@@ -42,3 +42,23 @@ async def test_defect_rca_agent_custom_benchmark_case():
     assert report.total_cases == 1
     assert report.passed_cases == 1
     assert report.details[0]["diagnosis"] == "GATEWAY_OR_3DS_TIMEOUT"
+
+
+from agents import RequirementAgent
+
+
+@pytest.mark.anyio
+async def test_requirement_agent_produces_traceable_acceptance_criteria_and_scenarios():
+    agent = RequirementAgent()
+    run = await agent.execute(
+        "Support passenger self-service booking cancellation",
+        context={"requirement_id": "REQ-CANCEL-001", "domain": "airline"},
+    )
+    assert run.status == "COMPLETED"
+    import json
+    data = json.loads(run.output)
+    assert data["requirement_id"] == "REQ-CANCEL-001"
+    assert data["traceability_status"] == "READY_FOR_IMPLEMENTATION"
+    assert len(data["acceptance_criteria"]) == 3
+    assert len(data["test_scenarios"]) == 3
+    assert {s["type"] for s in data["test_scenarios"]} == {"POSITIVE", "NEGATIVE", "BOUNDARY"}
