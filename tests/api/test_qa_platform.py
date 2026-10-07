@@ -318,7 +318,7 @@ def test_requirement_trace_persistence_and_engineering_plan(client: TestClient):
 
 # kept synchronous because TestClient calls are synchronous
 def test_production_observation_creates_incident_and_supports_resolution(client: TestClient):
-    response = await client.post(
+    response = client.post(
         "/qa/production/observations",
         json={
             "source": "production-smoke",
