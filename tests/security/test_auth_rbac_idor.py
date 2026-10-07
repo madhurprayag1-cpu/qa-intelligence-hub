@@ -207,3 +207,54 @@ def test_rbac_release_manager_can_override_quality_gate(client: TestClient):
     assert data["override_role"] == "release_manager"
     assert data["override_by"] == "release@qahub.io"
     assert "audit_timestamp" in data
+
+
+def test_auth_demo_session_issuance_and_booking_authorization(client: TestClient):
+    # 1. Obtain server-controlled demo passenger session
+    resp = client.post("/auth/demo-session")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == "passenger@qahub.io"
+    assert data["user"]["role"] == "passenger"
+
+    token = data["access_token"]
+
+    # 2. Verify identity through /auth/me
+    me_resp = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_resp.status_code == 200
+    assert me_resp.json()["email"] == "passenger@qahub.io"
+
+    # 3. Create booking with server-issued demo token
+    flights = client.get("/flights").json()
+    flight = next(f for f in flights if f.get("available_seats", 0) > 2)
+    booking_resp = client.post(
+        "/bookings",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "flight_id": flight["id"],
+            "passenger_name": "Demo Passenger Alice",
+            "passenger_email": "passenger@qahub.io",
+            "seats": 1,
+            "payment_method": "CARD",
+        },
+    )
+    assert booking_resp.status_code == 201
+    booking = booking_resp.json()
+    assert booking["passenger_email"] == "passenger@qahub.io"
+    assert booking["status"] == "CONFIRMED"
+
+    # 4. Verify unauthenticated booking request without token is rejected with 401
+    unauth_resp = client.post(
+        "/bookings",
+        json={
+            "flight_id": flight["id"],
+            "passenger_name": "Unauth User",
+            "passenger_email": "unauth@example.com",
+            "seats": 1,
+        },
+    )
+    assert unauth_resp.status_code == 401
+    assert "Missing Authorization Bearer token" in unauth_resp.json()["detail"]
+

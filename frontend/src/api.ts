@@ -35,9 +35,9 @@ import type {
 } from "./types";
 
 export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL !== undefined
+  import.meta.env.VITE_API_BASE_URL !== undefined && import.meta.env.VITE_API_BASE_URL.trim() !== ""
     ? import.meta.env.VITE_API_BASE_URL.trim().replace(/\/$/, "")
-    : (import.meta.env.PROD ? "" : "http://127.0.0.1:8000");
+    : "http://127.0.0.1:8000";
 
 let accessToken: string | null = null;
 
@@ -52,11 +52,41 @@ export async function login(email: string, password: string): Promise<DemoUser> 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.detail ?? "Login failed");
   accessToken = data.access_token;
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem("qa_auth_token", data.access_token);
+  }
   return data.user as DemoUser;
+}
+
+export async function getDemoSession(): Promise<{ access_token: string; user: DemoUser }> {
+  const response = await fetch(`${API_BASE}/auth/demo-session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail ?? "Failed to acquire demo session");
+  accessToken = data.access_token;
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem("qa_auth_token", data.access_token);
+  }
+  return data;
+}
+
+export async function ensureAuthSession(): Promise<string> {
+  const token = accessToken || (typeof window !== "undefined" ? window.localStorage.getItem("qa_auth_token") : null);
+  if (token) {
+    accessToken = token;
+    return token;
+  }
+  const session = await getDemoSession();
+  return session.access_token;
 }
 
 export function logout(): void {
   accessToken = null;
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("qa_auth_token");
+  }
 }
 
 function authenticatedHeaders(headers: HeadersInit = {}): Headers {
@@ -64,6 +94,18 @@ function authenticatedHeaders(headers: HeadersInit = {}): Headers {
   const token = accessToken || (typeof window !== "undefined" ? window.localStorage.getItem("qa_auth_token") : null);
   if (token) result.set("Authorization", `Bearer ${token}`);
   return result;
+}
+
+export async function fetchWithAuthRetry(url: string, init: RequestInit = {}): Promise<Response> {
+  await ensureAuthSession();
+  const headers = authenticatedHeaders(init.headers || {});
+  let res = await fetch(url, { ...init, headers });
+  if (res.status === 401) {
+    await getDemoSession();
+    const retryHeaders = authenticatedHeaders(init.headers || {});
+    res = await fetch(url, { ...init, headers: retryHeaders });
+  }
+  return res;
 }
 
 export async function fetchHealth(): Promise<HealthStatus> {
@@ -120,9 +162,9 @@ export async function createBooking(payload: {
   payment_method?: string;
   ancillaries?: AncillarySelection;
 }): Promise<Booking> {
-  const res = await fetch(`${API_BASE}/bookings`, {
+  const res = await fetchWithAuthRetry(`${API_BASE}/bookings`, {
     method: "POST",
-    headers: authenticatedHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -133,7 +175,7 @@ export async function createBooking(payload: {
 }
 
 export async function getBookingById(bookingId: number): Promise<Booking> {
-  const res = await fetch(`${API_BASE}/bookings/${bookingId}`, { headers: authenticatedHeaders() });
+  const res = await fetchWithAuthRetry(`${API_BASE}/bookings/${bookingId}`);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail ?? "Booking not found");
@@ -142,9 +184,8 @@ export async function getBookingById(bookingId: number): Promise<Booking> {
 }
 
 export async function getBookingByReference(reference: string): Promise<Booking> {
-  const res = await fetch(
-    `${API_BASE}/bookings/reference/${encodeURIComponent(reference)}`,
-    { headers: authenticatedHeaders() }
+  const res = await fetchWithAuthRetry(
+    `${API_BASE}/bookings/reference/${encodeURIComponent(reference)}`
   );
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -162,9 +203,8 @@ export async function cancelBooking(bookingId: number): Promise<{
   refund_status: string;
   refund_amount: number;
 }> {
-  const res = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, {
+  const res = await fetchWithAuthRetry(`${API_BASE}/bookings/${bookingId}/cancel`, {
     method: "POST",
-    headers: authenticatedHeaders(),
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -178,9 +218,9 @@ export async function processPayment(payload: {
   method: PaymentMethod;
   three_ds_result?: ThreeDSStatus;
 }): Promise<PaymentResponse> {
-  const res = await fetch(`${API_BASE}/payments`, {
+  const res = await fetchWithAuthRetry(`${API_BASE}/payments`, {
     method: "POST",
-    headers: authenticatedHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -191,7 +231,7 @@ export async function processPayment(payload: {
 }
 
 export async function getPayment(bookingId: number): Promise<PaymentResponse> {
-  const res = await fetch(`${API_BASE}/payments/${bookingId}`, { headers: authenticatedHeaders() });
+  const res = await fetchWithAuthRetry(`${API_BASE}/payments/${bookingId}`);
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail ?? "Payment record not found");
@@ -1203,3 +1243,225 @@ export async function fetchTelecomDefects(): Promise<DefectSummary[]> {
   if (!res.ok) throw new Error("Failed to load telecom defects");
   return res.json();
 }
+
+// ============================================================================
+// OBJECTIVES 2 & 3: QA CAPABILITY, TEST EVIDENCE & RUN EXPLORER APIS
+// ============================================================================
+
+export interface QACapability {
+  capability_id: string;
+  name: string;
+  domain: string;
+  layer: string;
+  feature?: string;
+  priority: string;
+  status: string;
+  source_test?: string;
+  description?: string;
+  latest_run?: string;
+  latest_execution_timestamp?: string;
+  duration_ms?: number;
+  evidence_available?: boolean;
+}
+
+export interface QAAssertionEvidence {
+  name: string;
+  expected: string;
+  actual: string;
+  status: "PASS" | "FAIL";
+}
+
+export interface QATestEvidence {
+  test_name: string;
+  capability_id: string;
+  test_id: string;
+  domain: string;
+  layer: string;
+  feature?: string;
+  priority?: string;
+  source_file: string;
+  source_test_function: string;
+  run_id: string;
+  execution_id: string;
+  start_time: string;
+  end_time: string;
+  duration_ms: number;
+  duration_formatted: string;
+  status: string;
+  assertions: QAAssertionEvidence[];
+  http_method: string;
+  endpoint: string;
+  request_summary: string;
+  response_status: number;
+  response_validation: string;
+  expected_result: string;
+  actual_result: string;
+  defect_association: string;
+  environment: string;
+  commit_sha: string;
+  evidence_artifact_ref: string;
+  ui_evidence?: {
+    browser?: string;
+    viewport?: string;
+    page?: string;
+    action_sequence?: string[];
+    assertion_sequence?: string[];
+    screenshot_ref?: string;
+  };
+  security_evidence?: {
+    probe?: string;
+    expected_behavior?: string;
+    actual_result?: string;
+    vulnerability_status?: string;
+  };
+  database_evidence?: {
+    target?: string;
+    invariant?: string;
+    expected?: string;
+    actual?: string;
+    result?: string;
+  };
+}
+
+export interface QATestItem {
+  capability_id: string;
+  test_id: string;
+  test_name: string;
+  domain: string;
+  layer: string;
+  feature: string;
+  priority: string;
+  status: string;
+  source_test: string;
+  duration_ms: number;
+  duration_formatted: string;
+  run_id: string;
+  execution_timestamp: string;
+  evidence_available: boolean;
+}
+
+export interface QATestListResponse {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  blocked: number;
+  items: QATestItem[];
+}
+
+export interface QARunSummary {
+  run_id: string;
+  transaction_id: string;
+  execution_id: string;
+  commit_sha: string;
+  branch: string;
+  environment: string;
+  start_time: string;
+  end_time: string;
+  duration_seconds: number;
+  duration_formatted: string;
+  overall_status: string;
+  total_capabilities: number;
+  total_tests: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  blocked: number;
+  pass_rate: number;
+  domains_executed: string[];
+  layers_executed: string[];
+  quality_gate_result: string;
+  evidence_status: string;
+  domain_breakdown?: Record<string, { total: number; passed: number; failed: number }>;
+  layer_breakdown?: Record<string, { total: number; passed: number; failed: number }>;
+}
+
+export async function fetchQACapabilities(params?: {
+  domain?: string;
+  layer?: string;
+  status?: string;
+  search?: string;
+  limit?: number;
+  page?: number;
+}): Promise<{ total: number; items: QACapability[] }> {
+  const query = new URLSearchParams();
+  if (params?.domain) query.set("domain", params.domain);
+  if (params?.layer) query.set("layer", params.layer);
+  if (params?.status) query.set("status", params.status);
+  if (params?.search) query.set("search", params.search);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  if (params?.page !== undefined) query.set("page", String(params.page));
+  const res = await fetch(`${API_BASE}/qa/capabilities?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch QA capabilities");
+  return res.json();
+}
+
+export async function fetchQACapabilityDetails(
+  capabilityId: string
+): Promise<QACapability & { execution_history?: Array<{ run_id: string; status: string; timestamp: string }> }> {
+  const res = await fetch(`${API_BASE}/qa/capabilities/${encodeURIComponent(capabilityId)}`);
+  if (!res.ok) throw new Error(`Capability not found: ${capabilityId}`);
+  return res.json();
+}
+
+export async function fetchQATests(params?: {
+  domain?: string;
+  layer?: string;
+  status?: string;
+  search?: string;
+  limit?: number;
+  page?: number;
+}): Promise<QATestListResponse> {
+  const query = new URLSearchParams();
+  if (params?.domain) query.set("domain", params.domain);
+  if (params?.layer) query.set("layer", params.layer);
+  if (params?.status) query.set("status", params.status);
+  if (params?.search) query.set("search", params.search);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  if (params?.page !== undefined) query.set("page", String(params.page));
+  const res = await fetch(`${API_BASE}/qa/tests?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch QA tests");
+  return res.json();
+}
+
+export async function fetchQATestDetails(testId: string): Promise<QATestEvidence> {
+  const res = await fetch(`${API_BASE}/qa/tests/${encodeURIComponent(testId)}`);
+  if (!res.ok) throw new Error(`Test evidence not found: ${testId}`);
+  return res.json();
+}
+
+export async function fetchQARuns(page: number = 1, limit: number = 20): Promise<{ total: number; runs: QARunSummary[] }> {
+  const res = await fetch(`${API_BASE}/qa/runs?page=${page}&limit=${limit}`);
+  if (!res.ok) throw new Error("Failed to fetch QA runs");
+  return res.json();
+}
+
+export async function fetchQARunDetails(runId: string): Promise<QARunSummary> {
+  const res = await fetch(`${API_BASE}/qa/runs/${encodeURIComponent(runId)}`);
+  if (!res.ok) throw new Error(`Run not found: ${runId}`);
+  return res.json();
+}
+
+export async function fetchQARunTests(
+  runId: string,
+  params?: {
+    domain?: string;
+    layer?: string;
+    status?: string;
+    search?: string;
+    limit?: number;
+    page?: number;
+  }
+): Promise<QATestListResponse> {
+  const query = new URLSearchParams();
+  if (params?.domain) query.set("domain", params.domain);
+  if (params?.layer) query.set("layer", params.layer);
+  if (params?.status) query.set("status", params.status);
+  if (params?.search) query.set("search", params.search);
+  if (params?.limit !== undefined) query.set("limit", String(params.limit));
+  if (params?.page !== undefined) query.set("page", String(params.page));
+  const res = await fetch(`${API_BASE}/qa/runs/${encodeURIComponent(runId)}/tests?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch run tests");
+  return res.json();
+}
+

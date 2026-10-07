@@ -38,6 +38,13 @@ from quality_gate import (
 from agents import ReportingAgent, UIHealingAgent
 from load_generator import execute_load_test
 from app.models.quality_gate_run import QualityGateRunModel
+from app.core.evidence_explorer import (
+    get_all_runs,
+    get_capability_by_id,
+    get_detailed_test_evidence,
+    get_paginated_tests,
+    get_run_detail,
+)
 
 router = APIRouter(prefix="/qa", tags=["qa-engine"])
 
@@ -677,3 +684,118 @@ def trigger_orchestrator_loop(req: OrchestratorRunRequest):
             for p in report.phases
         ],
     }
+
+
+# ---------------------------------------------------------------------------
+# Test Evidence Explorer & Run History Endpoints (Objectives 2 & 3)
+# ---------------------------------------------------------------------------
+
+@router.get("/capabilities")
+def list_capabilities(
+    domain: Optional[str] = None,
+    layer: Optional[str] = None,
+    priority: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+):
+    """Alias for /qa/catalog to provide canonical capability resource."""
+    return get_capability_catalog(domain=domain, layer=layer, priority=priority, search=search, page=page, limit=limit)
+
+
+@router.get("/capabilities/{capability_id}")
+def get_capability_details(capability_id: str):
+    """Returns single capability details and its execution status."""
+    cap = get_capability_by_id(capability_id)
+    if not cap:
+        raise HTTPException(status_code=404, detail=f"Capability '{capability_id}' not found")
+    evidence = get_detailed_test_evidence(capability_id)
+    return {
+        **cap,
+        "capability_id": cap.get("id", capability_id),
+        "name": cap.get("feature", capability_id),
+        "status": cap.get("current_status", "VERIFIED"),
+        "capability": cap,
+        "latest_execution": evidence,
+    }
+
+
+@router.get("/tests")
+def list_tests(
+    run_id: Optional[str] = None,
+    domain: Optional[str] = None,
+    layer: Optional[str] = None,
+    status: Optional[str] = "ALL",
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+):
+    """Returns paginated automated tests from execution evidence with filter support."""
+    return get_paginated_tests(
+        run_id=run_id,
+        domain=domain,
+        layer=layer,
+        status=status,
+        search=search,
+        page=page,
+        limit=limit,
+    )
+
+
+@router.get("/tests/{test_id:path}")
+def get_test_details(test_id: str, run_id: Optional[str] = None):
+    """Returns granular test evidence including Expected vs Actual assertions."""
+    details = get_detailed_test_evidence(test_id, run_id=run_id)
+    if not details:
+        raise HTTPException(status_code=404, detail=f"Evidence for test '{test_id}' not found")
+    return details
+
+
+@router.get("/runs")
+def list_runs(page: int = 1, limit: int = 20):
+    """Returns all discovered execution runs with metadata and pass rates."""
+    all_runs = get_all_runs()
+    total = len(all_runs)
+    page = max(1, page)
+    limit = max(1, min(100, limit))
+    start_idx = (page - 1) * limit
+    paginated = all_runs[start_idx : start_idx + limit]
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit if total > 0 else 1,
+        "runs": paginated,
+    }
+
+
+@router.get("/runs/{run_id}")
+def get_run_details(run_id: str):
+    """Returns complete summary and domain/layer breakdown for a specific execution run."""
+    run_info = get_run_detail(run_id)
+    if not run_info:
+        raise HTTPException(status_code=404, detail=f"Execution run '{run_id}' not found")
+    return run_info
+
+
+@router.get("/runs/{run_id}/tests")
+def get_run_tests(
+    run_id: str,
+    domain: Optional[str] = None,
+    layer: Optional[str] = None,
+    status: Optional[str] = "ALL",
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+):
+    """Returns tests executed within a specific run."""
+    return get_paginated_tests(
+        run_id=run_id,
+        domain=domain,
+        layer=layer,
+        status=status,
+        search=search,
+        page=page,
+        limit=limit,
+    )
+

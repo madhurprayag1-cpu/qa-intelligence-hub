@@ -4,6 +4,7 @@ import {
   calculateRegressionImpact,
   cancelBooking,
   createBooking,
+  ensureAuthSession,
   evaluateQualityGate,
   executeTestRunner,
   fetchAIProviders,
@@ -64,6 +65,8 @@ import { HealthcareView } from "./components/HealthcareView";
 import { FinTechView } from "./components/FinTechView";
 import { EcommerceView } from "./components/EcommerceView";
 import { TelecomView } from "./components/TelecomView";
+import { TestExplorerView } from "./components/TestExplorerView";
+import { RunExplorerView } from "./components/RunExplorerView";
 
 export type SUTDomain = "airline" | "healthcare" | "fintech" | "ecommerce" | "telecom";
 export type Theme = "dark" | "light";
@@ -130,7 +133,10 @@ export function App() {
   const [lookupPayment, setLookupPayment] = useState<PaymentResponse | null>(null);
 
   // QA Platform subtab & capabilities
-  const [qaSubTab, setQaSubTab] = useState<"overview" | "defects" | "ai" | "gate" | "runner" | "self-heal" | "catalog">("overview");
+  const [qaSubTab, setQaSubTab] = useState<
+    "overview" | "tests" | "runs" | "defects" | "ai" | "gate" | "runner" | "self-heal" | "catalog"
+  >("overview");
+  const [selectedExplorerRunId, setSelectedExplorerRunId] = useState<string | undefined>(undefined);
   const [defectsList, setDefectsList] = useState<DefectSummary[]>([]);
   const [aiInfo, setAiInfo] = useState<AIProviderInfo | null>(null);
 
@@ -222,6 +228,9 @@ export function App() {
 
   // Initial load
   useEffect(() => {
+    // Acquire safe server-side controlled demo identity for friction-free demo flow
+    ensureAuthSession().catch(() => {});
+
     fetchHealth()
       .then(setHealth)
       .catch(() => setHealth(null));
@@ -1818,15 +1827,35 @@ export function App() {
           <div className="fade-in">
             {/* Top Stat Banner */}
             <div className="qa-grid">
-              <div className="stat-card">
-                <span className="stat-label">Automated Test Cases</span>
-                <span className="stat-value">{catalogSummary?.total_capabilities || 475}</span>
-                <span className="stat-detail">11 Layers: Unit, API, Contract, DB, Regression, Sec, AI, Perf, Domain, UI, Agents</span>
+              <div
+                className={`stat-card clickable-stat-card ${qaSubTab === "tests" ? "active-stat-card" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setQaSubTab("tests")}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setQaSubTab("tests"); }}
+                aria-label="View Automated Test Execution Explorer"
+                data-testid="stat-card-automated-tests"
+                style={{ cursor: "pointer" }}
+                title="Click to open Automated Test Execution Explorer"
+              >
+                <span className="stat-label">Automated Test Cases ➔</span>
+                <span className="stat-value">{catalogSummary?.total_capabilities || 492}</span>
+                <span className="stat-detail">427 Pytest + 65 Playwright (11 Layers)</span>
               </div>
-              <div className="stat-card">
-                <span className="stat-label">Automated Quality Gate</span>
+              <div
+                className={`stat-card clickable-stat-card ${qaSubTab === "runs" ? "active-stat-card" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setQaSubTab("runs")}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setQaSubTab("runs"); }}
+                aria-label="View Execution Run Explorer"
+                data-testid="stat-card-quality-gate"
+                style={{ cursor: "pointer" }}
+                title="Click to open Execution Run & Quality Gate Explorer"
+              >
+                <span className="stat-label">Automated Quality Gate ➔</span>
                 <span className="stat-value" style={{ color: "var(--success)" }}>PASSED</span>
-                <span className="stat-detail">0.0% Failure Rate (Strict Production)</span>
+                <span className="stat-detail">Strict Zero-Defect Governance (View Runs)</span>
               </div>
               <div className="stat-card">
                 <span className="stat-label">Engineered SUT Defects</span>
@@ -1846,6 +1875,22 @@ export function App() {
 
             {/* QA Sub-Navigation Tabs */}
             <div className="subnav-tabs">
+              <button
+                type="button"
+                className={`subnav-btn ${qaSubTab === "tests" ? "active" : ""}`}
+                onClick={() => setQaSubTab("tests")}
+                data-testid="qa-subtab-tests"
+              >
+                📋 Test Explorer (492)
+              </button>
+              <button
+                type="button"
+                className={`subnav-btn ${qaSubTab === "runs" ? "active" : ""}`}
+                onClick={() => setQaSubTab("runs")}
+                data-testid="qa-subtab-runs"
+              >
+                🚀 Run Explorer
+              </button>
               <button
                 type="button"
                 className={`subnav-btn ${qaSubTab === "overview" ? "active" : ""}`}
@@ -1913,6 +1958,23 @@ export function App() {
                 📚 Capability Catalog & Evidence ({catalogSummary?.total_capabilities || 475})
               </button>
             </div>
+
+            {/* SUBTAB: TEST EXECUTION EXPLORER (OBJECTIVE 2) */}
+            {qaSubTab === "tests" && (
+              <TestExplorerView
+                onSelectRun={(runId) => {
+                  setSelectedExplorerRunId(runId);
+                  setQaSubTab("runs");
+                }}
+              />
+            )}
+
+            {/* SUBTAB: RUN & CAPABILITY EXPLORER (OBJECTIVE 3) */}
+            {qaSubTab === "runs" && (
+              <RunExplorerView
+                initialRunId={selectedExplorerRunId}
+              />
+            )}
 
             {/* SUBTAB 1: ARCHITECTURE OVERVIEW */}
             {qaSubTab === "overview" && (
