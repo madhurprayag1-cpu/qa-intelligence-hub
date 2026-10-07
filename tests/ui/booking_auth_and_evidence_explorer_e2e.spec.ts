@@ -76,7 +76,17 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
     const apiRequest = page.waitForRequest((request) => request.url().includes("/qa/tests"));
     await page.locator('[data-testid="qa-subtab-tests"]').click();
     const request = await apiRequest;
-    expect(new URL(request.url()).origin).toBe(new URL(page.url()).origin);
+    const requestUrl = new URL(request.url());
+    const pageUrl = new URL(page.url());
+
+    // Local CI intentionally serves the React dev app from localhost while the
+    // FastAPI backend runs on 127.0.0.1:8000. Production/preview deployments
+    // must use same-origin Vercel rewrites.
+    if (pageUrl.hostname === "localhost" || pageUrl.hostname === "127.0.0.1") {
+      expect(requestUrl.origin).toBe("http://127.0.0.1:8000");
+    } else {
+      expect(requestUrl.origin).toBe(pageUrl.origin);
+    }
 
     // 3. Click the top "Automated Test Cases" stat card
     const statCard = page.locator('[data-testid="stat-card-automated-tests"]');
