@@ -278,3 +278,79 @@ def test_runtime_metrics_endpoint(client: TestClient):
     assert data["error_requests_5xx"] >= 0
     assert 0.0 <= data["error_rate"] <= 1.0
     assert data["p95_latency_ms"] >= 0.0
+
+
+def test_requirement_trace_persistence_and_engineering_plan(client: TestClient):
+    payload = {
+        "requirement_id": "REQ-PERSIST-001",
+        "requirement": "Provide secure self-service booking cancellation",
+        "domain": "airline",
+        "impacted_components": ["API", "UI", "database", "security"],
+    }
+    response = client.post("/qa/requirements/analyze", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["persisted"] is True
+    assert data["requirement_id"] == "REQ-PERSIST-001"
+
+    trace = client.get("/qa/requirements/REQ-PERSIST-001")
+    assert trace.status_code == 200
+    trace_data = trace.json()
+    assert trace_data["requirement_id"] == "REQ-PERSIST-001"
+    assert len(trace_data["acceptance_criteria"]) == 3
+    assert len(trace_data["test_scenarios"]) == 3
+
+    plan = client.post(
+        "/qa/requirements/REQ-PERSIST-001/engineering-plan",
+        json={"requirement_id": "REQ-PERSIST-001"},
+    )
+    assert plan.status_code == 200
+    plan_data = plan.json()
+    assert plan_data["status"] == "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION"
+    assert any(step["name"] == "PRODUCTION_STRICT_GATE" for step in plan_data["phases"])
+
+    test_plan = client.get("/qa/requirements/REQ-PERSIST-001/test-plan")
+    assert test_plan.status_code == 200
+    test_plan_data = test_plan.json()
+    assert test_plan_data["total_scenarios"] == 3
+    assert "SECURITY" in test_plan_data["required_layers"]
+
+
+# kept synchronous because TestClient calls are synchronous
+def test_production_observation_creates_incident_and_supports_resolution(client: TestClient):
+    response = client.post(
+        "/qa/production/observations",
+        json={
+            "source": "production-smoke",
+            "signal": "api_failure",
+            "status": "CRITICAL",
+            "summary": "Payment API returned 504 during checkout",
+            "details": {
+                "status_code": 504,
+                "endpoint": "/payments",
+                "error_message": "3DS timeout while waiting for provider",
+            },
+            "serving_sha": "TEST-SHA",
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["incident_created"] is True
+    assert data["incident_id"]
+
+    incidents = client.get("/qa/production/incidents?status=OPEN")
+    assert incidents.status_code == 200
+    incident_list = incidents.json()
+    assert incident_list["total"] >= 1
+    incident_id = data["incident_id"]
+
+    detail = client.get(f"/qa/production/incidents/{incident_id}")
+    assert detail.status_code == 200
+    assert detail.json()["status"] == "OPEN"
+
+    resolved = client.post(
+        f"/qa/production/incidents/{incident_id}/resolve",
+        json={"corrective_action": "Fix timeout handling and rerun focused plus full regression."},
+    )
+    assert resolved.status_code == 200
+    assert resolved.json()["status"] == "RESOLVED"

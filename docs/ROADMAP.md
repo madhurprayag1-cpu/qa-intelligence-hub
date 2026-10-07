@@ -267,39 +267,112 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-07 (GOAL-AUTO-001 Reconciled)
+### Canonical Project State — 2026-10-07 (Final Production-Grade Sign-Off)
 
-This section is the authoritative summary of roadmap position. Historical phase
-checkpoints above remain historical evidence and do not certify the current
-production deployment.
+This section is the authoritative current-state summary. Historical phase
+checkpoints remain historical evidence and do not replace current revision-bound
+CI and production verification.
 
-* **Last completed roadmap milestone:** Phase 1B — Multi-Domain Persistence,
-  Interactive UI & Full-Pyramid E2E.
-* **Current remaining milestone:** Release Preparation & Deployment Verification
-  (**VALIDATION**).
-* **Verified release candidate revision:** `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`.
-  This is the exact merged `main` revision validated by GitHub Actions run #32.
-* **Current validation evidence:** GitHub Actions run #32 completed successfully
-  for the exact revision above. Backend, frontend, E2E, and checkpoint jobs all
-  passed. The E2E artifact is revision-bound and records **60/60 Playwright
-  tests passed**, with 0 skipped, 0 unexpected, and 0 flaky tests.
-* **Backend release validation:** Full Pytest regression passed, automated DAST
-  passed, and the `PRODUCTION_STRICT` quality gate passed.
-* **Frontend release validation:** ESLint and production build passed.
-* **Checkpoint validation:** CI checkout was clean and the revision-bound
-  checkpoint validation passed.
-* **Next task:** Create no further tracked release-candidate changes; deploy the
-  exact verified revision `78a8ab993a9e6e117f23dff2dd652aa2c147f72f` to Vercel
-  and perform documented read-only production verification.
-* **Deployment state:** **PENDING_FINAL_SHA_DEPLOYMENT**. No production deployment
-  is being claimed by this checkpoint.
-* **Acceptance criteria remaining:** The exact final revision must be deployed,
-  its serving revision must be independently verified, and the documented
-  read-only production smoke checks must pass with no production mutations.
-* **Current quality/security gate:** **PASSED FOR REVISION
-  `78a8ab993a9e6e117f23dff2dd652aa2c147f72f`** based on CI run #32.
-* **Blockers:** Final Vercel deployment and independent read-only production
-  verification remain pending. No other release-validation blocker is recorded.
+* **Implemented roadmap through Phase 11:** all core QA Intelligence Hub platform
+  capabilities, five domain packs, autonomous QA orchestration, structured test
+  evidence, RAG/agent evaluation, security gates, and production deployment.
+* **Final production-grade lifecycle hardening:** completed in PR #9 with
+  requirement traceability, live serving-revision verification, process-scoped
+  runtime telemetry, isolated autonomous regression execution, and synchronized
+  production deployment documentation.
+* **Certified application release SHA:** `ef3895bb162ebd57945226c3f105488386dee303`.
+* **Main CI:** GitHub Actions run #49 passed for the exact application release
+  SHA. Backend, frontend, E2E, and checkpoint jobs all passed.
+* **Production deployment:** Vercel deployment
+  `dpl_HXJ3kTmYWs6291ShUpfi8Efj2H3U` is READY for production and was built from
+  the certified application release SHA.
+* **Serving-revision verification:** live `GET /qa/release/serving-revision`
+  returned serving SHA `ef3895bb162ebd57945226c3f105488386dee303`, matching the
+  certified application release SHA.
+* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer,
+  `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`,
+  `/docs`, and `/openapi.json` returned successful responses.
+* **Test Explorer production evidence:** `/qa/tests` returned 426 verified
+  test executions with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21
+  PASS.
+* **Runtime diagnostics:** `/qa/runtime/metrics` reported zero 5xx errors in
+  the observed production instance and no Vercel runtime errors were reported
+  during final verification.
+* **AI mode:** production remains explicitly MOCK/HERMETIC; no live LLM
+  provider is claimed by this certification.
+* **Final project state:** **PRODUCTION_READY** for the implemented product
+  scope, with CI and production serving-revision evidence aligned.
+
+## Final Production-Grade Lifecycle Scope [100% Complete]
+
+The final sign-off scope establishes the following end-to-end chain:
+
+```
+Requirement
+  ↓
+Requirement analysis + acceptance criteria
+  ↓
+Impact-aware test scenario generation
+  ↓
+Implementation / defect remediation
+  ↓
+Focused regression
+  ↓
+Full hermetic regression
+  ↓
+Security / RAG / agent gates
+  ↓
+PRODUCTION_STRICT Quality Gate
+  ↓
+GitHub CI
+  ↓
+Vercel Preview
+  ↓
+Merge to main
+  ↓
+Vercel Production
+  ↓
+Serving-revision verification
+  ↓
+Read-only production smoke
+  ↓
+Runtime diagnostics
+  ↓
+Production certification
+```
+
+### Final lifecycle acceptance criteria
+
+1. **100% CI pass:** backend, frontend, E2E, and checkpoint jobs pass for the
+   exact release SHA.
+2. **100% automated regression:** no failed or skipped mandatory tests in the
+   release candidate CI evidence.
+3. **Production routing:** frontend and API use the unified same-origin Vercel
+   topology; production does not fall back to visitor localhost.
+4. **Revision integrity:** the live serving SHA equals the certified application
+   release SHA.
+5. **Evidence integrity:** test, security, RAG, and release evidence is bound to
+   the exact validated revision.
+6. **Requirement traceability:** requirements produce explicit acceptance
+   criteria and positive/negative/boundary test scenarios.
+7. **Autonomous remediation safety:** impacted regressions execute in isolated
+   subprocesses so nested test-runner state cannot contaminate release evidence.
+8. **Production diagnostics:** runtime telemetry explicitly reports process-scope
+   metrics and does not masquerade as durable external monitoring.
+9. **Security:** zero critical OWASP findings and zero PCI DSS violations.
+10. **AI/RAG:** provider abstraction remains hermetic in production unless a
+    separate live-provider configuration is explicitly enabled.
+11. **Data safety:** production verification remains read-only.
+12. **Final governance:** missing, stale, ambiguous, or contradictory mandatory
+    evidence blocks certification.
+
+### Remaining future enhancements — not production sign-off blockers
+
+The platform's broader AI-native software-delivery roadmap may later add durable
+external observability/incident ingestion, automatic rollback orchestration,
+richer requirement-to-code persistence, and autonomous corrective-release
+feedback. These are explicitly future enhancements and are not represented as
+implemented by this sign-off.
 
 ### Completed milestones
 
