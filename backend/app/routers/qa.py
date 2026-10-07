@@ -9,7 +9,7 @@ Adheres strictly to AGENTS.md Sections 2, 5, 6, 11, 12, 24, and 35:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import sys
 import time
@@ -39,6 +39,11 @@ from quality_gate import (
 from agents import ReportingAgent, UIHealingAgent, RequirementAgent
 from load_generator import execute_load_test
 from app.models.quality_gate_run import QualityGateRunModel
+from app.models.lifecycle import (
+    RequirementTraceModel,
+    ProductionObservationModel,
+    ProductionIncidentModel,
+)
 from app.core.evidence_explorer import (
     get_all_runs,
     get_capability_by_id,
@@ -359,8 +364,11 @@ class RequirementAnalysisRequest(BaseModel):
 
 
 @router.post("/requirements/analyze")
-async def analyze_requirement(req: RequirementAnalysisRequest):
-    """Produce reviewable requirement -> acceptance criteria -> test scenario traceability."""
+async def analyze_requirement(
+    req: RequirementAnalysisRequest,
+    db: Session = Depends(get_db),
+):
+    """Produce and persist requirement -> acceptance criteria -> test scenario traceability."""
     agent = RequirementAgent()
     run = await agent.execute(
         req.requirement,
@@ -376,10 +384,32 @@ async def analyze_requirement(req: RequirementAnalysisRequest):
         result = json.loads(run.output)
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=500, detail=f"Requirement analysis produced invalid JSON: {exc}") from exc
+
+    source_sha = os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("GITHUB_SHA")
+    record = db.query(RequirementTraceModel).filter_by(requirement_id=result["requirement_id"]).first()
+    if not record:
+        record = RequirementTraceModel(
+            requirement_id=result["requirement_id"],
+            requirement=result["requirement"],
+            domain=result.get("domain", "cross-domain"),
+        )
+        db.add(record)
+    record.requirement = result["requirement"]
+    record.domain = result.get("domain", "cross-domain")
+    record.impacted_components = result.get("impacted_components", [])
+    record.acceptance_criteria = result.get("acceptance_criteria", [])
+    record.test_scenarios = result.get("test_scenarios", [])
+    record.status = result.get("traceability_status", "READY_FOR_IMPLEMENTATION")
+    record.source_sha = source_sha
+    record.updated_at = datetime.utcnow()
+    db.commit()
+
     return {
         **result,
         "run_id": run.run_id,
         "agent_id": run.agent_id,
+        "source_sha": source_sha,
+        "persisted": True,
         "events": [
             {
                 "timestamp": e.timestamp,
@@ -388,6 +418,244 @@ async def analyze_requirement(req: RequirementAnalysisRequest):
             }
             for e in run.events
         ],
+    }
+
+
+
+class EngineeringPlanRequest(BaseModel):
+    requirement_id: str
+    implementation_scope: Optional[List[str]] = None
+
+
+@router.get("/requirements/{requirement_id}")
+def get_requirement_trace(requirement_id: str, db: Session = Depends(get_db)):
+    record = db.query(RequirementTraceModel).filter_by(requirement_id=requirement_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Requirement '{requirement_id}' not found")
+    return {
+        "requirement_id": record.requirement_id,
+        "requirement": record.requirement,
+        "domain": record.domain,
+        "impacted_components": record.impacted_components or [],
+        "acceptance_criteria": record.acceptance_criteria or [],
+        "test_scenarios": record.test_scenarios or [],
+        "engineering_plan": record.engineering_plan,
+        "status": record.status,
+        "source_sha": record.source_sha,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "updated_at": record.updated_at.isoformat() if record.updated_at else None,
+    }
+
+
+@router.post("/requirements/{requirement_id}/engineering-plan")
+def create_engineering_plan(
+    requirement_id: str,
+    req: EngineeringPlanRequest,
+    db: Session = Depends(get_db),
+):
+    if req.requirement_id != requirement_id:
+        raise HTTPException(status_code=400, detail="Path and payload requirement IDs must match")
+    record = db.query(RequirementTraceModel).filter_by(requirement_id=requirement_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Requirement '{requirement_id}' not found")
+
+    components = req.implementation_scope or record.impacted_components or ["API", "UI", "database", "security", "regression"]
+    normalized = [str(item) for item in components]
+    phases = [
+        {"step": 1, "name": "REQUIREMENT_REVIEW", "status": "READY"},
+        {"step": 2, "name": "IMPACT_ANALYSIS", "status": "READY"},
+        {"step": 3, "name": "BOUNDED_IMPLEMENTATION", "status": "HUMAN_REVIEW_REQUIRED"},
+        {"step": 4, "name": "TEST_ENGINEERING", "status": "READY"},
+        {"step": 5, "name": "SECURITY_VALIDATION", "status": "MANDATORY"},
+        {"step": 6, "name": "FULL_REGRESSION", "status": "MANDATORY"},
+        {"step": 7, "name": "PRODUCTION_STRICT_GATE", "status": "MANDATORY"},
+        {"step": 8, "name": "RELEASE_AND_SERVING_REVISION_VERIFICATION", "status": "MANDATORY"},
+    ]
+    risk_flags = []
+    lower = {x.lower() for x in normalized}
+    if {"database", "migration", "schema"} & lower:
+        risk_flags.append("DESTRUCTIVE_OR_SCHEMA_CHANGE_REQUIRES_HUMAN_APPROVAL")
+    if "security" in lower:
+        risk_flags.append("SECURITY_VALIDATION_REQUIRED")
+    plan = {
+        "requirement_id": requirement_id,
+        "components": normalized,
+        "phases": phases,
+        "risk_flags": risk_flags,
+        "human_approval_boundaries": [
+            "production_credentials_or_permissions",
+            "destructive_database_changes",
+            "material_architecture_decisions",
+            "ambiguous_business_rules",
+            "unsafe_rollback_actions",
+        ],
+        "traceability_chain": {
+            "requirement_id": requirement_id,
+            "acceptance_criteria_count": len(record.acceptance_criteria or []),
+            "test_scenario_count": len(record.test_scenarios or []),
+            "implementation_sha": os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("GITHUB_SHA"),
+        },
+        "status": "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION",
+    }
+    record.engineering_plan = plan
+    record.status = "PLAN_READY_FOR_CONTROLLED_IMPLEMENTATION"
+    record.updated_at = datetime.utcnow()
+    db.commit()
+    return plan
+
+
+@router.get("/requirements/{requirement_id}/test-plan")
+def get_requirement_test_plan(requirement_id: str, db: Session = Depends(get_db)):
+    record = db.query(RequirementTraceModel).filter_by(requirement_id=requirement_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Requirement '{requirement_id}' not found")
+    scenarios = record.test_scenarios or []
+    layers = sorted({layer for scenario in scenarios for layer in scenario.get("required_layers", [])})
+    return {
+        "requirement_id": requirement_id,
+        "total_scenarios": len(scenarios),
+        "scenarios": scenarios,
+        "required_layers": layers,
+        "mandatory_gate": "PRODUCTION_STRICT",
+        "pass_rule": "100% of applicable scenarios must pass; failures block release",
+    }
+
+
+class ProductionObservationRequest(BaseModel):
+    source: str = Field(default="production")
+    signal: str = Field(..., min_length=2)
+    status: str = Field(..., min_length=2)
+    summary: str = Field(..., min_length=5)
+    details: Dict[str, Any] = Field(default_factory=dict)
+    serving_sha: Optional[str] = None
+
+
+@router.post("/production/observations")
+async def record_production_observation(
+    req: ProductionObservationRequest,
+    db: Session = Depends(get_db),
+):
+    observation_id = f"OBS-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{os.urandom(3).hex().upper()}"
+    serving_sha = req.serving_sha or os.getenv("VERCEL_GIT_COMMIT_SHA")
+    observation = ProductionObservationModel(
+        observation_id=observation_id,
+        source=req.source,
+        signal=req.signal,
+        status=req.status.upper(),
+        summary=req.summary,
+        details=req.details,
+        serving_sha=serving_sha,
+    )
+    db.add(observation)
+
+    incident = None
+    status_upper = req.status.upper()
+    if status_upper in {"ERROR", "CRITICAL"}:
+        from agents import DefectRCAAgent
+        agent = DefectRCAAgent()
+        run = await agent.execute(
+            f"Diagnose production observation: {req.summary}",
+            context={
+                "status_code": req.details.get("status_code"),
+                "error_msg": req.details.get("error_message", req.summary),
+                "endpoint": req.details.get("endpoint", req.signal),
+                "failure_code": req.details.get("failure_code"),
+            },
+        )
+        root_cause = run.output or "Production observation requires further investigation."
+        incident_id = f"INC-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{os.urandom(3).hex().upper()}"
+        incident = ProductionIncidentModel(
+            incident_id=incident_id,
+            severity="CRITICAL" if status_upper == "CRITICAL" else "HIGH",
+            status="OPEN",
+            summary=req.summary,
+            root_cause=root_cause,
+            corrective_action="Create bounded corrective change, rerun focused regression and mandatory full regression, then re-enter the release gate.",
+            evidence={
+                "observation_id": observation_id,
+                "agent_run_id": run.run_id,
+                "signal": req.signal,
+                "details": req.details,
+            },
+            source_sha=serving_sha,
+        )
+        db.add(incident)
+
+    db.commit()
+    return {
+        "observation_id": observation_id,
+        "incident_id": incident.incident_id if incident else None,
+        "incident_created": incident is not None,
+        "serving_sha": serving_sha,
+        "status": "RECORDED",
+    }
+
+
+@router.get("/production/incidents")
+def list_production_incidents(status: Optional[str] = None, limit: int = 50, db: Session = Depends(get_db)):
+    query = db.query(ProductionIncidentModel).order_by(ProductionIncidentModel.created_at.desc())
+    if status:
+        query = query.filter(ProductionIncidentModel.status == status.upper())
+    records = query.limit(max(1, min(200, limit))).all()
+    return {
+        "total": len(records),
+        "incidents": [
+            {
+                "incident_id": r.incident_id,
+                "severity": r.severity,
+                "status": r.status,
+                "summary": r.summary,
+                "root_cause": r.root_cause,
+                "corrective_action": r.corrective_action,
+                "source_sha": r.source_sha,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "resolved_at": r.resolved_at.isoformat() if r.resolved_at else None,
+            }
+            for r in records
+        ],
+    }
+
+
+@router.get("/production/incidents/{incident_id}")
+def get_production_incident(incident_id: str, db: Session = Depends(get_db)):
+    record = db.query(ProductionIncidentModel).filter_by(incident_id=incident_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Incident '{incident_id}' not found")
+    return {
+        "incident_id": record.incident_id,
+        "severity": record.severity,
+        "status": record.status,
+        "summary": record.summary,
+        "root_cause": record.root_cause,
+        "corrective_action": record.corrective_action,
+        "evidence": record.evidence,
+        "source_sha": record.source_sha,
+        "created_at": record.created_at.isoformat() if record.created_at else None,
+        "resolved_at": record.resolved_at.isoformat() if record.resolved_at else None,
+    }
+
+
+class ResolveIncidentRequest(BaseModel):
+    corrective_action: str = Field(..., min_length=5)
+
+
+@router.post("/production/incidents/{incident_id}/resolve")
+def resolve_production_incident(
+    incident_id: str,
+    req: ResolveIncidentRequest,
+    db: Session = Depends(get_db),
+):
+    record = db.query(ProductionIncidentModel).filter_by(incident_id=incident_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail=f"Incident '{incident_id}' not found")
+    record.status = "RESOLVED"
+    record.corrective_action = req.corrective_action
+    record.resolved_at = datetime.utcnow()
+    db.commit()
+    return {
+        "incident_id": record.incident_id,
+        "status": record.status,
+        "resolved_at": record.resolved_at.isoformat(),
     }
 
 
