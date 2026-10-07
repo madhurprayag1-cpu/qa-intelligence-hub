@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.observability import ObservabilityMiddleware
+from app.db.database import engine
+from app.models.lifecycle import ensure_lifecycle_tables
 from app.routers import (
     ai,
     airlines,
@@ -54,3 +56,9 @@ app.include_router(healthcare.router)
 app.include_router(fintech.router)
 app.include_router(ecommerce.router)
 app.include_router(telecom.router)
+
+@app.on_event("startup")
+async def ensure_additive_lifecycle_schema() -> None:
+    # Vercel build-time migrations can be environment-scoped; keep runtime
+    # additive tables self-healing while preserving Alembic as the source of truth.
+    ensure_lifecycle_tables(engine)
