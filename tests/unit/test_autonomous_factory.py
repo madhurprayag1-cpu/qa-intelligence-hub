@@ -196,12 +196,15 @@ def test_release_promotion_gate_and_lifecycle(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
+    import subprocess
+    expected_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+
     def fake_urlopen(request, timeout=15):
         url = request.full_url
         if url.endswith("/release/serving-revision"):
             return FakeResponse(200, {
                 "status": "ok",
-                "serving_sha": "simulated-merge-sha",
+                "serving_sha": expected_sha,
                 "vercel_environment": "production",
             })
         if url.endswith("/qa/tests"):
