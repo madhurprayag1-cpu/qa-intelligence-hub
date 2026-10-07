@@ -1,0 +1,37 @@
+{
+  "base_commit": "5307d78084549c8f06b004afd90a4b61e632ece8",
+  "release_commit": "701c6e378023f18b7cde19a29aef8d536bc7eb1a",
+  "files_changed_on_main": [
+    ".qa/task-checkpoint.json",
+    "docs/ROADMAP.md",
+    "qa-engine/task_checkpoint.py",
+    "tests/unit/test_task_checkpoint.py"
+  ],
+  "files_changed_on_feature": [
+    "docs/ROADMAP.md",
+    "tests/catalog/master_catalog.json",
+    "tests/catalog/INDEPENDENT_ACCEPTANCE_INVENTORY.json",
+    "qa-engine/autonomous/",
+    ".qa/autonomous/"
+  ],
+  "classifications": {
+    ".qa/task-checkpoint.json": "SAFE_TO_RETAIN",
+    "qa-engine/task_checkpoint.py": "SAFE_TO_RETAIN",
+    "tests/unit/test_task_checkpoint.py": "SAFE_TO_RETAIN",
+    "docs/ROADMAP.md": "CONFLICTING"
+  },
+  "conflict_details": {
+    "docs/ROADMAP.md": {
+      "nature": "Textual conflict in ## Checkpoint Status section",
+      "resolution_strategy": "Preserve latest main validation markers while retaining all GOAL-AUTO-001 autonomous orchestration roadmap sections and 475 capabilities."
+    }
+  },
+  "impact_assessment": {
+    "alters_production_behavior": false,
+    "alters_tests": true,
+    "test_impact_details": "tests/unit/test_task_checkpoint.py added on main increases unit test count from 415 to 422 hermetic pytest tests (all passing).",
+    "alters_security": false,
+    "alters_rag_llm": false,
+    "alters_orchestration": false
+  }
+}

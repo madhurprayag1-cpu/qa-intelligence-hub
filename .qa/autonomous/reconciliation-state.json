@@ -1,0 +1,25 @@
+{
+  "git": {
+    "branch": "feature/master-autonomous-orchestration",
+    "head": "701c6e378023f18b7cde19a29aef8d536bc7eb1a",
+    "status": "?? .qa/autonomous/final-production-certification.json\n?? .qa/autonomous/final-production-certification.md",
+    "merge_base": "e11653666da8436fe025cbdedc40869954682acf",
+    "commits_ahead": 5,
+    "commits_behind": 3,
+    "main_head": "5307d78084549c8f06b004afd90a4b61e632ece8"
+  },
+  "github_pr": {
+    "number": 5,
+    "state": "open",
+    "title": "release: GOAL-AUTO-001 Autonomous Factory Promotion to main",
+    "html_url": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/pull/5",
+    "head_sha": "701c6e378023f18b7cde19a29aef8d536bc7eb1a",
+    "base_sha": "5307d78084549c8f06b004afd90a4b61e632ece8",
+    "mergeable": false,
+    "mergeable_state": "dirty"
+  },
+  "main_commit_5307d78": {
+    "sha": "5307d78084549c8f06b004afd90a4b61e632ece8",
+    "message": "release: record validated release candidate state\n\nRecord the exact CI-validated release candidate revision and keep final Vercel deployment explicitly pending."
+  }
+}
