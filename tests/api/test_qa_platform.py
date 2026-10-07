@@ -265,3 +265,16 @@ def test_requirement_analysis_traceability_endpoint(client: TestClient):
     assert len(data["test_scenarios"]) == 3
     assert {s["type"] for s in data["test_scenarios"]} == {"POSITIVE", "NEGATIVE", "BOUNDARY"}
     assert data["run_id"].startswith("RUN-")
+
+
+def test_runtime_metrics_endpoint(client: TestClient):
+    health = client.get("/health")
+    assert health.status_code == 200
+    response = client.get("/qa/runtime/metrics")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["scope"] == "process_instance"
+    assert data["total_requests"] >= 1
+    assert data["error_requests_5xx"] >= 0
+    assert 0.0 <= data["error_rate"] <= 1.0
+    assert data["p95_latency_ms"] >= 0.0
