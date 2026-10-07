@@ -271,44 +271,58 @@ def validate_defect_resolution(
 def execute_in_process_regression(
     test_files: List[str],
 ) -> Tuple[bool, int, int, int, List[str]]:
-    """
-    Executes selected regression tests in-process using pytest to provide
-    ultra-fast, deterministic verification (<500ms) with full assertion coverage.
-    """
-    import pytest
+    """Run impacted regression in isolated pytest subprocesses.
 
-    class RegressionCollectorPlugin:
-        def __init__(self):
-            self.passed = 0
-            self.failed = 0
-            self.skipped = 0
-            self.errors = []
-
-        def pytest_runtest_logreport(self, report):
-            if report.when == "call":
-                if report.passed:
-                    self.passed += 1
-                elif report.failed:
-                    self.failed += 1
-                    self.errors.append(f"{report.nodeid}: {report.longreprtext[:100]}")
-            elif report.when == "setup" and report.skipped:
-                self.skipped += 1
+    Nested pytest.main() inside an active pytest process can leak plugin and
+    event-loop state between suites. Production-grade remediation requires
+    process isolation so a green regression result is deterministic and
+    independently observable.
+    """
+    import re
+    import subprocess
+    import sys
+    import tempfile
 
     valid_files = [f for f in test_files if Path(f).exists()]
     if not valid_files:
         return True, 0, 0, 0, []
 
-    collector = RegressionCollectorPlugin()
-    exit_code = pytest.main(
-        ["-q", "--tb=no", *valid_files],
-        plugins=[collector],
-    )
+    total_passed = total_failed = total_skipped = 0
+    errors: List[str] = []
 
-    passed = collector.passed
-    failed = collector.failed
-    is_success = (exit_code == 0 or exit_code == pytest.ExitCode.OK) and failed == 0
-    return is_success, passed, failed, collector.skipped, collector.errors
+    for test_file in valid_files:
+        with tempfile.NamedTemporaryFile(prefix="qahub-remediation-", suffix=".xml", delete=False) as handle:
+            junit_path = handle.name
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", "--tb=short", f"--junitxml={junit_path}", test_file],
+                cwd=str(_REPO_ROOT),
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            summary = re.search(
+                r"(?:(\d+) passed)?(?:,?\s*(\d+) failed)?(?:,?\s*(\d+) skipped)?",
+                proc.stdout.splitlines()[-1] if proc.stdout.splitlines() else "",
+            )
+            if summary:
+                total_passed += int(summary.group(1) or 0)
+                total_failed += int(summary.group(2) or 0)
+                total_skipped += int(summary.group(3) or 0)
 
+            if proc.returncode != 0:
+                errors.append(
+                    f"{test_file}: subprocess exit {proc.returncode}; "
+                    f"{(proc.stdout + proc.stderr)[-1200:]}"
+                )
+        finally:
+            try:
+                Path(junit_path).unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    is_success = total_failed == 0 and not errors
+    return is_success, total_passed, total_failed, total_skipped, errors
 
 def execute_remediation_workflow(
     defect_id: str,
