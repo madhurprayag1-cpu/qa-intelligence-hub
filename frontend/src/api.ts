@@ -34,10 +34,26 @@ import type {
   DefectSummary,
 } from "./types";
 
-export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL !== undefined && import.meta.env.VITE_API_BASE_URL.trim() !== ""
-    ? import.meta.env.VITE_API_BASE_URL.trim().replace(/\/$/, "")
-    : "http://127.0.0.1:8000";
+function resolveApiBase(): string {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  // Production/preview: use the same-origin Vercel rewrite so browser requests
+  // never fall back to a developer's localhost.
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return window.location.origin;
+    }
+
+    // Local Vite dev server keeps the historical FastAPI port as its fallback.
+    return "http://127.0.0.1:8000";
+  }
+
+  return "http://127.0.0.1:8000";
+}
+
+export const API_BASE = resolveApiBase();
 
 let accessToken: string | null = null;
 
