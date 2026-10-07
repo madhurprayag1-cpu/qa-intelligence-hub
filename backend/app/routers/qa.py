@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
+from app.core.observability import RuntimeMetrics
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if str(_REPO_ROOT / "qa-engine") not in sys.path:
@@ -465,6 +466,12 @@ async def run_stress_test(req: PerformanceStressTestRequest):
         concurrency=req.concurrency,
     )
     return res.to_dict()
+
+
+@router.get("/runtime/metrics")
+def get_runtime_metrics():
+    """Return explicitly process-scoped runtime telemetry for diagnostics."""
+    return RuntimeMetrics.snapshot()
 
 
 @router.get("/ai/providers/status")
