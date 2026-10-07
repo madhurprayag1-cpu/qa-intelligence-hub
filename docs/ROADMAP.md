@@ -243,11 +243,31 @@
 * **Definition of Done**: Multi-domain UI and persistent SUT operational, 60/60 Playwright E2E tests passing, 367 backend tests passing, and Phase 1B.5 Quality Gate approved.
 * **Checkpoint**: Phase 1B Multi-Domain Persistence, Interactive UI & Full-Pyramid E2E COMPLETE.
 
+## Phase 11 — Master Autonomous Execution & Master Capability Inventory [100% Complete]
+
+* **Objective**: Execute Master Autonomous Execution Contract transitioning the platform into a self-orchestrating, fully audited quality engineering system with master capability inventory, structured run evidence, and closed-loop orchestration.
+* **Prerequisites**: Phase 1B complete, Python 3.14+, Pytest 9.1+, React 19 Frontend.
+* **Implementation Tasks**:
+  - [x] **Task 11.1**: Master Capability Inventory (`qa-engine/catalog_manager.py`) extracting and classifying all 475 automated capabilities across 11 architecture layers and 5 domain packs into canonical JSON catalogs (`tests/catalog/master_catalog.json`).
+  - [x] **Task 11.2**: Structured Evidence Engine (`qa-engine/evidence_engine.py`) parsing JUnit XML and Playwright telemetry into normalized evidence records saved to `.qa/evidence/latest_evidence.json`.
+  - [x] **Task 11.3**: Master Agent Orchestrator (`qa-engine/orchestrator.py`) coordinating Discovery, Planning, Test Execution, Security Audit, Auto-Repair, Evidence Collection, and PRODUCTION_STRICT Quality Gate evaluation.
+  - [x] **Task 11.4**: 10-Dimensional AI/RAG Evaluation Suite (`ai-engine/rag_dataset.py`, `tests/ai/test_rag_comprehensive_audit.py`) auditing retrieval precision, context grounding, hallucination resistance, adversarial safety, and truthful refusal.
+  - [x] **Task 11.5**: Dynamic Backend Test Explorer Endpoints (`backend/app/routers/qa.py`) exposing `/qa/catalog`, `/qa/catalog/summary`, `/qa/evidence/latest`, `/qa/orchestrator/run`, and dynamic 11-layer `/qa/layers`.
+  - [x] **Task 11.6**: Frontend Test Explorer & Live Telemetry Integration (`frontend/src/App.tsx`, `frontend/src/api.ts`) eliminating hardcoded test counters and embedding the interactive Capability Catalog & Evidence Explorer.
+* **Acceptance Criteria**:
+  - 100% automated pass across all 415 Pytest backend tests and 60 Playwright E2E tests (475 total).
+  - DAST security scan passes with status SECURE (100% compliance rate).
+  - Master Agent Orchestrator closed-loop evaluates to `PRODUCTION_READY` in under 18s.
+  - Frontend TypeScript build compiles with zero errors or warnings.
+* **Required Tests**: `tests/api/test_qa_platform.py`, `tests/ai/test_rag_comprehensive_audit.py`, full Pytest suite (415 tests), Playwright suite (60 tests).
+* **Definition of Done**: All 475 capabilities cataloged with structured execution evidence, orchestrator verified, frontend integrated, and production quality gate passed.
+* **Checkpoint**: Phase 11 Master Autonomous Execution COMPLETE (Run ID: `RUN-AUTO-20261006-172244`, status: `PRODUCTION_READY`).
+
 ---
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-02
+### Canonical Project State — 2026-10-06
 
 This section is the authoritative summary of roadmap position. Historical phase
 checkpoints above remain historical evidence and do not certify the current
@@ -310,3 +330,470 @@ Phases 1, 1B, 2 (RAG), 3–10 are recorded as completed in the milestone section
 above. Their completion statements and metrics describe the evidence captured
 for those milestones, not current validation. Phase 5's deployment evidence is
 historical and is not a current deployment attestation.
+
+---
+
+# Ultimate Target — AI-Native End-to-End Software Delivery Lifecycle
+
+## Direction and status
+
+The long-term goal of QA Intelligence Hub is to evolve from an AI-powered Quality
+Engineering platform into a reusable, domain-independent, AI-assisted software
+delivery lifecycle. The target is a closed-loop engineering lifecycle—not merely
+a test-generation system—that can take a validated business requirement through
+design, development, verification, controlled release, production feedback, and
+the next corrective release cycle.
+
+**This section describes future target architecture and roadmap scope. It does
+not claim that the full lifecycle, autonomous development, automatic production
+deployment, live-revision verification, or production feedback loop is currently
+implemented.** Existing milestone records above remain historical records; the
+canonical current-state section remains authoritative for active work and
+blockers.
+
+The roadmap owns future milestones, prerequisites, acceptance criteria,
+progression, and long-term direction. Engineering behavior and architectural
+constraints remain governed by [`AGENTS.md`](../AGENTS.md); execution and
+fail-closed quality/evidence/security/release requirements by
+[`QUALITY_GATE.md`](../QUALITY_GATE.md); documentation ownership by
+[`DOCUMENTATION_GOVERNANCE.md`](../DOCUMENTATION_GOVERNANCE.md); the AI-assisted
+task workflow by [`docs/AI_WORKFLOW.md`](AI_WORKFLOW.md); deployment procedures
+by [`docs/DEPLOYMENT.md`](DEPLOYMENT.md); and executable checkpoint policy by
+[`.qa/task-checkpoint.json`](../.qa/task-checkpoint.json) and
+[`qa-engine/task_checkpoint.py`](../qa-engine/task_checkpoint.py). This roadmap
+does not override those authorities or make Markdown instructions a substitute
+for deterministic enforcement.
+
+## Target end-to-end lifecycle
+
+The following is the intended future lifecycle, not a statement of current
+implementation completeness:
+
+```text
+Business Requirement
+        ↓
+Requirement Analysis
+        ↓
+Business Rules / Acceptance Criteria
+        ↓
+Impact Analysis
+        ↓
+Architecture / Technical Design
+        ↓
+Implementation Plan
+        ↓
+Development
+        ↓
+Code Review / Static Validation
+        ↓
+Unit / Component Testing
+        ↓
+API / UI / DB / Contract Testing
+        ↓
+Integration Testing
+        ↓
+SIT
+        ↓
+AI / RAG / Agent Evaluation where applicable
+        ↓
+Security Testing
+        ↓
+Performance / Reliability Testing where applicable
+        ↓
+Impact-Aware Regression Selection + Mandatory Regression
+        ↓
+Complete Quality Gate
+        ↓
+Revision-Bound CI Evidence
+        ↓
+Release Candidate
+        ↓
+Deployment Readiness
+        ↓
+Authorized Production Deployment
+        ↓
+Live Frontend / API Verification
+        ↓
+Serving-Revision Verification
+        ↓
+Production Observability
+        ↓
+Feedback / Defect / Incident Detection
+        ↓
+RCA
+        ↓
+Corrective Change
+        ↓
+Regression
+        ↓
+Controlled Redeployment / Next Release Cycle
+```
+
+AI is intended to assist where reasoning, analysis, selection, or generation
+adds value. Deterministic software, tests, quality gates, security controls,
+deployment controls, revision-bound evidence, and authorization boundaries
+remain authoritative. AI output is not accepted merely because it appears
+plausible, and generated code is subject to the same deterministic validation as
+human-authored code.
+
+## Requirement analysis and traceability
+
+A future Requirement Analysis capability is intended to accept a business
+requirement and derive reviewable, traceable artifacts including:
+
+- Functional and non-functional requirements, business rules, and acceptance
+  criteria.
+- Affected domain, services/modules, APIs, UI, database, and integrations.
+- Security, performance, AI/RAG, testability, dependency, and operational risks
+  as applicable.
+- Required test types and test environments, plus release considerations.
+
+AI may assist with analysis and generation. The original business requirement
+remains the source reference; generated requirements and decisions must be
+reviewable, attributable, and traceable back to it. Ambiguity or material
+business decisions require the human decision prescribed by project policy.
+Future implementation, tests, evidence, and release artifacts should retain
+links to the requirement and its approved acceptance criteria.
+
+## Architecture and development engineering
+
+A future Development/Engineering Agent capability is intended to interpret
+approved requirements, inspect the existing architecture, identify reusable
+components and impacted domain packs, and produce an implementation plan before
+making a bounded change. Where authorized, its workflow may modify the smallest
+appropriate file set, preserve core/domain separation and existing contracts,
+add or update tests, run static checks and focused validation, diagnose failures,
+perform safe corrective iterations, and produce reviewable implementation
+evidence.
+
+The development workflow must follow `AGENTS.md` and repository architecture;
+it must not bypass quality gates because code was AI-generated or appears
+correct. It must not become unrestricted repository modification. Risky,
+ambiguous, destructive, security-sensitive, or authorization-bound work stops at
+the applicable human decision boundary.
+
+## Test engineering, validation progression, and remediation
+
+For each approved change, the target QA lifecycle should derive, select, or
+maintain applicable scenarios and tests for positive, negative, and boundary
+behavior; API, UI, database, contract, component, integration, SIT, regression,
+security, and performance concerns; and AI/RAG/agent behavior where applicable.
+The existing QA Intelligence Hub capabilities are to be reused and evolved,
+not replaced by a separate test-generation system.
+
+The intended validation progression is:
+
+```text
+Development validation
+→ Component validation
+→ Integration testing
+→ SIT
+→ Regression
+→ Release validation
+```
+
+For every stage, entry criteria should be machine-checkable where practical;
+exit criteria must be evidence-based; failures should trigger evidence-backed
+RCA; bounded routine defects may be eligible for controlled automated
+remediation; affected tests and mandatory regression must rerun after a fix; and
+unresolved failures block promotion. Impact-aware regression selection may
+reduce redundant execution only when risk and policy permit it. Mandatory suites
+must never be silently skipped, and missing, unavailable, stale, ambiguous, or
+contradictory required evidence fails closed.
+
+Autonomous remediation is constrained to a bounded proposal/change/validation
+loop. It cannot directly perform arbitrary repository or production operations.
+It must stop for destructive production operations, unsafe database changes,
+unresolved security issues, missing credentials, required authorization,
+ambiguous business decisions, high-risk architecture decisions, or changes
+that cannot be safely validated.
+
+## AI, RAG, and agent quality
+
+AI-enabled components are software under test. Where applicable, future release
+validation should cover provider/model compatibility; prompt and structured
+output evaluation; retrieval quality, relevance, groundedness, citation
+correctness, and hallucination-oriented cases; agent task completion, tool
+selection/arguments, workflow and authorization boundaries; safety and security;
+and regression across supported providers/models. Latency, token/cost, and
+provider reliability should be monitored where measurable and relevant.
+Plausible-looking output or a successful request alone is not evidence of AI
+quality.
+
+## CI/CD, release orchestration, and production topology
+
+The intended future normal-change path is:
+
+```text
+Approved code change
+→ commit to main / approved release branch
+→ automatic CI
+→ backend validation
+→ frontend lint/build
+→ API / UI / E2E validation
+→ database and migration checks
+→ AI / RAG / agent evaluation where applicable
+→ security and other mandatory gates
+→ complete quality gate
+→ revision-bound evidence
+→ release candidate
+→ deployment-readiness policy
+→ automatic deployment when policy and authorization permit
+→ live frontend / API verification
+→ serving-revision verification
+→ checkpoint / release completion
+```
+
+The intended production topology remains the unified Vercel project—frontend
+and FastAPI API—with Neon PostgreSQL, as documented in
+[`docs/DEPLOYMENT.md`](DEPLOYMENT.md). The target automation is an approved
+change flowing through GitHub and CI, mandatory gates, revision-bound release
+evidence, Vercel production deployment, and live production verification.
+This is future direction, not a claim that automatic deployment or end-to-end
+deployment verification is currently implemented.
+
+Every result must bind to the exact Git revision. Stale, missing, failed, or
+contradictory mandatory evidence cannot authorize release or deployment. A
+provider-reported successful deployment is insufficient by itself: the actual
+serving revision and live application must be verified before deployment or
+release completion is claimed. Automatic deployment is permitted only when the
+configured deployment policy and required authorization allow it; roadmap
+direction does not grant production authorization.
+
+## Live verification and production feedback
+
+After deployment, the target system should automatically perform safe,
+policy-approved checks for frontend availability and critical-path smoke
+behavior; API health and critical endpoints; authentication behavior; relevant
+security headers/configuration; safely observable database connectivity and
+migration/version state; expected runtime environment; and the actual serving
+revision. Critical business-flow smoke checks should use production-safe,
+non-mutating methods or an explicitly isolated test boundary. A target evidence
+chain is:
+
+```text
+Git SHA X
+→ deployment X
+→ live serving revision X
+→ frontend verification PASS
+→ API verification PASS
+→ required production checks PASS
+→ checkpoint / release completion eligible
+```
+
+If the serving revision cannot be verified, deployment completion remains
+unverified. A health response alone does not prove release readiness.
+
+The future feedback loop is:
+
+```text
+Production
+→ observability
+→ errors / failures / latency / availability / business-flow signals
+→ detection
+→ incident or defect evidence
+→ RCA and impact analysis
+→ corrective change proposal
+→ tests and CI
+→ controlled release
+```
+
+Potential monitored signals include application/API errors, latency,
+availability, failed business flows, deployment health, AI/RAG quality where
+measurable, model/provider failures, and relevant resource or cost anomalies.
+This target does not assert that full production observability or automated
+incident creation currently exists.
+
+## Controlled RCA and rollback behavior
+
+The intended remediation cycle is:
+
+```text
+Failure
+→ evidence collection
+→ RCA / root-cause hypothesis
+→ safe, reviewable change proposal
+→ focused validation
+→ mandatory regression
+→ quality gate
+→ authorized release
+```
+
+Routine, bounded defects may eventually be fixed automatically inside this
+controlled cycle. Pre-deployment failures block release. CI failures trigger
+RCA and, if a safe fix is available, retesting and regression. Deployment
+failure must remain a failure state. Post-deployment verification failure must
+halt promotion and invoke only a configured, verified safe response; resulting
+production state must itself be verified and evidence recorded. Production
+incidents follow detection, RCA, corrective change, regression, and controlled
+release.
+
+Do not assume or document a rollback capability until the selected provider's
+actual deployment mechanism and rollback behavior have been verified and the
+procedure implemented in the deployment runbook. Where automated rollback is
+unsafe or unsupported, stop for the human decision required by deployment
+policy.
+
+## Human authorization and domain independence
+
+The target is **minimum necessary human intervention**, not removal of humans.
+Routine engineering work may be automated within policy. Human authorization
+remains required for production credentials and permissions; destructive
+migrations and production actions; security exceptions; material architecture
+decisions; ambiguous business requirements; high-risk releases; rollback
+decisions where automation is unsafe; and any action that repository policy
+explicitly reserves for a human.
+
+The lifecycle is intended to work across the existing Airline, Healthcare,
+FinTech, E-Commerce, and Telecom domain packs and future domains. The shared
+orchestration layer must remain domain-independent rather than hardcoded to one
+industry. Domain-specific rules and behavior stay in the appropriate domain
+packs/plugins/capabilities; the core lifecycle operates on common concepts such
+as Requirement, Change, Test, Evidence, Gate, Release, Deployment, Observation,
+Incident, and RCA.
+
+## Future agents, skills, tools, and traceability
+
+As justified by working contracts and demonstrated value, specialist agents may
+support requirement analysis, architecture, development, test design and
+execution, RCA, security, release, deployment verification, and
+observability/RCA. Reusable skills may provide procedures for QA test design,
+RCA, security testing, RAG evaluation, and release quality. MCP integrations,
+tools, or plugins may connect GitHub, deployment providers, databases, CI/CD,
+observability, and external engineering systems. Introduce no unnecessary
+abstractions or services: integrations must follow the existing architecture,
+permission boundaries, and explicit observable/auditable contracts. Markdown
+provides governed guidance; deterministic code remains responsible for
+enforcement wherever practical.
+
+The target traceability chain is:
+
+```text
+Business Requirement
+→ Acceptance Criteria
+→ Architecture Decision
+→ Code Change / Git SHA
+→ Test Cases
+→ Test Results
+→ Quality / Security Evidence
+→ Release Candidate
+→ Deployment
+→ Serving Revision
+→ Production Verification
+→ Monitoring / Feedback
+```
+
+Every production release should be explainable from this chain without
+fabricated or inferred evidence.
+
+## Future roadmap stages — planned, not completed
+
+These stages describe a dependency-oriented future progression beyond the
+existing historical milestones and current release-preparation milestone. They
+are **not** current tasks marked complete, do not replace the canonical current
+state above, and become active milestones only through the normal roadmap and
+checkpoint process.
+
+### Future Stage A — Autonomous Release Lifecycle
+
+- CI, mandatory quality gates, revision-bound evidence, release candidate, and
+  deployment readiness.
+- Policy-authorized deployment, live frontend/API and serving-revision
+  verification, and post-deployment checkpoint evidence.
+- Verified deployment failure handling and rollback readiness based on the
+  actual provider mechanism.
+
+### Future Stage B — Autonomous Engineering Orchestration
+
+- Policy-governed roadmap task selection and task continuation.
+- Bounded implementation, focused validation, failure RCA/remediation,
+  mandatory regression, documentation synchronization, and checkpoint
+  continuation.
+
+### Future Stage C — Requirement Intelligence
+
+- Requirement ingestion and reviewable analysis.
+- Acceptance-criteria generation, impact analysis, risks/dependencies, and
+  end-to-end requirement traceability.
+
+### Future Stage D — AI-Assisted Development
+
+- Architecture and implementation planning against the existing design.
+- Bounded code generation/modification, code review, and deterministic
+  validation under existing repository policy.
+
+### Future Stage E — Autonomous Test Engineering
+
+- Scenario and test generation/maintenance across applicable test layers.
+- Risk-aware regression selection, SIT orchestration, and AI/RAG/agent
+  evaluation, without silently skipping mandatory suites.
+
+### Future Stage F — Production Intelligence
+
+- Verified production observability and feedback integration.
+- Incident/defect detection, evidence-backed RCA, impact analysis, and
+  corrective-change proposals.
+
+### Future Stage G — Closed-Loop AI Software Delivery
+
+Integrate the preceding capabilities into the full requirement-to-production
+feedback lifecycle:
+
+```text
+Requirement
+→ Development
+→ Testing
+→ SIT
+→ Regression
+→ CI/CD
+→ Release
+→ Production
+→ Monitoring
+→ RCA
+→ Corrective Development
+→ Testing
+→ Controlled Deployment
+```
+
+## Ultimate-target acceptance criteria
+
+The ultimate target must remain **not complete** until objective evidence
+demonstrates all applicable criteria below through the established milestone,
+quality-gate, and checkpoint process:
+
+1. A business requirement can enter the system and remains identifiable.
+2. Requirement analysis produces reviewable acceptance criteria traceable to
+   that source requirement.
+3. Impact analysis identifies affected components and domain capabilities.
+4. An implementation plan is generated and remains reviewable.
+5. Approved implementation can be produced or modified by the bounded
+   development workflow.
+6. Applicable automated tests are generated, maintained, or selected.
+7. Unit/component, API, UI, database, integration, SIT, and regression checks
+   execute where applicable.
+8. AI/RAG/agent-specific validation executes where applicable.
+9. Mandatory security and quality gates execute and enforce their configured
+   policy.
+10. CI produces evidence bound to the exact Git revision.
+11. A release candidate is created only after mandatory gates pass.
+12. Deployment occurs automatically only when verified deployment policy and
+    authorization permit it.
+13. The production frontend and API receive the intended release revision.
+14. The actual serving revision is independently verified.
+15. Required production health and smoke checks pass without unsafe mutation.
+16. Production observability is active and its relevant signals are verified.
+17. Failures produce retained evidence and actionable RCA.
+18. Safe corrective changes re-enter the same test, gate, and release lifecycle.
+19. Human intervention occurs at explicit authorization and safety boundaries.
+20. The lifecycle operates across all supported domains without domain-specific
+    hardcoding in shared core orchestration.
+21. Every release is traceable from requirement through production evidence.
+22. The system fails closed when required evidence is missing, stale, ambiguous,
+    or contradictory.
+
+Completion requires verified evidence for each applicable criterion, current
+revision-bound CI and release evidence, satisfied authorization and production
+safety requirements, and a passing canonical checkpoint. No future capability
+is complete merely because it is described here or generated by an agent.
+
+> The Ultimate Target describes the intended evolution of QA Intelligence Hub. It is architectural direction and future roadmap scope, not evidence of current implementation. Current completion status is determined only by the canonical current-state section, milestone acceptance criteria, verified checkpoint evidence, CI results, and production verification.

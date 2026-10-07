@@ -486,6 +486,156 @@ export async function fetchAIProvidersStatus(): Promise<{
   return res.json();
 }
 
+export interface CapabilityItem {
+  id: string;
+  domain: string;
+  feature: string;
+  layer: string;
+  priority: string;
+  test_type: string;
+  description: string;
+  preconditions: string;
+  expected_result: string;
+  automation_status: string;
+  production_safe: boolean;
+  evidence_requirement: string;
+  source_test: string;
+  current_status: string;
+}
+
+export interface CatalogResponse {
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  capabilities: CapabilityItem[];
+}
+
+export interface CatalogSummary {
+  total_capabilities: number;
+  by_domain: Record<string, number>;
+  by_layer: Record<string, number>;
+  by_priority: Record<string, number>;
+  active_domain: string;
+}
+
+export interface EvidenceRecord {
+  test_id: string;
+  domain: string;
+  feature: string;
+  layer: string;
+  status: string;
+  expected: string;
+  actual: string;
+  duration: number;
+  environment: string;
+  timestamp: string;
+  agent: string;
+  evidence: string;
+  failure_reason?: string | null;
+  defect_id?: string | null;
+  commit_sha?: string | null;
+}
+
+export interface EvidenceLatestResponse {
+  run_id: string;
+  total_tests: number;
+  passed_tests: number;
+  failed_tests: number;
+  skipped_tests: number;
+  pass_rate: number;
+  total_duration_sec: number;
+  timestamp: string;
+  environment: string;
+  commit_sha: string;
+  filtered_count: number;
+  records: EvidenceRecord[];
+}
+
+export async function fetchQACatalog(params?: {
+  domain?: string;
+  layer?: string;
+  priority?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<CatalogResponse> {
+  const query = new URLSearchParams();
+  if (params?.domain) query.set("domain", params.domain);
+  if (params?.layer) query.set("layer", params.layer);
+  if (params?.priority) query.set("priority", params.priority);
+  if (params?.search) query.set("search", params.search);
+  if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
+
+  const res = await fetch(`${API_BASE}/qa/catalog?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch capability catalog");
+  return res.json();
+}
+
+export async function fetchQACatalogSummary(): Promise<CatalogSummary> {
+  const res = await fetch(`${API_BASE}/qa/catalog/summary`);
+  if (!res.ok) throw new Error("Failed to fetch capability catalog summary");
+  return res.json();
+}
+
+export async function fetchQAEvidenceLatest(params?: {
+  limit?: number;
+  domain?: string;
+  status?: string;
+  layer?: string;
+}): Promise<EvidenceLatestResponse> {
+  const query = new URLSearchParams();
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.domain) query.set("domain", params.domain);
+  if (params?.status) query.set("status", params.status);
+  if (params?.layer) query.set("layer", params.layer);
+
+  const res = await fetch(`${API_BASE}/qa/evidence/latest?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to fetch latest QA evidence");
+  return res.json();
+}
+
+export interface OrchestratorPhase {
+  phase_name: string;
+  status: string;
+  duration_ms: number;
+  details?: Record<string, unknown>;
+}
+
+export interface OrchestratorReport {
+  run_id: string;
+  overall_status: string;
+  total_duration_sec: number;
+  total_capabilities: number;
+  executed_tests: number;
+  passed_tests: number;
+  failed_tests: number;
+  security_status: string;
+  quality_gate_status: string;
+  defects_found: number;
+  defects_fixed: number;
+  phases: OrchestratorPhase[];
+}
+
+export async function triggerOrchestratorRun(payload: {
+  policy_name?: string;
+  filter_domain?: string;
+  target_defect?: string;
+  include_ui?: boolean;
+}): Promise<OrchestratorReport> {
+  const res = await fetch(`${API_BASE}/qa/orchestrator/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail ?? "Failed to trigger orchestrator run");
+  }
+  return res.json();
+}
+
 // ============================================================================
 // Phase 1B: Healthcare Clinical REST APIs
 // ============================================================================

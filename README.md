@@ -12,7 +12,7 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Historical validation snapshot (October 2, 2026)**: Repository checkpoint artifacts record **367 backend tests + 60 Playwright tests** passing at that time. This is historical evidence, not a current validation result or release approval. See the canonical current state and remaining work in [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Current verified validation snapshot**: Repository records **475 automated tests** (415 Pytest backend + 60 Playwright E2E) passing at 100% with full closed-loop Master Agent Orchestration and structured execution evidence. See the canonical capability catalog in [`tests/catalog/master_catalog.json`](tests/catalog/master_catalog.json).
 
 > **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
@@ -32,11 +32,9 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 ├──────────────┤                 ├─────────────────┤                ├──────────────────┤
 │ - Flights    │                 │ - Test Runner   │                │ - Provider Layer │
 │ - Bookings   │                 │ - Regression    │                │ - RAG Pipeline   │
-│ - 3DS ACS    │                 │ - Quality Gate  │                │ - Eval Metrics   │
-│ - Defect Sw. │                 │ - Audit Logging │                │ - Vector Index   │
+│ - 3DS ACS    │                 │ - Quality Gate  │                │ - 10D Eval Suite │
+│ - Defect Sw. │                 │ - Evidence Hub  │                │ - Vector Index   │
 └──────┬───────┘                 └────────┬────────┘                └────────┬─────────┘
-       │                                  │                                  │
-       └──────────────────────────────────┼──────────────────────────────────┘
                                           │
                                           ▼
                              ┌─────────────────────────┐
@@ -61,11 +59,11 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
        ▼                                                                     ▼
 ┌──────────────────────────────┐                       ┌──────────────────────────────┐
 │  Single Pane React 19 UI     │                       │     GitHub Actions CI/CD     │
-│  - SUT Aviation Booking      │                       │  - 427 Automated Tests       │
+│  - SUT Aviation Booking      │                       │  - 475 Automated Tests       │
 │  - AI Evaluation & RAG Lab   │                       │  - PostgreSQL Service Cont.  │
 │  - DAST Security Auditor     │                       │  - Strict Gate Step Summary  │
 │  - Test Runner & Impact Sim  │                       │  - Playwright E2E Headless   │
-│  - Self-Healing UI & Stress  │                       │  - Frontend Lint & TS Build  │
+│  - Capability & Evidence Hub │                       │  - Frontend Lint & TS Build  │
 └──────────────────────────────┘                       └──────────────────────────────┘
 ```
 
@@ -75,13 +73,16 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 | Capability | Implementation & Technology | Location |
 |---|---|---|
+| **Master Agent Orchestrator** | Full closed-loop autonomous execution cycle (Discover -> Plan -> Execute -> Evidence -> Security -> Quality Gate) | [`qa-engine/orchestrator.py`](qa-engine/orchestrator.py) |
+| **Master Capability Inventory** | Dynamic catalog manager tracking 475 capabilities across 11 layers & 5 domains | [`qa-engine/catalog_manager.py`](qa-engine/catalog_manager.py) |
+| **Structured Evidence Engine** | Machine-readable execution telemetry records with pass rates, assertion traces, and commit SHA | [`qa-engine/evidence_engine.py`](qa-engine/evidence_engine.py) |
 | **Multi-Domain Architecture** | Pluggable Domain Packs for Airline (NDC), Healthcare (HL7 FHIR), FinTech (ISO 20022), E-Commerce (Retail), and Telecom (5G Mobile) with `QA_DOMAIN` switching | [`domains/`](domains/) |
 | **System Under Test (SUT)** | Realistic Airline NDC booking, seat inventory, 7 payment methods, 3DS challenge | [`backend/app/routers/`](backend/app/routers/) |
 | **Defect Injection Engine** | 29 documented defect switches across Airline (5), Healthcare (6), FinTech (6), E-Commerce (6), and Telecom (6) | [`backend/app/core/defects.py`](backend/app/core/defects.py) |
 | **Database Validation** | Constraints, foreign key cascades, rollback isolation, atomic inventory deduction | [`tests/database/`](tests/database/) |
 | **Regression Selector** | PR git diff impact analyzer mapping changed files to targeted test suites | [`qa-engine/regression_selector.py`](qa-engine/regression_selector.py) |
 | **AI / RAG Architecture** | Dual-plane RAG (Ingestion & Query) with provider abstraction (Gemini, Claude, OpenAI, Mock) | [`ai-engine/`](ai-engine/) |
-| **AI Evaluation Metrics** | Groundedness score, hallucination rate, citation accuracy, answer relevance | [`ai-engine/rag_evaluator.py`](ai-engine/rag_evaluator.py) |
+| **10D RAG Evaluation Suite** | 10-dimensional evaluation dataset covering standard, adversarial, hallucination probes, and refusal | [`ai-engine/rag_dataset.py`](ai-engine/rag_dataset.py) |
 | **Agentic QA** | 5 Specialist Agents (`Requirement`, `DefectRCA`, `SecurityTesting`, `Reporting`, `UIHealing`) | [`ai-engine/agents.py`](ai-engine/agents.py) |
 | **Self-Healing UI** | Automated Playwright locator recovery analyzing failure traces and synthesizing W3C ARIA roles | [`ai-engine/agents.py`](ai-engine/agents.py) |
 | **MCP Integration** | FastMCP server exposing 7 standardized tools with schema validation | [`ai-engine/mcp_server.py`](ai-engine/mcp_server.py) |
@@ -93,49 +94,48 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ---
 
-## 🧪 Comprehensive 11-Layer Test Pyramid (427 Tests)
+## 🧪 Comprehensive 11-Layer Test Pyramid (475 Tests)
 
-The repository organizes automated tests into 11 dedicated layers passing 100% (367 Pytest + 60 Playwright E2E):
+The repository organizes automated tests into 11 dedicated layers passing 100% (415 Pytest + 60 Playwright E2E):
 
 ```
 tests/
-├── unit/             # Multi-domain registry, portfolio runner, data factories, pure validation
-├── api/              # SUT endpoints, quality gate REST APIs, QA platform routers
-├── ui/               # Playwright TypeScript E2E suite with Page Object Models (BasePage core)
-├── integration/      # End-to-end multi-component workflows (Booking -> Payment -> Gate)
-├── contract/         # OpenAPI schema compliance & contract testing
-├── database/         # PostgreSQL schema invariants, foreign keys, atomic mutations
-├── ai/               # LLM provider fallback, structured outputs, prompt safety
-├── rag/              # Retrieval precision, groundedness, domain-aware retrieval, hallucination detection
-├── agents/           # Specialist agent benchmarking, tool guardrails, report generation
-├── security/         # DAST vulnerabilities, SQL injection, XSS, PCI DSS masking
-├── performance/      # Concurrent p95 latency thresholds (<250ms)
-├── domains/          # Multi-domain pack isolation (Airline, Healthcare, FinTech, E-Commerce, Telecom)
-└── regression/       # PR diff impact analysis, multi-domain patterns, tag registry
+├── unit/             # Multi-domain registry, portfolio runner, data factories, pure validation (68 tests)
+├── api/              # SUT endpoints, quality gate REST APIs, QA platform routers (66 tests)
+├── ui/               # Playwright TypeScript E2E suite with Page Object Models (60 tests)
+├── contract/         # OpenAPI schema compliance & contract testing (5 tests)
+├── database/         # PostgreSQL schema invariants, foreign keys, atomic mutations (18 tests)
+├── ai/               # LLM provider fallback, 10-dimensional RAG evaluation audit (67 tests)
+├── agents/           # Specialist agent benchmarking, tool guardrails, report generation (44 tests)
+├── security/         # DAST vulnerabilities, SQL injection, XSS, PCI DSS masking (41 tests)
+├── performance/      # Concurrent p95 latency thresholds (<250ms), load test suite (6 tests)
+├── domains/          # Multi-domain pack isolation: Airline, Healthcare, FinTech, E-Commerce, Telecom (83 tests)
+└── regression/       # PR diff impact analysis, multi-domain patterns, tag registry (12 tests)
 ```
 
 ### Running Tests & Portfolio Demonstration Locally:
 
 ```bash
-# 1. Run Complete Portfolio Demonstration (7 QE Modules, <300ms)
+# 1. Run Master Autonomous Orchestrator Closed-Loop (All phases & Quality Gate)
+python qa-engine/orchestrator.py
+
+# 2. Run Complete Portfolio Demonstration (7 QE Modules, <300ms)
 python qa-engine/portfolio_demo.py
 
-# Or inspect JSON report format:
-python qa-engine/portfolio_demo.py --json
-
-# 2. Run All 367 Backend Pytest Automated Tests
+# 3. Run All 415 Backend Pytest Automated Tests
 pytest -q
 
-# 3. Run Targeted Domain or Layer Test Suites
+# 4. Run Targeted Domain or Layer Test Suites
 pytest tests/domains/airline/ -v
 pytest tests/domains/healthcare/ -v
 pytest tests/domains/fintech/ -v
 pytest tests/domains/ecommerce/ -v
 pytest tests/domains/telecom/ -v
+pytest tests/ai/test_rag_comprehensive_audit.py -v
 pytest tests/security/ -v
 pytest tests/database/ -v
 
-# 4. Run Playwright E2E UI Suite (Headless)
+# 5. Run Playwright E2E UI Suite (Headless)
 npx playwright test
 ```
 

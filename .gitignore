@@ -51,7 +51,9 @@ allure-report/
 .qa/*.xml
 .qa/*-summary.md
 .qa/*-result.json
+.qa/*-result.txt
 .qa/*-scan.json
+.qa/evidence/RUN-*.json
 
 # ==============================
 # AI / RAG Generated Data
@@ -92,3 +94,4 @@ Desktop.ini
 *.temp
 *.bak
 *.cache
+MASTER_PROMPT.md

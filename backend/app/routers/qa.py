@@ -10,6 +10,7 @@ Adheres strictly to AGENTS.md Sections 2, 5, 6, 11, 12, 24, and 35:
 
 import asyncio
 from datetime import datetime
+import json
 import sys
 import time
 from pathlib import Path
@@ -193,8 +194,32 @@ class GenerateReleaseReportRequest(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.get("/layers")
-def get_test_layers():
-    """Returns the comprehensive 9-layer test pyramid topology."""
+def get_test_layers(include_all: bool = False):
+    """Returns the comprehensive test pyramid topology."""
+    if include_all:
+        cat_path = _REPO_ROOT / "tests/catalog" / "master_catalog.json"
+        if cat_path.exists():
+            with open(cat_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            by_layer = data.get("summary", {}).get("by_layer", {})
+            full_layers = [
+                {"id": "database", "name": "Database Invariants", "path": "tests/database/", "test_count": by_layer.get("DATABASE", 18), "description": "Foreign keys, transaction rollbacks, uniqueness, atomic inventory, and RAG chunk persistence", "layer_type": "Data Integrity"},
+                {"id": "regression", "name": "Regression Selector", "path": "tests/regression/", "test_count": by_layer.get("REGRESSION", 12), "description": "Git diff impact analysis, multi-file PR union resolution, and tag filtering", "layer_type": "Impact Analysis"},
+                {"id": "contract", "name": "OpenAPI Contract", "path": "tests/contract/", "test_count": by_layer.get("CONTRACT", 5), "description": "OpenAPI schema adherence, catalog schemas, and parameter boundary contracts", "layer_type": "Contract Governance"},
+                {"id": "unit", "name": "Unit & Quality Gate", "path": "tests/unit/", "test_count": by_layer.get("UNIT", 68), "description": "Policy engine math, parsers (JUnit/Playwright), test data factories, and AI unit logic", "layer_type": "Component Unit"},
+                {"id": "api", "name": "REST API Suite", "path": "tests/api/", "test_count": by_layer.get("API", 66), "description": "Full SUT flight search, bookings, 3DS payments, ancillaries, cancellations, and defect injection", "layer_type": "Integration API"},
+                {"id": "security", "name": "Security & RBAC", "path": "tests/security/", "test_count": by_layer.get("SECURITY", 41), "description": "SQL injection, XSS sanitization, PCI DSS PAN masking, JWT validation, and IDOR protection", "layer_type": "AppSec Verification"},
+                {"id": "ai", "name": "AI & RAG Platform", "path": "tests/ai/", "test_count": by_layer.get("AI_RAG", 67), "description": "Provider abstraction, groundedness evaluator, hallucination detection, 10D RAG dataset, and MCP tool protocols", "layer_type": "AI Reliability"},
+                {"id": "agents", "name": "Specialist Agents", "path": "tests/agents/", "test_count": by_layer.get("AGENTS", 44), "description": "Defect RCA agent benchmark accuracy and Security Testing Agent attack vector probes", "layer_type": "Agentic Evaluation"},
+                {"id": "domain", "name": "Domain Packs", "path": "domains/", "test_count": by_layer.get("DOMAIN_PACK", 83), "description": "Multi-industry domain validation: Airline NDC, Healthcare HL7/FHIR, Fintech ISO20022, Ecommerce, Telecom", "layer_type": "Domain Engineering"},
+                {"id": "ui", "name": "Playwright UI & E2E", "path": "tests/ui/", "test_count": by_layer.get("UI_E2E", 60), "description": "Playwright browser automation: bookings, payment flows, self-healing, multi-domain E2E journeys", "layer_type": "End-to-End UI"},
+                {"id": "performance", "name": "Performance Benchmarks", "path": "tests/performance/", "test_count": by_layer.get("PERFORMANCE", 6), "description": "Latency percentiles (p95 < 250ms), concurrent load throughput, and observability overhead", "layer_type": "Performance SLA"},
+            ]
+            return {
+                "total_layers": len(full_layers),
+                "total_tests": sum(l["test_count"] for l in full_layers),
+                "layers": full_layers,
+            }
     total_tests = sum(l["test_count"] for l in TEST_LAYERS)
     return {
         "total_layers": len(TEST_LAYERS),
@@ -487,4 +512,168 @@ def reset_active_domain():
         "active_domain": active,
         "name": pack.name if pack else active,
         "message": f"Runtime QA domain reset to '{active}'.",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Master Capability Inventory & Structured Evidence Endpoints
+# ---------------------------------------------------------------------------
+
+@router.get("/catalog")
+def get_capability_catalog(
+    domain: Optional[str] = None,
+    layer: Optional[str] = None,
+    priority: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+):
+    """Returns paginated, searchable capability catalog across all domains and test layers."""
+    cat_path = _REPO_ROOT / "tests/catalog" / "master_catalog.json"
+    if not cat_path.exists():
+        from catalog_manager import collect_all_capabilities
+        caps = [c.to_dict() for c in collect_all_capabilities()]
+    else:
+        with open(cat_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        caps = data.get("capabilities", [])
+
+    filtered = caps
+    if domain and domain.lower() != "all":
+        filtered = [c for c in filtered if c.get("domain", "").lower() == domain.lower()]
+    if layer and layer.lower() != "all":
+        filtered = [c for c in filtered if c.get("layer", "").lower() == layer.lower()]
+    if priority and priority.lower() != "all":
+        filtered = [c for c in filtered if c.get("priority", "").lower() == priority.lower()]
+    if search:
+        s = search.lower()
+        filtered = [
+            c for c in filtered
+            if s in c.get("id", "").lower()
+            or s in c.get("feature", "").lower()
+            or s in c.get("description", "").lower()
+            or s in c.get("source_test", "").lower()
+        ]
+
+    total = len(filtered)
+    page = max(1, page)
+    limit = max(1, min(200, limit))
+    start_idx = (page - 1) * limit
+    end_idx = start_idx + limit
+    paginated = filtered[start_idx:end_idx]
+
+    return {
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit if total > 0 else 1,
+        "capabilities": paginated,
+    }
+
+
+@router.get("/catalog/summary")
+def get_catalog_summary():
+    """Returns aggregated summary metrics of the Master Capability Inventory."""
+    cat_path = _REPO_ROOT / "tests/catalog" / "master_catalog.json"
+    if not cat_path.exists():
+        from catalog_manager import generate_and_save_catalogs
+        summary_data = generate_and_save_catalogs()
+        return summary_data["summary"]
+
+    with open(cat_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return {
+        **data.get("summary", {}),
+        "active_domain": domain_registry.get_active_domain_id(),
+        "total_capabilities": data.get("summary", {}).get("total_capabilities", len(data.get("capabilities", []))),
+    }
+
+
+@router.get("/evidence/latest")
+def get_latest_evidence(
+    limit: int = 100,
+    domain: Optional[str] = None,
+    status: Optional[str] = None,
+    layer: Optional[str] = None,
+):
+    """Returns the most recent structured test execution run and evidence records."""
+    ev_path = _REPO_ROOT / ".qa" / "evidence" / "latest_evidence.json"
+    if not ev_path.exists():
+        return {
+            "run_id": "NONE",
+            "total_tests": 0,
+            "passed_tests": 0,
+            "failed_tests": 0,
+            "pass_rate": 100.0,
+            "records": [],
+            "message": "No evidence record file found. Run orchestrator to collect evidence.",
+        }
+
+    with open(ev_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    records = data.get("records", [])
+    if domain and domain.lower() != "all":
+        records = [r for r in records if r.get("domain", "").lower() == domain.lower()]
+    if status and status.lower() != "all":
+        records = [r for r in records if r.get("status", "").lower() == status.lower()]
+    if layer and layer.lower() != "all":
+        records = [r for r in records if r.get("layer", "").lower() == layer.lower()]
+
+    limit = max(1, min(500, limit))
+    return {
+        "run_id": data.get("run_id"),
+        "total_tests": data.get("total_tests"),
+        "passed_tests": data.get("passed_tests"),
+        "failed_tests": data.get("failed_tests"),
+        "skipped_tests": data.get("skipped_tests", 0),
+        "pass_rate": data.get("pass_rate"),
+        "total_duration_sec": data.get("total_duration_sec"),
+        "timestamp": data.get("timestamp"),
+        "environment": data.get("environment"),
+        "commit_sha": data.get("commit_sha"),
+        "filtered_count": len(records),
+        "records": records[:limit],
+    }
+
+
+class OrchestratorRunRequest(BaseModel):
+    policy_name: str = "PRODUCTION_STRICT"
+    filter_domain: Optional[str] = None
+    target_defect: Optional[str] = None
+    include_ui: bool = False
+
+
+@router.post("/orchestrator/run")
+def trigger_orchestrator_loop(req: OrchestratorRunRequest):
+    """Triggers the Master Agent Orchestrator closed-loop cycle."""
+    from orchestrator import MasterAgentOrchestrator
+    orchestrator = MasterAgentOrchestrator()
+    report = orchestrator.run_autonomous_loop(
+        policy_name=req.policy_name,
+        filter_domain=req.filter_domain,
+        target_defect=req.target_defect,
+        include_ui=req.include_ui,
+    )
+    return {
+        "run_id": report.run_id,
+        "overall_status": report.overall_status,
+        "total_duration_sec": report.total_duration_sec,
+        "total_capabilities": report.total_capabilities,
+        "executed_tests": report.executed_tests,
+        "passed_tests": report.passed_tests,
+        "failed_tests": report.failed_tests,
+        "security_status": report.security_status,
+        "quality_gate_status": report.quality_gate_status,
+        "defects_found": report.defects_found,
+        "defects_fixed": report.defects_fixed,
+        "phases": [
+            {
+                "phase_name": p.phase_name,
+                "status": p.status,
+                "duration_ms": p.duration_ms,
+                "details": p.details,
+            }
+            for p in report.phases
+        ],
     }

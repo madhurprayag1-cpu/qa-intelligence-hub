@@ -187,16 +187,27 @@ The synthetic System Under Test (SUT) operates independently of external AI serv
 | **Database** | **PostgreSQL 18 + SQLAlchemy 2.0** | Enterprise ACID compliance, relational integrity with foreign keys, row-level locking for inventory concurrency, and Alembic version-controlled migrations. |
 | **Frontend** | **React 19 + TypeScript + Vite** | Predictable state management, high performance, type safety across component props, and zero build latency (< 200ms). |
 | **UI Automation** | **Playwright + TypeScript** | Auto-waiting mechanisms, native multi-browser isolation, network mocking, trace/video diagnostics, and robust Page Object Model support. |
-| **API Testing** | **Pytest + TestClient** | Fast execution (~10s for 367 automated tests), composable fixtures, parameterized tests, and JUnit XML reporting for CI gates. |
+| **API Testing** | **Pytest + TestClient** | Fast execution (~12s for 415 automated backend tests, 475 total with Playwright), composable fixtures, parameterized tests, and JUnit XML reporting for CI gates. |
 | **AI Abstraction** | **Provider-Neutral Interface** | Strictly avoids vendor lock-in. Switchable between Google Gemini, Claude, OpenAI, and deterministic offline mock vectorizers without changing business logic. |
 
 ---
 
 ## 7. AI & RAG Quality Evaluation Strategy
 
-AI quality is evaluated multi-dimensionally rather than relying on brittle exact-string checks:
+AI quality is evaluated across 10 distinct operational dimensions rather than relying on brittle exact-string checks:
 - **Groundedness / Hallucination Detection**: Measures the proportion of answer claims directly supported by retrieved context chunks.
 - **Answer Relevance**: Evaluates whether the generated answer directly addresses the query context.
 - **Retrieval Metrics**: Quantifies top-k hit rate, recall, precision, and cosine similarity ranking.
+- **10-Dimensional RAG Dataset**: Audited across STANDARD, DOMAIN_SPECIFIC, PARAPHRASED, MULTI_STEP, AMBIGUOUS, UNSUPPORTED, ADVERSARIAL, HALLUCINATION_PROBE, CITATION_TEST, and REFUSAL_TEST.
 - **Non-Fabrication Refusal**: Enforces truthful refusal when query context is unindexed or outside active domain knowledge.
-- **Provider Independence**: `AIProvider` base class allows running tests offline in CI using `MockAIProvider` (deterministic 64-dim L2-normalized vectorizer) while switching to live Gemini or OpenAI in production via environment configuration.
+- **Provider Independence**: `AIProvider` base class allows running tests offline in CI using `MockAIProvider` (deterministic term hashing) while switching to live Gemini or OpenAI in production via environment configuration.
+
+---
+
+## 8. Master Agent Orchestration & Autonomous Quality Governance
+
+The platform features an autonomous closed-loop Master Agent Orchestration layer (`qa-engine/orchestrator.py`):
+- **Autonomous Lifecycle**: `DISCOVERY -> PLANNING -> EXECUTION -> EVIDENCE -> SECURITY -> REPAIR -> QUALITY GATE`.
+- **Master Capability Inventory**: Dynamic catalog manager (`qa-engine/catalog_manager.py`) discovering and tagging 475 capabilities across 11 layers and 5 domains.
+- **Structured Evidence Engine**: Standardized run telemetry records (`qa-engine/evidence_engine.py`) persisted in `.qa/evidence/latest_evidence.json` with commit SHA, pass rate, and assertion traces.
+- **Fail-Closed Governance**: Strict policy enforcement (`PRODUCTION_STRICT`) requiring 100% test pass rate, 0 critical defects, 0 security vulnerabilities, and RAG groundedness >= 0.85 before certifying release readiness.

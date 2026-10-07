@@ -171,3 +171,77 @@ def test_get_ai_providers_status_endpoint(client: TestClient):
     assert "openai" in data["providers"]
     assert "mock" in data["providers"]
     assert data["providers"]["mock"]["configured"] is True
+
+
+def test_get_qa_layers_include_all(client: TestClient):
+    """Verify full 11-layer topology when include_all is requested."""
+    resp = client.get("/qa/layers?include_all=true")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total_layers"] >= 11
+    assert data["total_tests"] >= 450
+    layer_ids = [l["id"] for l in data["layers"]]
+    assert "domain" in layer_ids
+    assert "ui" in layer_ids
+
+
+def test_get_capability_catalog(client: TestClient):
+    """Verify paginated capability catalog retrieval."""
+    resp = client.get("/qa/catalog?limit=10&page=1")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total"] >= 450
+    assert data["page"] == 1
+    assert data["limit"] == 10
+    assert len(data["capabilities"]) == 10
+    first_cap = data["capabilities"][0]
+    assert "id" in first_cap
+    assert "domain" in first_cap
+    assert "feature" in first_cap
+    assert "layer" in first_cap
+    assert "expected_result" in first_cap
+
+
+def test_get_capability_catalog_filtering(client: TestClient):
+    """Verify domain and layer filtering on capability catalog."""
+    resp = client.get("/qa/catalog?domain=airline&layer=API&limit=10")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total"] > 0
+    for cap in data["capabilities"]:
+        assert cap["domain"].lower() == "airline"
+        assert cap["layer"].upper() == "API"
+
+
+def test_get_catalog_summary(client: TestClient):
+    """Verify summary metrics endpoint for Master Capability Inventory."""
+    resp = client.get("/qa/catalog/summary")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total_capabilities"] >= 450
+    assert "by_domain" in data
+    assert "by_layer" in data
+    assert "by_priority" in data
+    assert "airline" in data["by_domain"]
+    assert "healthcare" in data["by_domain"]
+
+
+def test_get_latest_evidence(client: TestClient):
+    """Verify structured test execution run and evidence records endpoint."""
+    resp = client.get("/qa/evidence/latest?limit=25")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert "run_id" in data
+    assert "total_tests" in data
+    assert "records" in data
+    if data["total_tests"] > 0:
+        assert len(data["records"]) <= 25
+        first_rec = data["records"][0]
+        assert "test_id" in first_rec
+        assert "status" in first_rec
+        assert "evidence" in first_rec
