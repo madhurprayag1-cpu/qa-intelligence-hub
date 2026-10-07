@@ -8,8 +8,8 @@ test.describe("QA Platform Intelligence & Quality Gate E2E Suite", () => {
   });
 
   test("Scenario 1: Inspect QA Architecture Overview and Platform Metrics", async ({ page }) => {
-    // Top stats validation (163 total tests across 11 layers)
-    await expect(page.locator(".stat-value").first()).toHaveText("163");
+    // Top stats validation (475 total capabilities across 11 layers)
+    await expect(page.locator(".stat-value").first()).toHaveText("475");
     await expect(page.locator(".stat-card").nth(1)).toContainText("PASSED");
 
     // Architecture Overview verification
