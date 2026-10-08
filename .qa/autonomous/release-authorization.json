@@ -18,5 +18,12 @@
   },
   "security_status": "PASSED",
   "quality_gate_status": "PASSED",
-  "governance_status": "PRODUCTION_READY"
+  "governance_status": "PRODUCTION_READY",
+  "record_status": "HISTORICAL_SNAPSHOT_SUPERSEDED",
+  "superseded_by": {
+    "application_release_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "ci_run": "37663693580",
+    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9"
+  },
+  "note": "Immutable release-authorization snapshot for the earlier application release. Current production state is maintained by the canonical checkpoint and roadmap."
 }
