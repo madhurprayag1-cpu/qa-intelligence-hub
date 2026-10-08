@@ -61,7 +61,11 @@ def test_flight_search_has_next_day_and_long_range_future_coverage(client):
 
     today = date.today()
     for offset_days in (1, 365, 730, 1095):
-        travel_date = today + timedelta(days=offset_days)
+        travel_date = (
+            today.replace(year=today.year + 3)
+            if offset_days == 1095
+            else today + timedelta(days=offset_days)
+        )
         response = client.get(
             f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date.isoformat()}"
         )
@@ -89,7 +93,8 @@ def test_flight_search_has_historical_coverage(client):
 def test_flight_search_outside_seeded_future_window_is_empty(client):
     from datetime import date, timedelta
 
-    travel_date = date.today() + timedelta(days=1096)
+    today = date.today()
+    travel_date = today.replace(year=today.year + 3) + timedelta(days=1)
     response = client.get(
         f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date.isoformat()}"
     )
