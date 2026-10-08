@@ -187,7 +187,7 @@ The synthetic System Under Test (SUT) operates independently of external AI serv
 | **Database** | **PostgreSQL 18 + SQLAlchemy 2.0** | Enterprise ACID compliance, relational integrity with foreign keys, row-level locking for inventory concurrency, and Alembic version-controlled migrations. |
 | **Frontend** | **React 19 + TypeScript + Vite** | Predictable state management, high performance, type safety across component props, and zero build latency (< 200ms). |
 | **UI Automation** | **Playwright + TypeScript** | Auto-waiting mechanisms, native multi-browser isolation, network mocking, trace/video diagnostics, and robust Page Object Model support. |
-| **API Testing** | **Pytest + TestClient** | Fast execution (~12s for 415 automated backend tests, 475 total with Playwright), composable fixtures, parameterized tests, and JUnit XML reporting for CI gates. |
+| **API Testing** | **Pytest + TestClient** | Fast hermetic execution; current main CI validates 442 backend tests + 80 Playwright E2E tests (522 total CI test items), composable fixtures, parameterized tests, and JUnit XML reporting for CI gates. |
 | **AI Abstraction** | **Provider-Neutral Interface** | Strictly avoids vendor lock-in. Switchable between Google Gemini, Claude, OpenAI, and deterministic offline mock vectorizers without changing business logic. |
 
 ---
