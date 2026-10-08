@@ -61,12 +61,12 @@ def _create_seeded_sqlite_engine():
         # schedule model without loading the full five-year migration dataset.
         today = date.today()
         fixture_dates = [
-            today - timedelta(days=730),
+            today.replace(year=today.year - 2),
             today - timedelta(days=365),
             today + timedelta(days=1),
             today + timedelta(days=365),
             today + timedelta(days=730),
-            today + timedelta(days=1095),
+            today.replace(year=today.year + 3),
         ]
         generated = []
         for fixture_date in fixture_dates:
