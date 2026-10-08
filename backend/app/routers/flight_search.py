@@ -44,6 +44,10 @@ async def search_flights(
             Flight.departure_time >= day_start,
             Flight.departure_time < day_end,
         )
+    else:
+        # Unscoped searches are kept bounded so the API remains responsive now
+        # that the SUT contains multi-year schedule history and future data.
+        stmt = stmt.limit(100)
 
     active_defect = get_active_defect(request)
     rows = db.execute(stmt).all()
