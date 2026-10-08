@@ -18,5 +18,12 @@
     ".qa/autonomous/runs/",
     "reports/autonomous_summary.json"
   ],
-  "status": "PR_OPEN"
+  "status": "PR_OPEN",
+  "record_status": "SUPERSEDED",
+  "superseded_by": {
+    "application_release_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "ci_run": "37663693580",
+    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9"
+  },
+  "note": "Historical PR manifest retained for auditability; the referenced PR/open state is not current."
 }
