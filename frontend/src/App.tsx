@@ -10,7 +10,6 @@ import {
   fetchAIProviders,
   fetchAirports,
   fetchDefects,
-  fetchFlights,
   fetchHealth,
   fetchQALayers,
   fetchQualityGateRuns,
@@ -71,6 +70,16 @@ import { RunExplorerView } from "./components/RunExplorerView";
 export type SUTDomain = "airline" | "healthcare" | "fintech" | "ecommerce" | "telecom";
 export type Theme = "dark" | "light";
 
+function formatLocalDateOffset(offsetDays: number): string {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + offsetDays);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getInitialTheme(): Theme {
   if (typeof window !== "undefined") {
     try {
@@ -109,7 +118,7 @@ export function App() {
   const [airports, setAirports] = useState<Airport[]>([]);
   const [origin, setOrigin] = useState("ATH");
   const [destination, setDestination] = useState("SKG");
-  const [travelDate, setTravelDate] = useState("2026-10-15");
+  const [travelDate, setTravelDate] = useState(formatLocalDateOffset(1));
   const [flights, setFlights] = useState<Flight[]>([]);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
 
@@ -245,23 +254,11 @@ export function App() {
       })
       .catch((err) => setError(err.message));
 
-    // Initial flights
-    fetchFlights()
-      .then((res) => {
-        const mapped = res.map((f) => ({
-          flight_id: f.id,
-          flight_number: f.flight_number,
-          airline: f.airline?.code ?? "A3",
-          origin: f.origin?.code ?? "ATH",
-          destination: f.destination?.code ?? "SKG",
-          departure_time: f.departure_time,
-          arrival_time: f.arrival_time,
-          duration_minutes: f.duration_minutes,
-          available_seats: f.available_seats,
-          base_price: f.base_price,
-        }));
-        setFlights(mapped);
-      })
+    // Initial flight cards use the same date-scoped search path as the
+    // user-facing workflow. This avoids loading a multi-year schedule just
+    // to render the initial booking view and makes E2E startup deterministic.
+    searchFlights("ATH", "SKG", formatLocalDateOffset(1))
+      .then(setFlights)
       .catch(() => {});
 
     // Initial QA platform data
@@ -1016,6 +1013,16 @@ export function App() {
                         type="date"
                         className="form-control"
                         value={travelDate}
+                        min={formatLocalDateOffset(-730)}
+                        max={(() => {
+                          const date = new Date();
+                          date.setHours(12, 0, 0, 0);
+                          date.setFullYear(date.getFullYear() + 3);
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, "0");
+                          const day = String(date.getDate()).padStart(2, "0");
+                          return `${year}-${month}-${day}`;
+                        })()}
                         onChange={(e) => setTravelDate(e.target.value)}
                         data-testid="travel-date-input"
                       />

@@ -35,6 +35,7 @@ async def list_flights(db: Session = Depends(get_db)):
         .join(destination, Flight.destination_id == destination.id)
         .where(Flight.active.is_(True))
         .order_by(Flight.departure_time)
+        .limit(100)
     )
 
     results = db.execute(statement).all()

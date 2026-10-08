@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session, aliased
@@ -35,7 +35,19 @@ async def search_flights(
     )
 
     if travel_date:
-        stmt = stmt.where(Flight.departure_time >= travel_date)
+        # A travel date represents one calendar day, not an open-ended
+        # lower-bound search. Keep historical and future schedule instances
+        # independently searchable without leaking adjacent dates.
+        day_start = datetime.combine(travel_date, time.min)
+        day_end = day_start + timedelta(days=1)
+        stmt = stmt.where(
+            Flight.departure_time >= day_start,
+            Flight.departure_time < day_end,
+        )
+    else:
+        # Unscoped searches are kept bounded so the API remains responsive now
+        # that the SUT contains multi-year schedule history and future data.
+        stmt = stmt.limit(100)
 
     active_defect = get_active_defect(request)
     rows = db.execute(stmt).all()

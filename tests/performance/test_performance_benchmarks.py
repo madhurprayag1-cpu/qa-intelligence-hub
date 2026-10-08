@@ -1,4 +1,5 @@
 import statistics
+from datetime import date, timedelta
 import time
 import concurrent.futures
 from fastapi.testclient import TestClient
@@ -14,10 +15,13 @@ def test_flight_search_latency_and_throughput(client: TestClient):
     """
     iterations = 25
     latencies_ms = []
+    travel_date = (date.today() + timedelta(days=1)).isoformat()
 
     for _ in range(iterations):
         start = time.perf_counter()
-        res = client.get("/search/flights?origin=ATH&destination=SKG")
+        res = client.get(
+            f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date}"
+        )
         duration = (time.perf_counter() - start) * 1000.0
         assert res.status_code == 200
         latencies_ms.append(duration)
@@ -36,10 +40,14 @@ def test_concurrent_search_performance(client: TestClient):
     """
     def execute_search():
         start = time.perf_counter()
-        res = client.get("/search/flights?origin=ATH&destination=SKG")
+        res = client.get(
+            f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date}"
+        )
         return res.status_code, (time.perf_counter() - start) * 1000.0
 
     concurrency = 8
+    travel_date = (date.today() + timedelta(days=1)).isoformat()
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
         futures = [executor.submit(execute_search) for _ in range(concurrency)]
         results = [f.result() for f in futures]

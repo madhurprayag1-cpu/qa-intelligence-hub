@@ -1,5 +1,6 @@
 import asyncio
 import pytest
+from datetime import date, timedelta
 from fastapi.testclient import TestClient
 from load_generator import execute_load_test
 
@@ -40,7 +41,13 @@ async def test_flight_search_stress_simulation(client: TestClient):
     """
     async def run_search():
         loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(None, lambda: client.get("/search/flights?origin=ATH&destination=SKG"))
+        travel_date = (date.today() + timedelta(days=1)).isoformat()
+        resp = await loop.run_in_executor(
+            None,
+            lambda: client.get(
+                f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date}"
+            ),
+        )
         return resp
 
     res = await execute_load_test(

@@ -46,3 +46,57 @@ def test_list_all_flights(client):
     assert isinstance(flights, list)
     assert len(flights) >= 12
 
+
+
+def test_flight_search_is_scoped_to_requested_calendar_day(client):
+    response = client.get("/search/flights?origin=ATH&destination=SKG&travel_date=2026-10-15")
+    assert response.status_code == 200
+    flights = response.json()
+    assert flights
+    assert all(item["departure_time"].startswith("2026-10-15") for item in flights)
+
+
+def test_flight_search_has_next_day_and_long_range_future_coverage(client):
+    from datetime import date, timedelta
+
+    today = date.today()
+    for offset_days in (1, 365, 730, 1095):
+        travel_date = (
+            today.replace(year=today.year + 3)
+            if offset_days == 1095
+            else today + timedelta(days=offset_days)
+        )
+        response = client.get(
+            f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date.isoformat()}"
+        )
+        assert response.status_code == 200
+        flights = response.json()
+        assert len(flights) >= 2, f"No schedule coverage for {travel_date}"
+        assert all(item["departure_time"].startswith(travel_date.isoformat()) for item in flights)
+
+
+def test_flight_search_has_historical_coverage(client):
+    from datetime import date, timedelta
+
+    today = date.today()
+    for offset_days in (365, 730):
+        travel_date = today - timedelta(days=offset_days)
+        response = client.get(
+            f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date.isoformat()}"
+        )
+        assert response.status_code == 200
+        flights = response.json()
+        assert len(flights) >= 2, f"No historical schedule coverage for {travel_date}"
+        assert all(item["departure_time"].startswith(travel_date.isoformat()) for item in flights)
+
+
+def test_flight_search_outside_seeded_future_window_is_empty(client):
+    from datetime import date, timedelta
+
+    today = date.today()
+    travel_date = today.replace(year=today.year + 3) + timedelta(days=1)
+    response = client.get(
+        f"/search/flights?origin=ATH&destination=SKG&travel_date={travel_date.isoformat()}"
+    )
+    assert response.status_code == 200
+    assert response.json() == []
