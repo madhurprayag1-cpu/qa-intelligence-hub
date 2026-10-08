@@ -5,7 +5,7 @@ Revises: e1f2a3b4c5d6
 Create Date: 2026-10-08 00:00:00.000000
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Sequence, Union
 
 from alembic import op
@@ -49,6 +49,7 @@ def upgrade() -> None:
         )
     }
 
+    seeded_at = datetime.utcnow()
     rows = []
     for item in generate_schedule_flights(start_date, end_date):
         key = (item["flight_number"], item["departure"])
@@ -68,6 +69,7 @@ def upgrade() -> None:
                 "available_seats": item["available_seats"],
                 "base_price": item["base_price"],
                 "active": True,
+                "created_at": seeded_at,
             }
         )
 
