@@ -1,6 +1,6 @@
 import os
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -15,7 +15,7 @@ from app.models.flight import Flight
 from app.core.auth import DEMO_USERS, User, create_access_token
 from app.db.seed import AIRLINES
 from app.db.seed_airports import AIRPORTS
-from app.db.seed_flights import FLIGHTS, get_id
+from app.db.seed_flights import FLIGHTS, generate_schedule_flights, get_id
 
 
 def _create_seeded_sqlite_engine():
@@ -36,6 +36,43 @@ def _create_seeded_sqlite_engine():
         db.commit()
 
         for f in FLIGHTS:
+            airline_id = get_id(db, Airline, f["airline"])
+            origin_id = get_id(db, Airport, f["origin"])
+            dest_id = get_id(db, Airport, f["destination"])
+            arrival = f["departure"] + timedelta(minutes=f["duration_minutes"])
+            db.add(
+                Flight(
+                    flight_number=f["flight_number"],
+                    airline_id=airline_id,
+                    origin_id=origin_id,
+                    destination_id=dest_id,
+                    departure_time=f["departure"],
+                    arrival_time=arrival,
+                    duration_minutes=f["duration_minutes"],
+                    total_seats=f["total_seats"],
+                    available_seats=f["available_seats"],
+                    base_price=f["base_price"],
+                    active=True,
+                )
+            )
+        db.commit()
+
+        # Keep the hermetic API fixture representative of the production
+        # schedule model without loading the full five-year migration dataset.
+        today = date.today()
+        fixture_dates = [
+            today - timedelta(days=730),
+            today - timedelta(days=365),
+            today + timedelta(days=1),
+            today + timedelta(days=365),
+            today + timedelta(days=730),
+            today + timedelta(days=1095),
+        ]
+        generated = []
+        for fixture_date in fixture_dates:
+            generated.extend(generate_schedule_flights(fixture_date, fixture_date))
+
+        for f in generated:
             airline_id = get_id(db, Airline, f["airline"])
             origin_id = get_id(db, Airport, f["origin"])
             dest_id = get_id(db, Airport, f["destination"])
