@@ -71,6 +71,16 @@ import { RunExplorerView } from "./components/RunExplorerView";
 export type SUTDomain = "airline" | "healthcare" | "fintech" | "ecommerce" | "telecom";
 export type Theme = "dark" | "light";
 
+function formatLocalDateOffset(offsetDays: number): string {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + offsetDays);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getInitialTheme(): Theme {
   if (typeof window !== "undefined") {
     try {
@@ -109,7 +119,7 @@ export function App() {
   const [airports, setAirports] = useState<Airport[]>([]);
   const [origin, setOrigin] = useState("ATH");
   const [destination, setDestination] = useState("SKG");
-  const [travelDate, setTravelDate] = useState("2026-10-15");
+  const [travelDate, setTravelDate] = useState(formatLocalDateOffset(1));
   const [flights, setFlights] = useState<Flight[]>([]);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
 
@@ -1016,6 +1026,8 @@ export function App() {
                         type="date"
                         className="form-control"
                         value={travelDate}
+                        min={formatLocalDateOffset(-730)}
+                        max={formatLocalDateOffset(1095)}
                         onChange={(e) => setTravelDate(e.target.value)}
                         data-testid="travel-date-input"
                       />
