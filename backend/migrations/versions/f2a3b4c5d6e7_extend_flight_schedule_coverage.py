@@ -11,6 +11,8 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
+from app.db.seed import AIRLINES
+from app.db.seed_airports import AIRPORTS
 from app.db.seed_flights import generate_schedule_flights
 
 
@@ -32,6 +34,34 @@ def upgrade() -> None:
     today = date.today()
     start_date = today.replace(year=today.year - 2)
     end_date = today.replace(year=today.year + 3)
+
+    # CI applies Alembic before the normal seed runner, while production
+    # databases may already contain these reference rows. Make the migration
+    # self-contained and idempotent for the flight schedule data it introduces.
+    seeded_at = datetime.utcnow()
+    existing_airlines = {
+        row.code
+        for row in bind.execute(sa.select(airlines.c.code))
+    }
+    missing_airlines = [
+        {**item, "created_at": seeded_at}
+        for item in AIRLINES
+        if item["code"] not in existing_airlines
+    ]
+    if missing_airlines:
+        bind.execute(airlines.insert(), missing_airlines)
+
+    existing_airports = {
+        row.code
+        for row in bind.execute(sa.select(airports.c.code))
+    }
+    missing_airports = [
+        {**item, "created_at": seeded_at}
+        for item in AIRPORTS
+        if item["code"] not in existing_airports
+    ]
+    if missing_airports:
+        bind.execute(airports.insert(), missing_airports)
 
     airline_ids = {
         row.code: row.id
