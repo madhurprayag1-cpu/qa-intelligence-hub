@@ -1,11 +1,13 @@
-# Autonomous Execution Status & State Preservation Report
+# Autonomous Execution Status & State Preservation Report (Historical Candidate Snapshot)
 
-**Checkpoint Date:** October 7, 2026 (Reconciled & Revalidated Release Candidate)  
-**Current Branch:** `feature/master-autonomous-orchestration`  
-**Current Commit SHA:** `439cd704f27acd076eeacab43de85cb7635fc1c5`  
+**Checkpoint Date:** October 7, 2026 (Historical Candidate Snapshot)  
+**Historical Branch:** `feature/master-autonomous-orchestration`  
+**Historical Commit SHA:** `439cd704f27acd076eeacab43de85cb7635fc1c5`  
 **Working Tree Status:** Clean, Reconciled & Revalidated Against Main  
-**Current State Verdict:** `RELEASE_READY_FOR_APPROVAL`  
+**Historical State Verdict:** `RELEASE_READY_FOR_APPROVAL`  
 **Quality Policy:** `PRODUCTION_STRICT` (Fail-Closed Governance)  
+
+> **Historical-status notice:** This document records the October 7 autonomous candidate before the final production-hardening merges. It is retained for audit history and is **not** the current production status. The current canonical production application release is `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`, GitHub Actions run #59, Vercel deployment `dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9`, with the live serving SHA verified to match. The authoritative current state is maintained in `docs/ROADMAP.md` and `.qa/task-checkpoint.json`.
 
 ---
 
@@ -62,7 +64,7 @@ The autonomous engineering cycle for the **QA Intelligence Hub** has fully verif
 
 ### What Is Reported / Pending Remote Verification:
 1. **Remote CI Synchronization**: Verified locally; remote GitHub Actions CI execution is pending git push to origin.
-2. **Production Cloud Revision**: The live Vercel deployment (`https://qa-intelligence-hub-flax.vercel.app`) serves historical commit `4136487`. The current branch `feature/master-autonomous-orchestration` packages all Phase 11 assets for promotion.
+2. **Production Cloud Revision**: That historical candidate was later superseded by production-hardening merges; it must not be used as current deployment evidence.
 
 ---
 
