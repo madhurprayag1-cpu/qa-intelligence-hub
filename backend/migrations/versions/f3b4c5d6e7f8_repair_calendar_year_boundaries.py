@@ -87,3 +87,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Boundary rows are retained intentionally to avoid destructive deletion
     # of schedule instances that could already be referenced by bookings.
+    pass
