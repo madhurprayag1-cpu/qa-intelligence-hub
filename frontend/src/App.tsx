@@ -1027,7 +1027,15 @@ export function App() {
                         className="form-control"
                         value={travelDate}
                         min={formatLocalDateOffset(-730)}
-                        max={formatLocalDateOffset(1095)}
+                        max={(() => {
+                          const date = new Date();
+                          date.setHours(12, 0, 0, 0);
+                          date.setFullYear(date.getFullYear() + 3);
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, "0");
+                          const day = String(date.getDate()).padStart(2, "0");
+                          return `${year}-${month}-${day}`;
+                        })()}
                         onChange={(e) => setTravelDate(e.target.value)}
                         data-testid="travel-date-input"
                       />
