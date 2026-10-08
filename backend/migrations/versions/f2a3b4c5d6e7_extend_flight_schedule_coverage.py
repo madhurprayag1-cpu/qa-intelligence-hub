@@ -30,8 +30,8 @@ def upgrade() -> None:
     # Keep two years of historical schedule data and three years of future
     # schedule data relative to the deployment/migration date.
     today = date.today()
-    start_date = today - timedelta(days=730)
-    end_date = today + timedelta(days=1095)
+    start_date = today.replace(year=today.year - 2)
+    end_date = today.replace(year=today.year + 3)
 
     airline_ids = {
         row.code: row.id
