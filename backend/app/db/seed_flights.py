@@ -225,9 +225,12 @@ def seed_flights() -> None:
             origin_id = get_id(db, Airport, data["origin"])
             destination_id = get_id(db, Airport, data["destination"])
 
+            # Flight numbers repeat across dates. Treat a flight
+            # number + scheduled departure timestamp as the instance key.
             existing = db.execute(
                 select(Flight).where(
-                    Flight.flight_number == data["flight_number"]
+                    Flight.flight_number == data["flight_number"],
+                    Flight.departure_time == data["departure"],
                 )
             ).scalar_one_or_none()
 
