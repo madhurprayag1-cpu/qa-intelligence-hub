@@ -269,67 +269,16 @@
 
 ### Canonical Project State — 2026-10-08 (Final Production-Grade Sign-Off)
 
-This section is the authoritative current-state summary. Historical phase
-checkpoints remain historical evidence and do not replace current revision-bound
-CI and production verification.
-
-* **Implemented roadmap through Phase 11:** all core QA Intelligence Hub platform
-  capabilities, five domain packs, autonomous QA orchestration, structured test
-  evidence, RAG/agent evaluation, security gates, and production deployment.
-* **Final lifecycle hardening:** requirement traceability, durable PostgreSQL
-  lifecycle records, engineering/test planning APIs, production observation and
-  incident/RCA workflows, live serving-revision verification, process-scoped
-  runtime telemetry, isolated autonomous regression execution, and forward
-  Alembic migrations are implemented and CI-validated.
-* **Certified application baseline SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a` (code-bearing production release validated by Main CI run #59).
-* **Main CI baseline evidence:** GitHub Actions run #59 passed for the certified application baseline. Backend, frontend, E2E, and checkpoint jobs all passed; backend executed 442 tests and Playwright executed 80 tests, for 522 current CI test items.
-* **Current production deployment:** Vercel deployment `dpl_9EUrY3wqVEdBHt4MWtgQFmM5C9LE` is READY and is built from metadata-only merge SHA `13d2051ef5b331ac2eca5d299f359c0234e5d84b`.
-* **Serving-revision verification:** live `GET /qa/release/serving-revision` returned serving SHA `13d2051ef5b331ac2eca5d299f359c0234e5d84b`. This merge commit contains the same application/source code as the certified baseline; only governance/documentation metadata changed.
-* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer, `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`, `/docs`, `/openapi.json`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, and `/qa/ai/providers/status` returned successful responses.
-* **Test Explorer production evidence:** `/qa/tests` returned stored run `RUN-AUTO-20261007-115444` with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21 PASS. This stored evidence is distinct from the current CI total of 522 test items and the 492-capability catalog.
-* **Runtime diagnostics:** no Vercel runtime errors were found in the most recent 12-hour verification window; process-scoped telemetry reported 0 observed 5xx errors.
-* **Database lifecycle hardening:** requirement/observation/incident lifecycle tables are provisioned through the Alembic migration path with an idempotent additive runtime safety net; unknown requirement lookup now correctly returns HTTP 404 instead of a database-table error.
-* **AI mode:** production remains explicitly `HERMETIC_OFFLINE_MOCK`; no live LLM provider is claimed by this certification.
-* **Final project state:** **PRODUCTION_READY** for the implemented production scope, with current GitHub CI, Vercel serving-revision, and live smoke evidence aligned.
-
-## Final Production-Grade Lifecycle Scope [100% Complete]
-
-The final sign-off scope establishes the following end-to-end chain:
-
-```
-Requirement
-  ↓
-Requirement analysis + acceptance criteria
-  ↓
-Impact-aware test scenario generation
-  ↓
-Implementation / defect remediation
-  ↓
-Focused regression
-  ↓
-Full hermetic regression
-  ↓
-Security / RAG / agent gates
-  ↓
-PRODUCTION_STRICT Quality Gate
-  ↓
-GitHub CI
-  ↓
-Vercel Preview
-  ↓
-Merge to main
-  ↓
-Vercel Production
-  ↓
-Serving-revision verification
-  ↓
-Read-only production smoke
-  ↓
-Runtime diagnostics
-  ↓
-Production certification
-```
-
+* **Certified application code baseline:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
+* **Certification CI:** Main CI run #59 passed for the certified application baseline. Backend executed 442 tests and Playwright executed 80 tests, for 522 CI test items.
+* **Final CI revalidation:** Main CI run #63 also completed successfully after the documentation/governance synchronization. Frontend, backend, E2E, and checkpoint jobs all passed.
+* **Production verification policy:** The active Vercel deployment and serving SHA are verified externally from the live `GET /qa/release/serving-revision` endpoint and the Vercel production deployment state. Exact serving/deployment identifiers are deliberately not self-asserted here because any documentation-only commit creates a new deployment revision.
+* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer, `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`, `/docs`, `/openapi.json`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, and `/qa/ai/providers/status` returned successful responses in the final live verification.
+* **Test Explorer production evidence:** Stored run `RUN-AUTO-20261007-115444` returned 426/426 PASS with 0 FAIL; Healthcare filtering returned 21/21 PASS. This stored evidence is distinct from the 492-capability catalog and the 522 current CI test items.
+* **Runtime diagnostics:** No Vercel runtime errors were found in the final selected verification window; process-scoped telemetry reported 0 observed 5xx errors.
+* **Database lifecycle hardening:** Requirement/observation/incident lifecycle tables are provisioned through Alembic with an idempotent additive runtime safety net; unknown requirement lookup returns clean HTTP 404 instead of a database-table error.
+* **AI mode:** Production remains explicitly `HERMETIC_OFFLINE_MOCK`; no live LLM provider is claimed by this certification.
+* **Final project state:** **PRODUCTION_READY** for the implemented production scope.
 ### Final lifecycle acceptance criteria
 
 1. **100% CI pass:** backend, frontend, E2E, and checkpoint jobs pass for the
