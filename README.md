@@ -178,22 +178,24 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 **https://qa-intelligence-hub-flax.vercel.app**
 
-Current production release evidence:
+Current production certification evidence:
 
-- **Certified application code baseline SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a
-- **GitHub Actions run #59:** PASSED (442 backend + 80 Playwright E2E test items)
-- **Current Vercel deployment:** dpl_9EUrY3wqVEdBHt4MWtgQFmM5C9LE — READY
-- **Live serving SHA:** 13d2051ef5b331ac2eca5d299f359c0234e5d84b — metadata-only merge commit containing the same application/source code as the certified baseline
+- **Certified application code baseline SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`
+- **GitHub Actions run #59:** PASSED — 442 backend + 80 Playwright E2E test items
+- **Final CI revalidation run #63:** PASSED
+- **Production serving revision:** verified externally from `/qa/release/serving-revision` and the Vercel production deployment state
 - **Production Test Explorer snapshot:** 426/426 PASS; Healthcare 21/21 PASS
 - **Open production incidents:** 0
-- **Vercel runtime errors:** 0 in the most recent 12-hour verification window
-- **AI mode:** HERMETIC_OFFLINE_MOCK (no live Gemini/Claude/OpenAI provider configured)
+- **Vercel runtime errors:** 0 in the final selected verification window
+- **AI mode:** `HERMETIC_OFFLINE_MOCK` (no live Gemini/Claude/OpenAI provider configured)
 
-Read-only production smoke verification covered the serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status.
+Exact serving/deployment identifiers are intentionally kept as externally verified release evidence rather than self-referential README claims, because a documentation-only commit itself creates a new Vercel deployment revision.
 
-Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the active production topology.
+Read-only production smoke verification covered the health endpoint, serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status.
 
-Complete deployment runbook and environment-variable reference: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the authoritative current topology.
+
+Complete deployment runbook and environment-variable reference: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## 📖 Engineering Documentation
 
