@@ -12,7 +12,7 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Current verified validation snapshot**: Repository records **475 automated tests** (415 Pytest backend + 60 Playwright E2E) passing at 100% with full closed-loop Master Agent Orchestration and structured execution evidence. See the canonical capability catalog in [`tests/catalog/master_catalog.json`](tests/catalog/master_catalog.json).
+> **Current verified validation snapshot (2026-10-08)**: Main CI run #59 for 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a passed with **442 backend tests + 80 Playwright E2E tests = 522 current CI test items**. The capability catalog contains **492 capabilities**. Production Test Explorer currently serves a stored evidence snapshot of **426/426 PASS**, with Healthcare **21/21 PASS**.
 
 > **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
@@ -59,7 +59,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
        ▼                                                                     ▼
 ┌──────────────────────────────┐                       ┌──────────────────────────────┐
 │  Single Pane React 19 UI     │                       │     GitHub Actions CI/CD     │
-│  - SUT Aviation Booking      │                       │  - 475 Automated Tests       │
+│  - SUT Aviation Booking      │                       │  - 522 Current CI Test Items │
 │  - AI Evaluation & RAG Lab   │                       │  - PostgreSQL Service Cont.  │
 │  - DAST Security Auditor     │                       │  - Strict Gate Step Summary  │
 │  - Test Runner & Impact Sim  │                       │  - Playwright E2E Headless   │
@@ -94,9 +94,9 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ---
 
-## 🧪 Comprehensive 11-Layer Test Pyramid (475 Tests)
+## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The repository organizes automated tests into 11 dedicated layers passing 100% (415 Pytest + 60 Playwright E2E):
+The platform organizes validation across 11 architecture layers. Current revision-bound CI evidence is **442 backend tests + 80 Playwright E2E tests = 522 test items**. The capability/evidence explorer exposes **492 capabilities**, while the production Test Explorer endpoint currently serves a stored **426-test execution snapshot** at 100% pass. These are distinct evidence models and must not be treated as the same counter:
 
 ```
 tests/
@@ -122,7 +122,7 @@ python qa-engine/orchestrator.py
 # 2. Run Complete Portfolio Demonstration (7 QE Modules, <300ms)
 python qa-engine/portfolio_demo.py
 
-# 3. Run All 415 Backend Pytest Automated Tests
+# 3. Run All Backend Pytest Automated Tests
 pytest -q
 
 # 4. Run Targeted Domain or Layer Test Suites
@@ -174,22 +174,28 @@ npm run dev
 
 ## 🌐 Production Deployment
 
-The roadmap records a historical production deployment, but the currently
-serving topology, deployed revision, and production health have not been
-verified by the current project checkpoint. Do not interpret the configuration
-options below as a statement of the active production topology.
+The active production topology is a **unified Vercel deployment** serving the React frontend and FastAPI API from the same project, backed by Neon PostgreSQL. The canonical production alias is:
 
-The platform is architected for zero-cost / low-overhead public cloud deployment:
+**https://qa-intelligence-hub-flax.vercel.app**
 
-| Tier | Target | Configuration | Details |
-|---|---|---|---|
-| **Frontend** | Vercel | [`frontend/vercel.json`](frontend/vercel.json) | Built with Vite in `<200ms`, global CDN edge |
-| **Backend** | Render / Fly.io | [`render.yaml`](render.yaml) | FastAPI ASGI web service with Blueprint IaC |
-| **Database** | Neon / Supabase | PostgreSQL 18 | Managed PostgreSQL with connection pooling |
+Current production release evidence:
 
-Complete deployment runbook, environment variable reference, and smoke test commands: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+- **GitHub main SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a
+- **GitHub Actions run #59:** PASSED
+- **Backend:** 442/442 passed
+- **Playwright E2E:** 80/80 passed
+- **Vercel deployment:** dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9 — READY
+- **Live serving SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a — matches GitHub main
+- **Production Test Explorer snapshot:** 426/426 PASS; Healthcare 21/21 PASS
+- **Open production incidents:** 0
+- **Vercel runtime errors:** 0 in the most recent 12-hour verification window
+- **AI mode:** HERMETIC_OFFLINE_MOCK (no live Gemini/Claude/OpenAI provider configured)
 
----
+Read-only production smoke verification covered the serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status.
+
+Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the active production topology.
+
+Complete deployment runbook and environment-variable reference: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## 📖 Engineering Documentation
 
