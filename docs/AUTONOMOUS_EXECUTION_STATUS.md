@@ -7,7 +7,7 @@
 **Historical State Verdict:** `RELEASE_READY_FOR_APPROVAL`  
 **Quality Policy:** `PRODUCTION_STRICT` (Fail-Closed Governance)  
 
-> **Historical-status notice:** This document records the October 7 autonomous candidate before the final production-hardening merges. It is retained for audit history and is **not** the current production status. The current canonical production application release is `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`, GitHub Actions run #59, Vercel deployment `dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9`, with the live serving SHA verified to match. The authoritative current state is maintained in `docs/ROADMAP.md` and `.qa/task-checkpoint.json`.
+> **Historical-status notice:** This document records the October 7 autonomous candidate before the final production-hardening merges. It is retained for audit history and is **not** the current production status. The certified code-bearing application baseline is `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a` and GitHub Actions run #59 passed for that baseline. The active Vercel serving deployment is verified externally via the live serving-revision endpoint; the authoritative current policy is maintained in `docs/ROADMAP.md` and `.qa/task-checkpoint.json`.
 
 ---
 
