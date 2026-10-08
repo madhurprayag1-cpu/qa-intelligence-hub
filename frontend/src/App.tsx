@@ -10,7 +10,6 @@ import {
   fetchAIProviders,
   fetchAirports,
   fetchDefects,
-  fetchFlights,
   fetchHealth,
   fetchQALayers,
   fetchQualityGateRuns,
@@ -255,23 +254,11 @@ export function App() {
       })
       .catch((err) => setError(err.message));
 
-    // Initial flights
-    fetchFlights()
-      .then((res) => {
-        const mapped = res.map((f) => ({
-          flight_id: f.id,
-          flight_number: f.flight_number,
-          airline: f.airline?.code ?? "A3",
-          origin: f.origin?.code ?? "ATH",
-          destination: f.destination?.code ?? "SKG",
-          departure_time: f.departure_time,
-          arrival_time: f.arrival_time,
-          duration_minutes: f.duration_minutes,
-          available_seats: f.available_seats,
-          base_price: f.base_price,
-        }));
-        setFlights(mapped);
-      })
+    // Initial flight cards use the same date-scoped search path as the
+    // user-facing workflow. This avoids loading a multi-year schedule just
+    // to render the initial booking view and makes E2E startup deterministic.
+    searchFlights("ATH", "SKG", formatLocalDateOffset(1))
+      .then(setFlights)
       .catch(() => {});
 
     // Initial QA platform data
