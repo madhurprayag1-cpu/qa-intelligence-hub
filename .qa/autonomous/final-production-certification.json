@@ -25,5 +25,12 @@
   "quality_gate": "PASSED",
   "security": "PASSED",
   "final_state": "PRODUCTION_READY",
-  "future_enhancements": "Non-blocking future work such as external observability aggregation and provider-specific rollback orchestration is not represented as implemented."
+  "future_enhancements": "Non-blocking future work such as external observability aggregation and provider-specific rollback orchestration is not represented as implemented.",
+  "record_status": "HISTORICAL_SNAPSHOT_SUPERSEDED",
+  "superseded_by": {
+    "application_release_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "ci_run": "37663693580",
+    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9"
+  },
+  "note": "Immutable certification snapshot for the earlier application release. Current production certification is maintained in docs/ROADMAP.md and .qa/task-checkpoint.json."
 }

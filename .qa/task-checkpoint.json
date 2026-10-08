@@ -192,12 +192,18 @@
     "deployment_status": "VERIFIED_PRODUCTION",
     "blockers": [],
     "historical_evidence_reference": "Historical phase evidence remains historical and is never used as current production attestation.",
-    "verified_application_revision": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
-    "ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37661603415",
+    "verified_application_revision": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "ci_run": "https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37663693580",
     "ci_conclusion": "success",
+    "backend_ci_tests": "442 passed",
+    "playwright_ci_tests": "80 passed",
+    "ci_total_test_items": 522,
     "e2e_result": "100% pass; 0 failed; 0 skipped",
-    "production_deployment_id": "dpl_DqMhBxTGVx5noJfoit8z8dZm1xfu",
-    "production_serving_sha": "a0326fcb18556d0f1ee979c1bb7ba6a5331da755",
+    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9",
+    "production_serving_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
     "production_verification": "PASSED",
-    "runtime_critical_errors": 0
-  }}
+    "production_test_explorer_snapshot": "426/426 passed; 0 failed; Healthcare 21/21 passed (stored evidence snapshot)",
+    "runtime_critical_errors": 0,
+    "runtime_error_window": "No Vercel runtime errors in the most recent 12-hour verification window."
+  }
+}

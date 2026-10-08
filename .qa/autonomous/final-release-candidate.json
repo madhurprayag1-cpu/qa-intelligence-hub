@@ -14,7 +14,7 @@
     "total_capabilities": 475,
     "backend_pytest": 415,
     "playwright_e2e": 60,
-    "pass_rate": 1.0
+    "pass_rate": 1
   },
   "evidence": [
     "tests/catalog/INDEPENDENT_ACCEPTANCE_INVENTORY.json",
@@ -27,5 +27,12 @@
     "docs/AUTONOMOUS_EXECUTION_STATUS.md"
   ],
   "release_authorized": true,
-  "governance_status": "RELEASE_READY_FOR_APPROVAL"
+  "governance_status": "RELEASE_READY_FOR_APPROVAL",
+  "record_status": "HISTORICAL_CANDIDATE_SUPERSEDED",
+  "superseded_by": {
+    "application_release_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "ci_run": "37663693580",
+    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9"
+  },
+  "note": "Historical autonomous candidate record retained for auditability; it is not the current production release."
 }
