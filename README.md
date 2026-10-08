@@ -180,12 +180,10 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 Current production release evidence:
 
-- **GitHub main SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a
-- **GitHub Actions run #59:** PASSED
-- **Backend:** 442/442 passed
-- **Playwright E2E:** 80/80 passed
-- **Vercel deployment:** dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9 — READY
-- **Live serving SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a — matches GitHub main
+- **Certified application code baseline SHA:** 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a
+- **GitHub Actions run #59:** PASSED (442 backend + 80 Playwright E2E test items)
+- **Current Vercel deployment:** dpl_9EUrY3wqVEdBHt4MWtgQFmM5C9LE — READY
+- **Live serving SHA:** 13d2051ef5b331ac2eca5d299f359c0234e5d84b — metadata-only merge commit containing the same application/source code as the certified baseline
 - **Production Test Explorer snapshot:** 426/426 PASS; Healthcare 21/21 PASS
 - **Open production incidents:** 0
 - **Vercel runtime errors:** 0 in the most recent 12-hour verification window

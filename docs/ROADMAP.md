@@ -281,10 +281,10 @@ CI and production verification.
   incident/RCA workflows, live serving-revision verification, process-scoped
   runtime telemetry, isolated autonomous regression execution, and forward
   Alembic migrations are implemented and CI-validated.
-* **Current production application release SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
-* **Main CI:** GitHub Actions run #59 passed for the exact release SHA. Backend, frontend, E2E, and checkpoint jobs all passed; backend executed 442 tests and Playwright executed 80 tests, for 522 current CI test items.
-* **Production deployment:** Vercel deployment `dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9` is READY and was built from `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
-* **Serving-revision verification:** live `GET /qa/release/serving-revision` returned serving SHA `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`, matching the current production application release SHA.
+* **Certified application baseline SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a` (code-bearing production release validated by Main CI run #59).
+* **Main CI baseline evidence:** GitHub Actions run #59 passed for the certified application baseline. Backend, frontend, E2E, and checkpoint jobs all passed; backend executed 442 tests and Playwright executed 80 tests, for 522 current CI test items.
+* **Current production deployment:** Vercel deployment `dpl_9EUrY3wqVEdBHt4MWtgQFmM5C9LE` is READY and is built from metadata-only merge SHA `13d2051ef5b331ac2eca5d299f359c0234e5d84b`.
+* **Serving-revision verification:** live `GET /qa/release/serving-revision` returned serving SHA `13d2051ef5b331ac2eca5d299f359c0234e5d84b`. This merge commit contains the same application/source code as the certified baseline; only governance/documentation metadata changed.
 * **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer, `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`, `/docs`, `/openapi.json`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, and `/qa/ai/providers/status` returned successful responses.
 * **Test Explorer production evidence:** `/qa/tests` returned stored run `RUN-AUTO-20261007-115444` with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21 PASS. This stored evidence is distinct from the current CI total of 522 test items and the 492-capability catalog.
 * **Runtime diagnostics:** no Vercel runtime errors were found in the most recent 12-hour verification window; process-scoped telemetry reported 0 observed 5xx errors.

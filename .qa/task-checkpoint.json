@@ -199,11 +199,14 @@
     "playwright_ci_tests": "80 passed",
     "ci_total_test_items": 522,
     "e2e_result": "100% pass; 0 failed; 0 skipped",
-    "production_deployment_id": "dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9",
-    "production_serving_sha": "5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a",
+    "production_deployment_id": "dpl_9EUrY3wqVEdBHt4MWtgQFmM5C9LE",
+    "production_serving_sha": "13d2051ef5b331ac2eca5d299f359c0234e5d84b",
     "production_verification": "PASSED",
     "production_test_explorer_snapshot": "426/426 passed; 0 failed; Healthcare 21/21 passed (stored evidence snapshot)",
     "runtime_critical_errors": 0,
-    "runtime_error_window": "No Vercel runtime errors in the most recent 12-hour verification window."
+    "runtime_error_window": "No Vercel runtime errors in the most recent 12-hour verification window.",
+    "verified_application_revision_type": "CODE_BEARING_BASELINE",
+    "metadata_sync_commit": "13d2051ef5b331ac2eca5d299f359c0234e5d84b",
+    "release_type": "METADATA_ONLY_SYNC_ON_TOP_OF_VERIFIED_APPLICATION_BASELINE"
   }
 }
