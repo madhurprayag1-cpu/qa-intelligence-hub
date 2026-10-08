@@ -279,6 +279,10 @@
 * **Database lifecycle hardening:** Requirement/observation/incident lifecycle tables are provisioned through Alembic with an idempotent additive runtime safety net; unknown requirement lookup returns clean HTTP 404 instead of a database-table error.
 * **AI mode:** Production remains explicitly `HERMETIC_OFFLINE_MOCK`; no live LLM provider is claimed by this certification.
 * **Final project state:** **PRODUCTION_READY** for the implemented production scope.
+## Final Production-Grade Lifecycle Scope [100% Complete]
+
+The implemented final production-grade lifecycle scope is complete and is governed by the canonical checkpoint evidence and production verification policy above.
+
 ### Final lifecycle acceptance criteria
 
 1. **100% CI pass:** backend, frontend, E2E, and checkpoint jobs pass for the
