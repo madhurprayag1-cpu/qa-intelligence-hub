@@ -267,7 +267,7 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-07 (Final Production-Grade Sign-Off)
+### Canonical Project State — 2026-10-08 (Final Production-Grade Sign-Off)
 
 This section is the authoritative current-state summary. Historical phase
 checkpoints remain historical evidence and do not replace current revision-bound
@@ -281,32 +281,16 @@ CI and production verification.
   incident/RCA workflows, live serving-revision verification, process-scoped
   runtime telemetry, isolated autonomous regression execution, and forward
   Alembic migrations are implemented and CI-validated.
-* **Current production release SHA:** `a0326fcb18556d0f1ee979c1bb7ba6a5331da755`.
-* **Main CI:** GitHub Actions run #55 passed for the exact current production
-  release SHA. Backend, frontend, E2E, and checkpoint jobs all passed.
-* **Production deployment:** Vercel deployment
-  `dpl_DqMhBxTGVx5noJfoit8z8dZm1xfu` is READY for production and was built from
-  the current production release SHA.
-* **Serving-revision verification:** live `GET /qa/release/serving-revision`
-  returned serving SHA `a0326fcb18556d0f1ee979c1bb7ba6a5331da755`, matching the
-  current production release SHA.
-* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer,
-  `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`,
-  `/docs`, `/openapi.json`, `/qa/runtime/metrics`, and production incident
-  listing returned successful responses.
-* **Test Explorer production evidence:** `/qa/tests` returned 426 verified
-  test executions with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21
-  PASS.
-* **Runtime diagnostics:** no Vercel runtime errors were observed in the final
-  five-minute production verification window; runtime telemetry reported 0
-  observed 5xx errors in the active process instance.
-* **Database migrations:** Vercel builds run `alembic upgrade head` before the
-  application build, while CI independently applies migrations on a clean
-  PostgreSQL instance.
-* **AI mode:** production remains explicitly MOCK/HERMETIC; no live LLM
-  provider is claimed by this certification.
-* **Final project state:** **PRODUCTION_READY** for the implemented production
-  scope, with CI and live serving-revision evidence aligned.
+* **Current production application release SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
+* **Main CI:** GitHub Actions run #59 passed for the exact release SHA. Backend, frontend, E2E, and checkpoint jobs all passed; backend executed 442 tests and Playwright executed 80 tests, for 522 current CI test items.
+* **Production deployment:** Vercel deployment `dpl_CHDyvsJAeLL1X6xosAcXv5grUEJ9` is READY and was built from `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
+* **Serving-revision verification:** live `GET /qa/release/serving-revision` returned serving SHA `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`, matching the current production application release SHA.
+* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer, `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`, `/docs`, `/openapi.json`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, and `/qa/ai/providers/status` returned successful responses.
+* **Test Explorer production evidence:** `/qa/tests` returned stored run `RUN-AUTO-20261007-115444` with 426 PASS and 0 FAIL; Healthcare filtering returned 21/21 PASS. This stored evidence is distinct from the current CI total of 522 test items and the 492-capability catalog.
+* **Runtime diagnostics:** no Vercel runtime errors were found in the most recent 12-hour verification window; process-scoped telemetry reported 0 observed 5xx errors.
+* **Database lifecycle hardening:** requirement/observation/incident lifecycle tables are provisioned through the Alembic migration path with an idempotent additive runtime safety net; unknown requirement lookup now correctly returns HTTP 404 instead of a database-table error.
+* **AI mode:** production remains explicitly `HERMETIC_OFFLINE_MOCK`; no live LLM provider is claimed by this certification.
+* **Final project state:** **PRODUCTION_READY** for the implemented production scope, with current GitHub CI, Vercel serving-revision, and live smoke evidence aligned.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
