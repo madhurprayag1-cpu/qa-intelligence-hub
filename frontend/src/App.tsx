@@ -625,6 +625,27 @@ export function App() {
 
   const handleProcessPayment = async () => {
     if (!currentBooking) return;
+    const cardMethod = ["CREDIT_CARD", "CREDIT_CARD_3DS", "DEBIT_CARD"].includes(selectedMethod);
+    if (cardMethod && (!cardholderName.trim() || cardNumber.replace(/\s/g, "").length < 13 || !/^\d{2}\/\d{2}$/.test(cardExpiry) || !/^\d{3,4}$/.test(cardCvc))) {
+      setError("Enter a cardholder name, a 13–19 digit card number, valid MM/YY expiry and 3–4 digit CVC.");
+      return;
+    }
+    if (selectedMethod === "UPI" && !/^[^@\s]+@[^@\s]+$/.test(upiId)) {
+      setError("Enter a valid demo UPI ID, for example demo@qahub.");
+      return;
+    }
+    if (selectedMethod === "WALLET" && !walletAccount.trim()) {
+      setError("Enter your demo wallet account identifier.");
+      return;
+    }
+    if (selectedMethod === "EASY_PAY" && easyPayPhone.replace(/\D/g, "").length < 8) {
+      setError("Enter a valid demo phone/account number for Easy Pay.");
+      return;
+    }
+    if (selectedMethod === "CASH" && !cashConfirmed) {
+      setError("Confirm that cash will be paid at the ticketing desk.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
