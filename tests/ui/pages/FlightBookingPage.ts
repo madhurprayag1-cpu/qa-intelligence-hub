@@ -149,6 +149,16 @@ export class FlightBookingPage extends BasePage {
   }
 
   async authorizePayment() {
+    // Demo-only values exercise the card form without using real payment credentials.
+    const cardNumber = this.page.getByTestId("payment-card-number");
+    if (await cardNumber.isVisible().catch(() => false)) {
+      await this.page.getByTestId("payment-cardholder").fill("QA Demo Passenger");
+      await cardNumber.fill("4242 4242 4242 4242");
+      const expiry = this.page.getByTestId("payment-card-expiry");
+      const current = new Date();
+      await expiry.fill(`${String(current.getMonth() + 1).padStart(2, "0")}/${String((current.getFullYear() + 2) % 100).padStart(2, "0")}`);
+      await this.page.getByTestId("payment-card-cvc").fill("123");
+    }
     await this.payButton.click();
     await expect(this.receiptCard).toBeVisible();
   }
