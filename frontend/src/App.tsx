@@ -134,6 +134,15 @@ export function App() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("CREDIT_CARD_3DS");
   const [threeDsResult, setThreeDsResult] = useState<ThreeDSStatus>("SUCCESS");
+  const [cardholderName, setCardholderName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+  const [upiId, setUpiId] = useState("");
+  const [walletProvider, setWalletProvider] = useState("Demo Wallet");
+  const [walletAccount, setWalletAccount] = useState("");
+  const [easyPayPhone, setEasyPayPhone] = useState("");
+  const [cashConfirmed, setCashConfirmed] = useState(false);
   const [paymentResult, setPaymentResult] = useState<PaymentResponse | null>(null);
 
   // Lookup tab
@@ -248,8 +257,14 @@ export function App() {
       .then((data) => {
         setAirports(data);
         if (data.length > 1) {
-          setOrigin(data[0].code);
-          setDestination(data[1].code);
+          // Keep the valid default/current selection. Unconditionally resetting
+          // these values when the async airport request resolves can overwrite
+          // a route selected by the user while the request was in flight.
+          const airportCodes = new Set(data.map((airport) => airport.code));
+          setOrigin((current) => (airportCodes.has(current) ? current : data[0].code));
+          setDestination((current) =>
+            airportCodes.has(current) ? current : data.find((airport) => airport.code !== origin)?.code ?? data[1].code
+          );
         }
       })
       .catch((err) => setError(err.message));
@@ -616,6 +631,27 @@ export function App() {
 
   const handleProcessPayment = async () => {
     if (!currentBooking) return;
+    const cardMethod = ["CREDIT_CARD", "CREDIT_CARD_3DS", "DEBIT_CARD"].includes(selectedMethod);
+    if (cardMethod && (!cardholderName.trim() || cardNumber.replace(/\s/g, "").length < 13 || !/^\d{2}\/\d{2}$/.test(cardExpiry) || !/^\d{3,4}$/.test(cardCvc))) {
+      setError("Enter a cardholder name, a 13–19 digit card number, valid MM/YY expiry and 3–4 digit CVC.");
+      return;
+    }
+    if (selectedMethod === "UPI" && !/^[^@\s]+@[^@\s]+$/.test(upiId)) {
+      setError("Enter a valid demo UPI ID, for example demo@qahub.");
+      return;
+    }
+    if (selectedMethod === "WALLET" && !walletAccount.trim()) {
+      setError("Enter your demo wallet account identifier.");
+      return;
+    }
+    if (selectedMethod === "EASY_PAY" && easyPayPhone.replace(/\D/g, "").length < 8) {
+      setError("Enter a valid demo phone/account number for Easy Pay.");
+      return;
+    }
+    if (selectedMethod === "CASH" && !cashConfirmed) {
+      setError("Confirm that cash will be paid at the ticketing desk.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -1416,6 +1452,66 @@ export function App() {
                       <div className="method-desc">Pay at ticketing desk</div>
                     </div>
                   </div>
+                </div>
+
+                <div className="challenge-box fade-in" data-testid="payment-details-form" style={{ marginTop: "20px" }}>
+                  <div className="challenge-title">
+                    <span>🔒</span>
+                    <span>{selectedMethod === "CREDIT_CARD_3DS" ? "Card Details & 3D Secure" : selectedMethod === "CREDIT_CARD" ? "Credit Card Details" : selectedMethod === "DEBIT_CARD" ? "Debit Card Details" : selectedMethod === "UPI" ? "UPI Payment Details" : selectedMethod === "WALLET" ? "Digital Wallet Details" : selectedMethod === "EASY_PAY" ? "Easy Pay Details" : "Cash Payment Confirmation"}</span>
+                  </div>
+                  <p className="challenge-desc">Demo payment simulation only. Use test values; no real payment is collected and card security codes are not saved.</p>
+                  {["CREDIT_CARD", "CREDIT_CARD_3DS", "DEBIT_CARD"].includes(selectedMethod) && (
+                    <div className="form-grid" data-testid="card-payment-fields">
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-cardholder">Cardholder name</label>
+                        <input id="payment-cardholder" data-testid="payment-cardholder" className="form-input" autoComplete="off" value={cardholderName} onChange={(e) => setCardholderName(e.target.value)} placeholder="Name on card" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-card-number">Card number</label>
+                        <input id="payment-card-number" data-testid="payment-card-number" className="form-input" inputMode="numeric" autoComplete="off" maxLength={23} value={cardNumber} onChange={(e) => setCardNumber(e.target.value.replace(/[^0-9 ]/g, ""))} placeholder="1234 5678 9012 3456" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-card-expiry">Expiry (MM/YY)</label>
+                        <input id="payment-card-expiry" data-testid="payment-card-expiry" className="form-input" autoComplete="off" maxLength={5} value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value.replace(/[^0-9/]/g, "").slice(0, 5))} placeholder="MM/YY" />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-card-cvc">CVC</label>
+                        <input id="payment-card-cvc" data-testid="payment-card-cvc" className="form-input" type="password" inputMode="numeric" autoComplete="new-password" maxLength={4} value={cardCvc} onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="3–4 digits" />
+                      </div>
+                    </div>
+                  )}
+                  {selectedMethod === "UPI" && (
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="payment-upi-id">UPI ID / VPA</label>
+                      <input id="payment-upi-id" data-testid="payment-upi-id" className="form-input" autoComplete="off" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="demo@qahub" />
+                    </div>
+                  )}
+                  {selectedMethod === "WALLET" && (
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-wallet-provider">Wallet provider</label>
+                        <select id="payment-wallet-provider" data-testid="payment-wallet-provider" className="form-input" value={walletProvider} onChange={(e) => setWalletProvider(e.target.value)}>
+                          <option>Demo Wallet</option><option>Paytm Demo</option><option>Amazon Pay Demo</option><option>PhonePe Demo</option><option>Google Pay Demo</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="payment-wallet-account">Wallet/account ID</label>
+                        <input id="payment-wallet-account" data-testid="payment-wallet-account" className="form-input" autoComplete="off" value={walletAccount} onChange={(e) => setWalletAccount(e.target.value)} placeholder="demo-account-123" />
+                      </div>
+                    </div>
+                  )}
+                  {selectedMethod === "EASY_PAY" && (
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="payment-easy-phone">Phone / account number</label>
+                      <input id="payment-easy-phone" data-testid="payment-easy-phone" className="form-input" inputMode="tel" autoComplete="off" value={easyPayPhone} onChange={(e) => setEasyPayPhone(e.target.value)} placeholder="Demo phone number" />
+                    </div>
+                  )}
+                  {selectedMethod === "CASH" && (
+                    <label className="form-label" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <input type="checkbox" data-testid="payment-cash-confirm" checked={cashConfirmed} onChange={(e) => setCashConfirmed(e.target.checked)} />
+                      I will pay the displayed amount in cash at the ticketing desk.
+                    </label>
+                  )}
                 </div>
 
                 {/* 3DS Challenge Simulator Box */}

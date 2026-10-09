@@ -35,16 +35,38 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
   test("TEST 2: Complete booking flow with server-controlled demo authorization and no bearer token error", async ({
     page,
   }) => {
-    // 1. Select route and search
+    // 1. Let the initial date-scoped inventory request settle before interacting.
+    // This prevents an in-flight startup request from masking the user-triggered search.
+    const flightCard = page.locator('[data-testid^="flight-card-"]').first();
+    await expect(flightCard).toBeVisible({ timeout: 15000 });
+
+    // 2. Select route and verify the actual search response for that route/date.
     const originSelect = page.locator('[data-testid="origin-select"]');
-    await expect(originSelect.locator("option").first()).toBeAttached();
+    await expect(originSelect.locator('option[value="ATH"]')).toBeAttached();
+    await expect(page.locator('[data-testid="destination-select"] option[value="SKG"]')).toBeAttached();
     await originSelect.selectOption("ATH");
     await page.locator('[data-testid="destination-select"]').selectOption("SKG");
+    const travelDate = await page.getByTestId("travel-date-input").inputValue();
+    const searchResponsePromise = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        url.pathname.endsWith("/search/flights") &&
+        url.searchParams.get("origin") === "ATH" &&
+        url.searchParams.get("destination") === "SKG" &&
+        url.searchParams.get("travel_date") === travelDate
+      );
+    });
     await page.locator('[data-testid="search-flights-btn"]').click();
+    const searchResponse = await searchResponsePromise;
+    expect(searchResponse.ok(), `Flight search failed: HTTP ${searchResponse.status()}`).toBeTruthy();
+    const searchResults = await searchResponse.json();
+    expect(
+      searchResults.length,
+      `No flights returned for ATH-SKG on ${travelDate}`
+    ).toBeGreaterThan(0);
 
-    // 2. Select flight
-    const flightCard = page.locator('[data-testid^="flight-card-"]').first();
-    await expect(flightCard).toBeVisible({ timeout: 10000 });
+    // 3. Select flight
+    await expect(flightCard).toBeVisible({ timeout: 15000 });
     await page.locator('button[data-testid^="select-flight-"]').first().click();
 
     // 3. Passenger Details Form -> Confirm Booking without manual auth input
@@ -55,8 +77,13 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
     await expect(page.locator('[data-testid="error-banner"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="success-banner"]')).toContainText("confirmed");
 
-    // 5. Payment processing
+    // 5. Payment processing with synthetic demo card details
     await expect(page.locator('[data-testid="pay-btn"]')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("payment-cardholder").fill("QA Demo Passenger");
+    await page.getByTestId("payment-card-number").fill("4242 4242 4242 4242");
+    const now = new Date();
+    await page.getByTestId("payment-card-expiry").fill(`${String(now.getMonth() + 1).padStart(2, "0")}/${String((now.getFullYear() + 2) % 100).padStart(2, "0")}`);
+    await page.getByTestId("payment-card-cvc").fill("123");
     await page.locator('[data-testid="pay-btn"]').click();
 
     // 6. Verify receipt reached
