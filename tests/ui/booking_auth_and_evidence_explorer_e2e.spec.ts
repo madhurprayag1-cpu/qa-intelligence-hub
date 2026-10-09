@@ -55,8 +55,13 @@ test.describe("Booking Authorization & Test Evidence Explorer E2E", () => {
     await expect(page.locator('[data-testid="error-banner"]')).toHaveCount(0);
     await expect(page.locator('[data-testid="success-banner"]')).toContainText("confirmed");
 
-    // 5. Payment processing
+    // 5. Payment processing with synthetic demo card details
     await expect(page.locator('[data-testid="pay-btn"]')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("payment-cardholder").fill("QA Demo Passenger");
+    await page.getByTestId("payment-card-number").fill("4242 4242 4242 4242");
+    const now = new Date();
+    await page.getByTestId("payment-card-expiry").fill(`${String(now.getMonth() + 1).padStart(2, "0")}/${String((now.getFullYear() + 2) % 100).padStart(2, "0")}`);
+    await page.getByTestId("payment-card-cvc").fill("123");
     await page.locator('[data-testid="pay-btn"]').click();
 
     // 6. Verify receipt reached
