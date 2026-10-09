@@ -257,8 +257,14 @@ export function App() {
       .then((data) => {
         setAirports(data);
         if (data.length > 1) {
-          setOrigin(data[0].code);
-          setDestination(data[1].code);
+          // Keep the valid default/current selection. Unconditionally resetting
+          // these values when the async airport request resolves can overwrite
+          // a route selected by the user while the request was in flight.
+          const airportCodes = new Set(data.map((airport) => airport.code));
+          setOrigin((current) => (airportCodes.has(current) ? current : data[0].code));
+          setDestination((current) =>
+            airportCodes.has(current) ? current : data.find((airport) => airport.code !== origin)?.code ?? data[1].code
+          );
         }
       })
       .catch((err) => setError(err.message));
