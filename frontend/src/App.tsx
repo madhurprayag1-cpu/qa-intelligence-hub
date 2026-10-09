@@ -134,6 +134,15 @@ export function App() {
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("CREDIT_CARD_3DS");
   const [threeDsResult, setThreeDsResult] = useState<ThreeDSStatus>("SUCCESS");
+  const [cardholderName, setCardholderName] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+  const [upiId, setUpiId] = useState("");
+  const [walletProvider, setWalletProvider] = useState("Demo Wallet");
+  const [walletAccount, setWalletAccount] = useState("");
+  const [easyPayPhone, setEasyPayPhone] = useState("");
+  const [cashConfirmed, setCashConfirmed] = useState(false);
   const [paymentResult, setPaymentResult] = useState<PaymentResponse | null>(null);
 
   // Lookup tab
