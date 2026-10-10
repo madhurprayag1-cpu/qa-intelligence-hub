@@ -16,7 +16,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 >
 > **Evidence-count note**: CI test totals, the capability catalog, and stored Test Explorer snapshots are separate evidence sources and can differ by revision. Do not compare or present their counts as interchangeable; use the revision-bound CI artifacts and live API evidence for current certification.
 >
-> **Portfolio Architecture****: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
+> **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
 ---
 
@@ -61,7 +61,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
        ▼                                                                     ▼
 ┌──────────────────────────────┐                       ┌──────────────────────────────┐
 │  Single Pane React 19 UI     │                       │     GitHub Actions CI/CD     │
-│  - SUT Aviation Booking      │                       │  - 522 Current CI Test Items │
+│  - SUT Aviation Booking      │                       │  - Revision-Bound CI Checks   │
 │  - AI Evaluation & RAG Lab   │                       │  - PostgreSQL Service Cont.  │
 │  - DAST Security Auditor     │                       │  - Strict Gate Step Summary  │
 │  - Test Runner & Impact Sim  │                       │  - Playwright E2E Headless   │
@@ -98,7 +98,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The platform organizes validation across 11 architecture layers. Current revision-bound CI evidence is **442 backend tests + 80 Playwright E2E tests = 522 test items**. The capability/evidence explorer exposes **492 capabilities**, while the production Test Explorer endpoint currently serves a stored **426-test execution snapshot** at 100% pass. These are distinct evidence models and must not be treated as the same counter:
+The platform organizes validation across 11 architecture layers. Historical CI run #59 recorded **442 backend tests + 80 Playwright E2E tests = 522 test items** for its own revision. The capability catalog and stored Test Explorer snapshots are separate evidence models; their historical counts (including 492 catalog capabilities and a 426-test snapshot) must not be presented as current results or treated as interchangeable. For the latest revision, use the linked revision-bound CI run and its artifacts:
 
 ```
 tests/
@@ -190,7 +190,7 @@ Current production certification evidence:
 
 Exact serving/deployment identifiers are intentionally kept as externally verified release evidence rather than self-referential README claims, because a documentation-only commit itself creates a new Vercel deployment revision.
 
-Read-only production smoke verification covered the health endpoint, serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status.
+Historical read-only production smoke verification covered the health endpoint, serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status. These historical checks are not evidence of a fresh live smoke run for the latest deployment.
 
 Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the authoritative current topology.
 
