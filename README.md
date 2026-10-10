@@ -12,9 +12,11 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Current verified validation snapshot (2026-10-08)**: Main CI run #59 for 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a passed with **442 backend tests + 80 Playwright E2E tests = 522 current CI test items**. The capability catalog contains **492 capabilities**. Production Test Explorer currently serves a stored evidence snapshot of **426/426 PASS**, with Healthcare **21/21 PASS**.
-
-> **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
+> **Latest revision-bound CI verification (2026-10-09)**: GitHub Actions run [#88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) completed successfully for main commit `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed. The matching Vercel production deployment is READY for the same commit. This confirms CI and deployment metadata; it does **not** substitute for a fresh live serving-revision/API smoke check.
+>
+> **Evidence-count note**: CI test totals, the capability catalog, and stored Test Explorer snapshots are separate evidence sources and can differ by revision. Do not compare or present their counts as interchangeable; use the revision-bound CI artifacts and live API evidence for current certification.
+>
+> **Portfolio Architecture****: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
 ---
 
@@ -180,13 +182,10 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 Current production certification evidence:
 
-- **Certified application code baseline SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`
-- **GitHub Actions run #59:** PASSED — 442 backend + 80 Playwright E2E test items
-- **Final CI revalidation run #63:** PASSED
-- **Production serving revision:** verified externally from `/qa/release/serving-revision` and the Vercel production deployment state
-- **Production Test Explorer snapshot:** 426/426 PASS; Healthcare 21/21 PASS
-- **Open production incidents:** 0
-- **Vercel runtime errors:** 0 in the final selected verification window
+- **Latest main commit:** `d4b53ef3cacbeb756703b6da8a5ada44a822eba0` (PR #18 payment-form changes).
+- **Latest CI evidence:** [GitHub Actions run #88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) — backend, frontend, E2E, and checkpoint jobs all completed successfully for that commit.
+- **Vercel production deployment:** [Deployment details](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2HPBjoQvuHeXReMCysVzUuHUYeoB), state READY, Git SHA `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`.
+- **Live serving revision:** Must be verified at `/qa/release/serving-revision` before making a fresh production certification claim; this README update does not assert a live endpoint check.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK` (no live Gemini/Claude/OpenAI provider configured)
 
 Exact serving/deployment identifiers are intentionally kept as externally verified release evidence rather than self-referential README claims, because a documentation-only commit itself creates a new Vercel deployment revision.
