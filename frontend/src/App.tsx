@@ -3033,7 +3033,12 @@ export function App() {
                           fontSize: "13px",
                         }}
                       >
-                        <option value="all">⚡ All 9 Layers (152 Tests Complete Suite)</option>
+                        <option value="all">
+                          ⚡ All {qaLayers.length || 9} Layers (
+                          {qaLayers.length > 0
+                            ? qaLayers.reduce((total, layer) => total + layer.test_count, 0)
+                            : 140} Tests Complete Suite)
+                        </option>
                         {qaLayers.length > 0 ? (
                           qaLayers.map((l) => (
                             <option key={l.id} value={l.id}>
