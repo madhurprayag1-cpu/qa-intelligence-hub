@@ -26,6 +26,22 @@ def test_get_qa_layers(client: TestClient):
         assert el in layer_ids
 
 
+def test_get_qa_layers_include_all_catalog_layers(client: TestClient):
+    """The explicit catalog view exposes all 11 layers and labels capability counts."""
+    resp = client.get("/qa/layers?include_all=true")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total_layers"] == 11
+    assert data["total_capabilities"] == data["total_tests"]
+    assert data["total_capabilities"] == sum(layer["test_count"] for layer in data["layers"])
+    layer_ids = [layer["id"] for layer in data["layers"]]
+    assert layer_ids == [
+        "database", "regression", "contract", "unit", "api", "security",
+        "ai", "agents", "domain", "ui", "performance",
+    ]
+
+
 def test_calculate_regression_impact_preset(client: TestClient):
     """Verify calculating test impact using preset PR diff."""
     payload = {"preset": "PAYMENTS_3DS"}
