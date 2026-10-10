@@ -252,7 +252,7 @@
   - [x] **Task 11.2**: Structured Evidence Engine (`qa-engine/evidence_engine.py`) parsing JUnit XML and Playwright telemetry into normalized evidence records saved to `.qa/evidence/latest_evidence.json`.
   - [x] **Task 11.3**: Master Agent Orchestrator (`qa-engine/orchestrator.py`) coordinating Discovery, Planning, Test Execution, Security Audit, Auto-Repair, Evidence Collection, and PRODUCTION_STRICT Quality Gate evaluation.
   - [x] **Task 11.4**: 10-Dimensional AI/RAG Evaluation Suite (`ai-engine/rag_dataset.py`, `tests/ai/test_rag_comprehensive_audit.py`) auditing retrieval precision, context grounding, hallucination resistance, adversarial safety, and truthful refusal.
-  - [x] **Task 11.5**: Dynamic Backend Test Explorer Endpoints (`backend/app/routers/qa.py`) exposing `/qa/catalog`, `/qa/catalog/summary`, `/qa/evidence/latest`, `/qa/orchestrator/run`, and dynamic 11-layer `/qa/layers`.
+  - [x] **Task 11.5**: Dynamic Backend Test Explorer Endpoints (`backend/app/routers/qa.py`) exposing `/qa/catalog`, `/qa/catalog/summary`, `/qa/evidence/latest`, `/qa/orchestrator/run`, and the 11-layer catalog view at `/qa/layers?include_all=true` (the default `/qa/layers` remains the 9-layer test-runner view).
   - [x] **Task 11.6**: Frontend Test Explorer & Live Telemetry Integration (`frontend/src/App.tsx`, `frontend/src/api.ts`) eliminating hardcoded test counters and embedding the interactive Capability Catalog & Evidence Explorer.
 * **Acceptance Criteria**:
   - 100% automated pass across all 415 Pytest backend tests and 60 Playwright E2E tests (475 total).
