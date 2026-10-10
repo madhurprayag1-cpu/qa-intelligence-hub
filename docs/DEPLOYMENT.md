@@ -6,29 +6,27 @@ This guide documents the deployment architectures, configuration requirements, a
 
 ## 1. Architecture & Deployment Topologies
 
+### Active production topology: unified Vercel + Neon
+
+The current production configuration serves the React/Vite frontend and FastAPI serverless API from the **same Vercel project and origin**, with Neon PostgreSQL as the managed database. The root `vercel.json` defines the frontend routing and API function.
+
 ```
-┌────────────────────────────────────────────────────────┐
-│                   Target: Public Cloud                 │
-├───────────────────────────┬────────────────────────────┤
-│  Frontend (Vercel)        │  Backend API (Render /     │
-│  - React 19 + Vite        │  Railway / Fly.io / AWS)   │
-│  - SPA rewrite rules      │  - FastAPI ASGI app        │
-│  - Static CDN Edge        │  - QA Engine + AI Engine   │
-└─────────────┬─────────────┴──────────────┬─────────────┘
-              │ HTTPS                      │ psycopg3
-              ▼                            ▼
-┌───────────────────────────┐ ┌──────────────────────────┐
-│ End-User Browser / SDET   │ │ Managed PostgreSQL 18    │
-│ Single Pane Dashboard     │ │ (Neon / Supabase / RDS)  │
-└───────────────────────────┘ └──────────────────────────┘
+Browser
+  │ HTTPS — same origin
+  ▼
+Vercel project: qa-intelligence-hub
+  ├── React 19 + Vite SPA (CDN)
+  └── FastAPI serverless function (api/index.py)
+           │
+           ▼
+      Neon PostgreSQL
 ```
 
-The system is decoupled into three tiers:
-1. **Frontend**: Static single-page application built with Vite + TypeScript + React. Hosted on Vercel with global CDN caching.
-2. **Backend**: Containerized ASGI service running FastAPI, SQLAlchemy 2.0 ORM, and specialist AI agents.
-3. **Database**: PostgreSQL 18 instance storing flights, seat inventories, bookings, audit records, defect injection toggles, RAG document vectors, and quality gate histories.
+1. **Frontend**: React + TypeScript + Vite, built into `frontend/dist` and served by Vercel.
+2. **Backend**: FastAPI serverless entry point at `api/index.py`, with application modules from `backend/`, `qa-engine/`, and `ai-engine/`.
+3. **Database**: Managed Neon PostgreSQL, configured through Vercel environment variables and migrated through Alembic.
 
----
+The local Docker Compose topology described below is a separate developer/demo option; it is not the production topology.
 
 ## 2. Option A: Full-Stack Local Docker Compose
 
