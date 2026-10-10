@@ -228,9 +228,13 @@ def get_test_layers(include_all: bool = False):
                 {"id": "ui", "name": "Playwright UI & E2E", "path": "tests/ui/", "test_count": by_layer.get("UI_E2E", 66), "description": "Playwright browser automation: bookings, payment flows, self-healing, multi-domain E2E journeys", "layer_type": "End-to-End UI"},
                 {"id": "performance", "name": "Performance Benchmarks", "path": "tests/performance/", "test_count": by_layer.get("PERFORMANCE", 6), "description": "Latency percentiles (p95 < 250ms), concurrent load throughput, and observability overhead", "layer_type": "Performance SLA"},
             ]
+            total_capabilities = sum(l["test_count"] for l in full_layers)
             return {
                 "total_layers": len(full_layers),
-                "total_tests": sum(l["test_count"] for l in full_layers),
+                # Keep total_tests as a compatibility alias; these values are
+                # cataloged capabilities, not a single CI execution's test count.
+                "total_tests": total_capabilities,
+                "total_capabilities": total_capabilities,
                 "layers": full_layers,
             }
     total_tests = sum(l["test_count"] for l in TEST_LAYERS)

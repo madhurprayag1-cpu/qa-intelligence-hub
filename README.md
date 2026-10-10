@@ -12,8 +12,12 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Current verified validation snapshot (2026-10-08)**: Main CI run #59 for 5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a passed with **442 backend tests + 80 Playwright E2E tests = 522 current CI test items**. The capability catalog contains **492 capabilities**. Production Test Explorer currently serves a stored evidence snapshot of **426/426 PASS**, with Healthcare **21/21 PASS**.
+> **Pre-audit application baseline — revision-bound CI verification (2026-10-09)**: GitHub Actions run [#88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) completed successfully for main commit `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed. The matching Vercel production deployment is READY for the same commit. This confirms CI and deployment metadata; it does **not** substitute for a fresh live serving-revision/API smoke check.
+>
+> **Evidence-count note**: CI test totals, the capability catalog, and stored Test Explorer snapshots are separate evidence sources and can differ by revision. Do not compare or present their counts as interchangeable; use the revision-bound CI artifacts and live API evidence for current certification.
 
+> **Read-only production smoke (2026-10-10, main SHA `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`)**: `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog`, `/qa/catalog/summary`, `/qa/tests`, `/qa/runs`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, `/flights`, `/airports`, and `/qa/ai/providers/status` returned HTTP 200. The serving-revision endpoint reported the same SHA as the production deployment. The default `/qa/layers` is the 9-layer test-runner view; `/qa/layers?include_all=true` is the 11-layer catalog view. Runtime metrics are process-instance scoped, and AI is explicitly `HERMETIC_OFFLINE_MOCK`. This smoke snapshot applies to the stated SHA, not to later PR changes.
+>
 > **Portfolio Architecture**: **Reusable QA Platform Core + Pluggable Multi-Domain Packs**. Five industry domain packs (Airline/NDC, Healthcare/FHIR, FinTech/Banking, E-Commerce/Retail, and Telecom/5G Mobile) operate as distinct, isolated domain plugins under a unified test harness without modifying the platform core. Features dynamic runtime domain selection via `QA_DOMAIN` and an automated end-to-end Portfolio Demonstration CLI (`qa-engine/portfolio_demo.py`). All test data, schemas, and workflows are 100% synthetic public standards; zero proprietary employer data.
 
 ---
@@ -59,7 +63,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
        ▼                                                                     ▼
 ┌──────────────────────────────┐                       ┌──────────────────────────────┐
 │  Single Pane React 19 UI     │                       │     GitHub Actions CI/CD     │
-│  - SUT Aviation Booking      │                       │  - 522 Current CI Test Items │
+│  - SUT Aviation Booking      │                       │  - Revision-Bound CI Checks   │
 │  - AI Evaluation & RAG Lab   │                       │  - PostgreSQL Service Cont.  │
 │  - DAST Security Auditor     │                       │  - Strict Gate Step Summary  │
 │  - Test Runner & Impact Sim  │                       │  - Playwright E2E Headless   │
@@ -96,7 +100,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The platform organizes validation across 11 architecture layers. Current revision-bound CI evidence is **442 backend tests + 80 Playwright E2E tests = 522 test items**. The capability/evidence explorer exposes **492 capabilities**, while the production Test Explorer endpoint currently serves a stored **426-test execution snapshot** at 100% pass. These are distinct evidence models and must not be treated as the same counter:
+The platform organizes validation across 11 architecture layers. Historical CI run #59 recorded **442 backend tests + 80 Playwright E2E tests = 522 test items** for its own revision. The capability catalog and stored Test Explorer snapshots are separate evidence models; their historical counts (including 492 catalog capabilities and a 426-test snapshot) must not be presented as current results or treated as interchangeable. For the latest revision, use the linked revision-bound CI run and its artifacts:
 
 ```
 tests/
@@ -180,18 +184,15 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 Current production certification evidence:
 
-- **Certified application code baseline SHA:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`
-- **GitHub Actions run #59:** PASSED — 442 backend + 80 Playwright E2E test items
-- **Final CI revalidation run #63:** PASSED
-- **Production serving revision:** verified externally from `/qa/release/serving-revision` and the Vercel production deployment state
-- **Production Test Explorer snapshot:** 426/426 PASS; Healthcare 21/21 PASS
-- **Open production incidents:** 0
-- **Vercel runtime errors:** 0 in the final selected verification window
+- **Pre-audit application baseline:** `d4b53ef3cacbeb756703b6da8a5ada44a822eba0` (PR #18 payment-form changes).
+- **Baseline CI evidence:** [GitHub Actions run #88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) — backend, frontend, E2E, and checkpoint jobs all completed successfully for that commit.
+- **Baseline production deployment (before audit fixes):** [Deployment details](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2HPBjoQvuHeXReMCysVzUuHUYeoB), state READY, Git SHA `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`.
+- **Live serving revision:** Must be verified at `/qa/release/serving-revision` before making a fresh production certification claim; this README update does not assert a live endpoint check.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK` (no live Gemini/Claude/OpenAI provider configured)
 
 Exact serving/deployment identifiers are intentionally kept as externally verified release evidence rather than self-referential README claims, because a documentation-only commit itself creates a new Vercel deployment revision.
 
-Read-only production smoke verification covered the health endpoint, serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status.
+Historical read-only production smoke verification covered the health endpoint, serving-revision endpoint, Test Explorer, run explorer, incident listing, flights, flight search, airports, QA layers, Swagger docs, OpenAPI, runtime metrics, and AI-provider status. These historical checks are not evidence of a fresh live smoke run for the latest deployment.
 
 Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the authoritative current topology.
 
