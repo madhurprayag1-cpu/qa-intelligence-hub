@@ -106,22 +106,35 @@ Deploy both the Vite React SPA frontend and the FastAPI Python serverless backen
 
 ## 5. Post-Deployment Smoke Verification
 
-After deployment, run the automated verification sequence against the public URL:
+### Production: read-only HTTP smoke checks
+
+Use the canonical production alias and only GET requests. These checks must not create bookings, execute payments, write quality-gate history, or mutate production data.
 
 ```bash
-# 1. Healthcheck
-curl -s https://<backend-url>/health | jq .
+BASE_URL="https://qa-intelligence-hub-flax.vercel.app"
 
-# 2. SUT Flight Inventory Verification
-curl -s https://<backend-url>/airports | jq .
+curl --fail --silent --show-error "$BASE_URL/" >/dev/null
+curl --fail --silent --show-error "$BASE_URL/health" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/release/serving-revision" | jq .
+curl --fail --silent --show-error "$BASE_URL/openapi.json" | jq -e '.openapi == "3.1.0"'
+curl --fail --silent --show-error "$BASE_URL/qa/catalog/summary" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/layers" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/layers?include_all=true" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/ai/providers/status" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/runtime/metrics" | jq .
+curl --fail --silent --show-error "$BASE_URL/qa/production/incidents?status=OPEN" | jq .
+curl --fail --silent --show-error "$BASE_URL/airports" | jq .
+curl --fail --silent --show-error "$BASE_URL/flights" | jq .
+```
 
-# 3. Quality Gate Evaluation
-curl -s -X POST https://<backend-url>/quality-gate/evaluate \
-  -H "Content-Type: application/json" \
-  -d '{"test_pass_rate": 0.98, "critical_defects": 0, "security_findings": 0, "rag_score": 0.92}' | jq .
+Compare `serving_sha` from `/qa/release/serving-revision` with the exact Git SHA for the production Vercel deployment. A READY deployment alone is not sufficient for certification. Record the endpoint status codes, serving SHA, deployment ID, and smoke timestamp. Runtime metrics are process-instance scoped, not durable monitoring.
 
-# 4. End-to-End UI Verification (Playwright)
-BASE_URL=https://<frontend-url> npx playwright test tests/ui/qa_platform_e2e.spec.ts
+### End-to-end verification: isolated test environment only
+
+Run Playwright E2E and any POST/PUT/DELETE workflow tests against the CI database, local Docker environment, or a dedicated staging environment—not production. The production smoke sequence must remain read-only.
+
+```bash
+BASE_URL="http://127.0.0.1:8000" npx playwright test tests/ui/qa_platform_e2e.spec.ts
 ```
 
 ---
