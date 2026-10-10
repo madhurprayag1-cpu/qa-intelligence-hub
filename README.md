@@ -12,7 +12,7 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Latest revision-bound CI verification (2026-10-09)**: GitHub Actions run [#88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) completed successfully for main commit `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed. The matching Vercel production deployment is READY for the same commit. This confirms CI and deployment metadata; it does **not** substitute for a fresh live serving-revision/API smoke check.
+> **Pre-audit application baseline — revision-bound CI verification (2026-10-09)**: GitHub Actions run [#88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) completed successfully for main commit `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed. The matching Vercel production deployment is READY for the same commit. This confirms CI and deployment metadata; it does **not** substitute for a fresh live serving-revision/API smoke check.
 >
 > **Evidence-count note**: CI test totals, the capability catalog, and stored Test Explorer snapshots are separate evidence sources and can differ by revision. Do not compare or present their counts as interchangeable; use the revision-bound CI artifacts and live API evidence for current certification.
 
@@ -184,9 +184,9 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 Current production certification evidence:
 
-- **Latest main commit:** `d4b53ef3cacbeb756703b6da8a5ada44a822eba0` (PR #18 payment-form changes).
-- **Latest CI evidence:** [GitHub Actions run #88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) — backend, frontend, E2E, and checkpoint jobs all completed successfully for that commit.
-- **Vercel production deployment:** [Deployment details](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2HPBjoQvuHeXReMCysVzUuHUYeoB), state READY, Git SHA `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`.
+- **Pre-audit application baseline:** `d4b53ef3cacbeb756703b6da8a5ada44a822eba0` (PR #18 payment-form changes).
+- **Baseline CI evidence:** [GitHub Actions run #88](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/37943142267) — backend, frontend, E2E, and checkpoint jobs all completed successfully for that commit.
+- **Baseline production deployment (before audit fixes):** [Deployment details](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2HPBjoQvuHeXReMCysVzUuHUYeoB), state READY, Git SHA `d4b53ef3cacbeb756703b6da8a5ada44a822eba0`.
 - **Live serving revision:** Must be verified at `/qa/release/serving-revision` before making a fresh production certification claim; this README update does not assert a live endpoint check.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK` (no live Gemini/Claude/OpenAI provider configured)
 
