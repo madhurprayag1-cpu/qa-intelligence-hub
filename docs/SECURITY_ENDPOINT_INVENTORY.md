@@ -114,7 +114,8 @@
 
 ## Controls implemented on the hardening branch
 
-- Production writes fail closed except for the exact non-persistent public POST allowlist above.
+- Production and Vercel Preview writes fail closed except for the exact non-persistent public POST allowlist above.
+- Runtime additive DDL is skipped in Vercel Preview and Production; schema changes must run through controlled migrations, important because Preview may share the configured database URL.
 - Sensitive booking, payment, healthcare, fintech, ecommerce, telecom, requirement, incident, and runtime-metric reads are denied anonymously.
 - Production identity resolution requires a valid bearer token; caller-supplied role and user-ID headers are not trusted.
 - Intentional defect injection is disabled in production.
