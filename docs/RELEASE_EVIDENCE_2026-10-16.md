@@ -22,7 +22,7 @@
 
 The following endpoints returned HTTP 200: `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN`.
 
-The live serving-revision endpoint returned `5779a51686f7a73f1d5d479b74b7bf68d0728d92`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
+The live serving-revision endpoint returned `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
 
 ## Count reconciliation
 
