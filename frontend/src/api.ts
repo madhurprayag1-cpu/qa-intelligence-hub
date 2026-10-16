@@ -1363,6 +1363,13 @@ export interface QATestListResponse {
   skipped: number;
   blocked: number;
   items: QATestItem[];
+  evidence_freshness?: {
+    status: "CURRENT_REVISION" | "HISTORICAL_REVISION" | "UNKNOWN" | string;
+    snapshot_commit_sha?: string | null;
+    serving_commit_sha?: string | null;
+    snapshot_timestamp?: string | null;
+    message: string;
+  };
 }
 
 export interface QARunSummary {

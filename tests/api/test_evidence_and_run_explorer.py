@@ -45,6 +45,12 @@ def test_list_tests_endpoint_with_status_filtering(client: TestClient):
     assert "tests" in all_data
     assert all_data["total"] > 0
     assert "passed_count" in all_data
+    freshness = all_data.get("evidence_freshness")
+    assert isinstance(freshness, dict)
+    assert freshness.get("status") in {"CURRENT_REVISION", "HISTORICAL_REVISION", "UNKNOWN"}
+    assert "snapshot_commit_sha" in freshness
+    assert "serving_commit_sha" in freshness
+    assert freshness.get("message")
 
     # PASSED tests only
     passed_resp = client.get("/qa/tests?status=PASSED&limit=20")

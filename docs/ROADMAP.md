@@ -248,19 +248,19 @@
 * **Objective**: Execute Master Autonomous Execution Contract transitioning the platform into a self-orchestrating, fully audited quality engineering system with master capability inventory, structured run evidence, and closed-loop orchestration.
 * **Prerequisites**: Phase 1B complete, Python 3.14+, Pytest 9.1+, React 19 Frontend.
 * **Implementation Tasks**:
-  - [x] **Task 11.1**: Master Capability Inventory (`qa-engine/catalog_manager.py`) extracting and classifying all 475 automated capabilities across 11 architecture layers and 5 domain packs into canonical JSON catalogs (`tests/catalog/master_catalog.json`).
+  - [x] **Task 11.1**: Master Capability Inventory (`qa-engine/catalog_manager.py`) extracting and classifying the historical 475-capability baseline; the current canonical catalog contains 492 capabilities across 11 architecture layers and 5 domain packs into canonical JSON catalogs (`tests/catalog/master_catalog.json`).
   - [x] **Task 11.2**: Structured Evidence Engine (`qa-engine/evidence_engine.py`) parsing JUnit XML and Playwright telemetry into normalized evidence records saved to `.qa/evidence/latest_evidence.json`.
   - [x] **Task 11.3**: Master Agent Orchestrator (`qa-engine/orchestrator.py`) coordinating Discovery, Planning, Test Execution, Security Audit, Auto-Repair, Evidence Collection, and PRODUCTION_STRICT Quality Gate evaluation.
   - [x] **Task 11.4**: 10-Dimensional AI/RAG Evaluation Suite (`ai-engine/rag_dataset.py`, `tests/ai/test_rag_comprehensive_audit.py`) auditing retrieval precision, context grounding, hallucination resistance, adversarial safety, and truthful refusal.
   - [x] **Task 11.5**: Dynamic Backend Test Explorer Endpoints (`backend/app/routers/qa.py`) exposing `/qa/catalog`, `/qa/catalog/summary`, `/qa/evidence/latest`, `/qa/orchestrator/run`, and the 11-layer catalog view at `/qa/layers?include_all=true` (the default `/qa/layers` remains the 9-layer test-runner view).
   - [x] **Task 11.6**: Frontend Test Explorer & Live Telemetry Integration (`frontend/src/App.tsx`, `frontend/src/api.ts`) eliminating hardcoded test counters and embedding the interactive Capability Catalog & Evidence Explorer.
 * **Acceptance Criteria**:
-  - 100% automated pass across all 415 Pytest backend tests and 60 Playwright E2E tests (475 total).
+  - Historical Phase 11 baseline: 415 Pytest backend tests + 60 Playwright E2E tests (475 execution items). Current verified CI baseline is recorded in the canonical checkpoint section below.
   - DAST security scan passes with status SECURE (100% compliance rate).
   - Master Agent Orchestrator closed-loop evaluates to `PRODUCTION_READY` in under 18s.
   - Frontend TypeScript build compiles with zero errors or warnings.
 * **Required Tests**: `tests/api/test_qa_platform.py`, `tests/ai/test_rag_comprehensive_audit.py`, full Pytest suite (415 tests), Playwright suite (60 tests).
-* **Definition of Done**: All 475 capabilities cataloged with structured execution evidence, orchestrator verified, frontend integrated, and production quality gate passed.
+* **Definition of Done**: The catalog and evidence explorer were implemented; the historical 475 count is not the current catalog size. Current catalog count is 492, while the stored 426-test Test Explorer run remains historical.
 * **Checkpoint**: COMPLETE.
 * **Evidence**: Phase 11 Master Autonomous Execution (Run ID: `RUN-AUTO-20261006-172244`, status: `PRODUCTION_READY`).
 
@@ -268,18 +268,20 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-08 (Final Production-Grade Sign-Off)
+### Canonical Project State — 2026-10-16 (Verified deployed baseline; final evidence synchronization in progress)
 
-* **Certified application code baseline:** `5acd4f52cb5bb8d3ee0f09c4a272d1168e91d93a`.
-* **Certification CI:** Main CI run #59 passed for the certified application baseline. Backend executed 442 tests and Playwright executed 80 tests, for 522 CI test items.
-* **Final CI revalidation:** Main CI run #63 also completed successfully after the documentation/governance synchronization. Frontend, backend, E2E, and checkpoint jobs all passed.
-* **Production verification policy:** The active Vercel deployment and serving SHA are verified externally from the live `GET /qa/release/serving-revision` endpoint and the Vercel production deployment state. Exact serving/deployment identifiers are deliberately not self-asserted here because any documentation-only commit creates a new deployment revision.
-* **Production smoke:** `/health`, `/qa/tests`, filtered Test Explorer, `/qa/runs`, `/flights`, `/search/flights`, `/airports`, `/qa/layers`, `/docs`, `/openapi.json`, `/qa/runtime/metrics`, `/qa/production/incidents?status=OPEN`, and `/qa/ai/providers/status` returned successful responses in the final live verification.
-* **Test Explorer production evidence:** Stored run `RUN-AUTO-20261007-115444` returned 426/426 PASS with 0 FAIL; Healthcare filtering returned 21/21 PASS. This stored evidence is distinct from the 492-capability catalog and the 522 current CI test items.
-* **Runtime diagnostics:** No Vercel runtime errors were found in the final selected verification window; process-scoped telemetry reported 0 observed 5xx errors.
-* **Database lifecycle hardening:** Requirement/observation/incident lifecycle tables are provisioned through Alembic with an idempotent additive runtime safety net; unknown requirement lookup returns clean HTTP 404 instead of a database-table error.
-* **AI mode:** Production remains explicitly `HERMETIC_OFFLINE_MOCK`; no live LLM provider is claimed by this certification.
-* **Final project state:** **PRODUCTION_READY** for the implemented production scope.
+* **Verified code-bearing main baseline:** `5779a51686f7a73f1d5d479b74b7bf68d0728d92`.
+* **Revision-bound CI run:** [GitHub Actions run #38038639739](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38038639739) passed all required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
+* **Executed tests:** 447/447 Pytest backend tests passed and 82/82 Playwright E2E tests passed (529 CI test items, 100% pass, 0 failed/skipped in the reported suites).
+* **Quality/security evidence:** Backend and E2E `PRODUCTION_STRICT` gates APPROVED. DAST reported 5/5 probes passed, 0 vulnerabilities, 0 PCI DSS violations, and 100% compliance.
+* **Current catalog:** 492 capabilities across 11 catalog layers. This is a capability inventory count, not a test-execution count.
+* **Test Explorer snapshot:** `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. This remains historical and is not represented as the current CI execution. The live Test Explorer's underlying snapshot still needs a safe, authoritative refresh path; do not invoke the synthetic `/qa/test-runner/execute` endpoint as real test evidence.
+* **Production deployment:** Vercel deployment [2v2J4XBzqPg1XpaQgsjnMFfSzp4y](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2v2J4XBzqPg1XpaQgsjnMFfSzp4y) is READY for the same SHA.
+* **Live serving revision:** Rechecked 2026-10-16; `/qa/release/serving-revision` returned the same SHA as the production deployment.
+* **Live smoke:** Read-only checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: 0.
+* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the current portfolio deployment. Live Gemini/Claude/OpenAI calls are **not** a release requirement for the current scope and are **not** claimed as tested; adding live-provider integration is a separate opt-in milestone.
+* **Release status:** The deployed baseline is operational and its stated CI evidence is green. A new PR CI run is required for the final evidence/documentation synchronization. Final sign-off must remain blocked until that run passes, the merged revision is deployed and serving-SHA verified, and Test Explorer freshness is either corrected with genuine revision-bound results or explicitly surfaced as historical in the UI.
+
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
 The implemented final production-grade lifecycle scope is complete and is governed by the canonical checkpoint evidence and production verification policy above.
