@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 from app.core.auth import get_current_domain_user
 from app.core.config import settings
-from app.core.production_safety import ProductionSafetyMiddleware
+from app.core.production_safety import ProductionSafetyMiddleware, is_production_runtime
 
 
 @pytest.fixture
@@ -116,3 +116,8 @@ def test_security_headers_are_set_on_public_responses(client, production_mode):
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "no-referrer"
+
+def test_vercel_preview_uses_production_safety_policy(monkeypatch):
+    monkeypatch.setattr(settings, "environment", "development")
+    monkeypatch.setenv("VERCEL_ENV", "preview")
+    assert is_production_runtime()
