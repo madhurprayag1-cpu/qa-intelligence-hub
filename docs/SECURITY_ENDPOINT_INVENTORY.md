@@ -116,6 +116,7 @@
 
 - Production and Vercel Preview writes fail closed except for the exact non-persistent public POST allowlist above.
 - Runtime additive DDL is skipped in Vercel Preview and Production; schema changes must run through controlled migrations, important because Preview may share the configured database URL.
+- The security PR preview has branch-scoped `ENVIRONMENT=production` and its own sensitive `JWT_SECRET`; the production JWT secret is not copied to Preview.
 - Sensitive booking, payment, healthcare, fintech, ecommerce, telecom, requirement, incident, and runtime-metric reads are denied anonymously.
 - Production identity resolution requires a valid bearer token; caller-supplied role and user-ID headers are not trusted.
 - Intentional defect injection is disabled in production.
