@@ -121,3 +121,7 @@ def test_vercel_preview_uses_production_safety_policy(monkeypatch):
     monkeypatch.setattr(settings, "environment", "development")
     monkeypatch.setenv("VERCEL_ENV", "preview")
     assert is_production_runtime()
+
+def test_head_requests_do_not_probe_sensitive_records(client, production_mode):
+    response = client.head("/healthcare/patients")
+    assert response.status_code == 404
