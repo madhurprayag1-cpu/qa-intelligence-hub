@@ -125,4 +125,4 @@
 
 ## Remaining deployment gate
 
-The app-level limiter is not a distributed rate limiter. Before production release, inspect the active Vercel Firewall configuration and add/verify edge-level rate limits and managed protections in a separately reviewed deployment change. This branch does not modify production infrastructure or database contents.
+The app-level limiter is not a distributed rate limiter. The read-only Vercel Firewall configuration lookup returned `404: Seawall Config not found`, so active edge-level rate-limit rules could not be verified. Before production release, configure and verify Vercel Firewall edge-level rate limits and managed protections in a separately reviewed infrastructure change. This branch does not modify production infrastructure or database contents.
