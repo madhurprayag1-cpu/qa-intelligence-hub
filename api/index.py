@@ -26,6 +26,23 @@ for _base in [_ROOT, _CWD, _FILE_DIR]:
         if _cand.exists() and _p_str not in sys.path:
             sys.path.insert(0, _p_str)
 
+def _bootstrap_failure_response() -> JSONResponse:
+    """Return a generic bootstrap failure without exposing diagnostic internals."""
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": "Service temporarily unavailable.",
+            "error_code": "APP_INITIALIZATION_FAILED",
+        },
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "X-Frame-Options": "DENY",
+            "Referrer-Policy": "no-referrer",
+        },
+    )
+
+
 try:
     from app.main import app as _real_app
     app = _real_app
@@ -39,16 +56,4 @@ except Exception:
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
     async def _safe_initialization_failure(path: str):
-        return JSONResponse(
-            status_code=503,
-            content={
-                "detail": "Service temporarily unavailable.",
-                "error_code": "APP_INITIALIZATION_FAILED",
-            },
-            headers={
-                "Cache-Control": "no-store",
-                "X-Content-Type-Options": "nosniff",
-                "X-Frame-Options": "DENY",
-                "Referrer-Policy": "no-referrer",
-            },
-        )
+        return _bootstrap_failure_response()
