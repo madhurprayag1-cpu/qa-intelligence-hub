@@ -268,19 +268,19 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-16 (Verified deployed baseline; final evidence synchronization in progress)
+### Canonical Project State — 2026-10-16 (Final release verification)
 
-* **Verified code-bearing main baseline:** `5779a51686f7a73f1d5d479b74b7bf68d0728d92`.
-* **Revision-bound CI run:** [GitHub Actions run #38038639739](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38038639739) passed all required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
-* **Executed tests:** 447/447 Pytest backend tests passed and 82/82 Playwright E2E tests passed (529 CI test items, 100% pass, 0 failed/skipped in the reported suites).
+* **Verified release baseline:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
+* **Revision-bound main CI:** [GitHub Actions run #38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
+* **Executed tests:** 447/447 Pytest backend tests passed and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass in both suites).
 * **Quality/security evidence:** Backend and E2E `PRODUCTION_STRICT` gates APPROVED. DAST reported 5/5 probes passed, 0 vulnerabilities, 0 PCI DSS violations, and 100% compliance.
 * **Current catalog:** 492 capabilities across 11 catalog layers. This is a capability inventory count, not a test-execution count.
-* **Test Explorer snapshot:** `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. This remains historical and is not represented as the current CI execution. The live Test Explorer's underlying snapshot still needs a safe, authoritative refresh path; do not invoke the synthetic `/qa/test-runner/execute` endpoint as real test evidence.
-* **Production deployment:** Vercel deployment [2v2J4XBzqPg1XpaQgsjnMFfSzp4y](https://vercel.com/qa-intelligence-hub/qa-intelligence-hub/2v2J4XBzqPg1XpaQgsjnMFfSzp4y) is READY for the same SHA.
-* **Live serving revision:** Rechecked 2026-10-16; `/qa/release/serving-revision` returned the same SHA as the production deployment.
+* **Test Explorer evidence:** Stored run `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares its snapshot SHA to the serving SHA, and the UI warns when the snapshot is historical/unknown. Current release execution evidence is the revision-bound CI run and its artifacts; the old snapshot is not misrepresented as current.
+* **Production deployment:** Vercel deployment was READY for `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
+* **Live serving revision:** Rechecked on 2026-10-16; `/qa/release/serving-revision` returned the same SHA as the production deployment.
 * **Live smoke:** Read-only checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: 0.
-* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the current portfolio deployment. Live Gemini/Claude/OpenAI calls are **not** a release requirement for the current scope and are **not** claimed as tested; adding live-provider integration is a separate opt-in milestone.
-* **Release status:** The deployed baseline is operational and its stated CI evidence is green. A new PR CI run is required for the final evidence/documentation synchronization. Final sign-off must remain blocked until that run passes, the merged revision is deployed and serving-SHA verified, and Test Explorer freshness is either corrected with genuine revision-bound results or explicitly surfaced as historical in the UI.
+* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the current portfolio deployment. Live Gemini/Claude/OpenAI calls are not a requirement for this release and are not claimed as tested; live-provider integration remains a separate opt-in milestone.
+* **Final release status:** **PASS for the implemented release scope**. Revision-bound CI, strict quality gates, deployment/serving-SHA match, read-only production smoke, documentation synchronization, and explicit historical-evidence labeling are verified. Mutating E2E tests remain restricted to isolated environments.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
