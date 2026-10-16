@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.observability import ObservabilityMiddleware
-from app.core.production_safety import ProductionSafetyMiddleware
+from app.core.production_safety import ProductionSafetyMiddleware, is_production_runtime
 from app.db.database import engine
 from app.models.lifecycle import ensure_lifecycle_tables
 from app.routers import (
@@ -63,6 +63,8 @@ app.include_router(telecom.router)
 
 @app.on_event("startup")
 async def ensure_additive_lifecycle_schema() -> None:
-    # Vercel build-time migrations can be environment-scoped; keep runtime
-    # additive tables self-healing while preserving Alembic as the source of truth.
-    ensure_lifecycle_tables(engine)
+    # Never run DDL during Vercel Preview or Production cold starts. Preview
+    # DATABASE_URL values may point at shared data; migrations belong in the
+    # isolated CI/deployment migration workflow, not request-serving startup.
+    if not is_production_runtime():
+        ensure_lifecycle_tables(engine)
