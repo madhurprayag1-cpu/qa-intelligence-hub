@@ -256,6 +256,15 @@ def get_paginated_tests(
     limit: int = 50,
 ) -> Dict[str, Any]:
     actual_run_id, records = get_run_records(run_id)
+    # Explicitly expose whether the persisted evidence belongs to the code revision
+    # currently serving the API. A green historical snapshot must not look current.
+    run_summary = get_run_detail(actual_run_id) or {}
+    evidence_commit_sha = run_summary.get("commit_sha")
+    serving_commit_sha = os.getenv("VERCEL_GIT_COMMIT_SHA") or os.getenv("GITHUB_SHA")
+    if evidence_commit_sha and serving_commit_sha:
+        evidence_freshness = "CURRENT_REVISION" if evidence_commit_sha == serving_commit_sha else "HISTORICAL_REVISION"
+    else:
+        evidence_freshness = "UNKNOWN"
 
     # Filter records
     filtered = []
@@ -318,6 +327,17 @@ def get_paginated_tests(
 
     return {
         "run_id": actual_run_id,
+        "evidence_freshness": {
+            "status": evidence_freshness,
+            "snapshot_commit_sha": evidence_commit_sha,
+            "serving_commit_sha": serving_commit_sha,
+            "snapshot_timestamp": run_summary.get("timestamp"),
+            "message": (
+                "Execution snapshot matches the serving revision."
+                if evidence_freshness == "CURRENT_REVISION"
+                else "Stored execution results are historical or revision freshness is unknown; use revision-bound CI artifacts for current release evidence."
+            ),
+        },
         "total": total,
         "passed": passed_count,
         "failed": failed_count,
