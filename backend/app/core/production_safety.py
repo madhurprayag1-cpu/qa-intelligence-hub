@@ -50,6 +50,7 @@ _SENSITIVE_GET_PATTERNS = tuple(
         r"^/ecommerce/orders(?:/.*)?$",
         r"^/telecom/subscribers(?:/.*)?$",
         r"^/qa/production/incidents(?:/.*)?$",
+        r"^/qa/requirements/[^/]+(?:/test-plan)?$",
         r"^/qa/runtime/metrics$",
     )
 )
