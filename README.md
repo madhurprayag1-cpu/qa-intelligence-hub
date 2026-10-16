@@ -102,7 +102,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The platform organizes validation across 11 architecture layers. The latest verified main CI run (#38038639739, commit `5779a51686f7a73f1d5d479b74b7bf68d0728d92`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
+The platform organizes validation across 11 architecture layers. The latest verified main CI run (#38862214826, commit `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
 
 ```
 tests/
