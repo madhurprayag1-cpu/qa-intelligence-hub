@@ -109,3 +109,10 @@ def test_cors_does_not_trust_arbitrary_vercel_subdomains(client, production_mode
         },
     )
     assert "access-control-allow-origin" not in response.headers
+
+def test_security_headers_are_set_on_public_responses(client, production_mode):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
