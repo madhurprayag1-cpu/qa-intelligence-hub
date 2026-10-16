@@ -1,11 +1,17 @@
 import asyncio
+from pathlib import Path
 
 import pytest
 from fastapi import HTTPException
 
 from app.core.auth import get_current_domain_user
 from app.core.config import settings
-from app.core.production_safety import ProductionSafetyMiddleware, is_production_runtime
+from app.core.production_safety import (
+    PUBLIC_READ_ONLY_POST_PATHS,
+    ProductionSafetyMiddleware,
+    is_production_runtime,
+)
+from app.main import app
 
 
 @pytest.fixture
@@ -125,3 +131,19 @@ def test_vercel_preview_uses_production_safety_policy(monkeypatch):
 def test_head_requests_do_not_probe_sensitive_records(client, production_mode):
     response = client.head("/healthcare/patients")
     assert response.status_code == 404
+
+def test_openapi_routes_are_fully_classified_in_security_inventory():
+    inventory_path = Path(__file__).resolve().parents[2] / "docs" / "SECURITY_ENDPOINT_INVENTORY.md"
+    inventory = inventory_path.read_text(encoding="utf-8")
+    methods = {"get", "post", "put", "patch", "delete"}
+    for path, operations in app.openapi()["paths"].items():
+        for method in methods.intersection(operations):
+            marker = f"| {method.upper()} | `{path}` |"
+            assert marker in inventory, f"Missing security classification: {method.upper()} {path}"
+
+
+def test_public_post_allowlist_only_contains_documented_post_routes():
+    paths = app.openapi()["paths"]
+    assert PUBLIC_READ_ONLY_POST_PATHS
+    for path in PUBLIC_READ_ONLY_POST_PATHS:
+        assert path in paths and "post" in paths[path], f"Allowlist path is not a POST route: {path}"
