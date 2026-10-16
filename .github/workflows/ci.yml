@@ -190,7 +190,7 @@ jobs:
       - name: Install static analysis and dependency audit tools
         run: python -m pip install --upgrade bandit pip-audit
       - name: Python SAST
-        run: bandit -r backend/app -ll -ii
+        run: bandit -r backend/app api -ll -ii
       - name: Python dependency vulnerability audit
         run: pip-audit -r backend/requirements.txt
       - uses: actions/setup-node@v4
