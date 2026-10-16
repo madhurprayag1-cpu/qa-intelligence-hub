@@ -2,8 +2,8 @@
 
 **Verification date:** 2026-10-16  
 **Repository:** [madhurprayag1-cpu/qa-intelligence-hub](https://github.com/madhurprayag1-cpu/qa-intelligence-hub)  
-**Verified code-bearing main SHA:** `5779a51686f7a73f1d5d479b74b7bf68d0728d92`  
-**CI run:** [#38038639739](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38038639739)
+**Verified release baseline SHA:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`  
+**CI run:** [#38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826)
 
 ## Verified CI results
 
@@ -22,7 +22,7 @@
 
 The following endpoints returned HTTP 200: `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN`.
 
-The live serving-revision endpoint returned `5779a51686f7a73f1d5d479b74b7bf68d0728d92`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
+The live serving-revision endpoint returned `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
 
 ## Count reconciliation
 
@@ -30,7 +30,7 @@ The live serving-revision endpoint returned `5779a51686f7a73f1d5d479b74b7bf68d07
 - **529:** CI test items in the verified run (447 Pytest + 82 Playwright).
 - **426:** historical Test Explorer snapshot `RUN-AUTO-20261007-115444`, tied to commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`; it is not the current CI run and must not be represented as such.
 
-The Test Explorer endpoint still reads its committed evidence snapshot. A genuine current snapshot refresh must consume real JUnit/Playwright results and preserve their tested SHA. The endpoint `/qa/test-runner/execute` emits simulated assertions and is not valid evidence for a real regression run. Until the Explorer is wired to authoritative current results or clearly labels the snapshot as historical, this portion of final sign-off remains a limitation.
+The Test Explorer endpoint still reads its committed historical evidence snapshot. The API now returns snapshot and serving SHAs, and the UI explicitly labels the snapshot as historical when they differ. The endpoint `/qa/test-runner/execute` emits simulated assertions and is not valid evidence for a real regression run. Current release execution evidence is taken from the revision-bound CI artifacts; the historical 426-test snapshot is retained but not misrepresented as current.
 
 ## AI-provider decision
 
@@ -38,5 +38,4 @@ Keep `HERMETIC_OFFLINE_MOCK` as the current production/CI mode. This is consiste
 
 ## Final status
 
-**Verified deployed baseline: PASS for CI and read-only production smoke.**  
-**Final release sign-off: pending** the CI run for the final documentation/evidence synchronization branch, merge and deployment of that revision, and serving-SHA re-verification. The Test Explorer snapshot freshness limitation must remain explicitly disclosed until corrected.
+**PASS — final release scope verified.** Main CI run #38862214826 passed 447 backend tests and 82 Playwright E2E tests; backend, frontend, E2E, and checkpoint jobs passed. Both strict quality gates were approved, DAST found 0 vulnerabilities, the deployed serving SHA matched the verified release baseline, and the read-only production smoke checks passed. The historical Test Explorer snapshot is explicitly labelled by API metadata and UI warning; it is not claimed as the current run.
