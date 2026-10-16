@@ -7,6 +7,7 @@ The in-process limiter is defense-in-depth; use Vercel Firewall for distributed
 edge rate limiting across serverless instances.
 """
 from collections import defaultdict, deque
+import os
 import re
 import threading
 import time
@@ -16,6 +17,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
 from app.core.config import settings
+
+
+def is_production_runtime() -> bool:
+    """Treat Vercel preview and production as protected deployment environments."""
+    configured = settings.environment.strip().lower()
+    vercel_env = os.getenv("VERCEL_ENV", "").strip().lower()
+    return configured in {"production", "prod"} or vercel_env in {"production", "preview"}
 
 
 # Public POSTs are intentionally limited to computation/query operations that
@@ -95,8 +103,7 @@ class ProductionSafetyMiddleware(BaseHTTPMiddleware):
             return False
 
     async def dispatch(self, request: Request, call_next):
-        is_production = settings.environment.strip().lower() in {"production", "prod"}
-        if not is_production:
+        if not is_production_runtime():
             return self._secure_headers(await call_next(request))
 
         method = request.method.upper()
