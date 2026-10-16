@@ -2,8 +2,8 @@
 
 **Verification date:** 2026-10-16  
 **Repository:** [madhurprayag1-cpu/qa-intelligence-hub](https://github.com/madhurprayag1-cpu/qa-intelligence-hub)  
-**Verified release baseline SHA:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`  
-**CI run:** [#38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826)
+**Verified release baseline SHA:** `8c9eea1a8ca08301ffc8aea59639666f64a6f799`  
+**CI run:** [#38863988873](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38863988873)
 
 ## Verified CI results
 
@@ -22,7 +22,7 @@
 
 The following endpoints returned HTTP 200: `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN`.
 
-The live serving-revision endpoint returned `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
+The live serving-revision endpoint returned `8c9eea1a8ca08301ffc8aea59639666f64a6f799`, matching the READY Vercel production deployment. The open-incidents endpoint returned zero incidents. No mutating production requests were made.
 
 ## Count reconciliation
 
@@ -38,4 +38,4 @@ Keep `HERMETIC_OFFLINE_MOCK` as the current production/CI mode. This is consiste
 
 ## Final status
 
-**PASS — final release scope verified.** Main CI run #38862214826 passed 447 backend tests and 82 Playwright E2E tests; backend, frontend, E2E, and checkpoint jobs passed. Both strict quality gates were approved, DAST found 0 vulnerabilities, the deployed serving SHA matched the verified release baseline, and the read-only production smoke checks passed. The historical Test Explorer snapshot is explicitly labelled by API metadata and UI warning; it is not claimed as the current run.
+**PASS — final release scope verified.** Main CI run #38863988873 passed 447 backend tests and 82 Playwright E2E tests; backend, frontend, E2E, and checkpoint jobs passed. Both strict quality gates were approved, DAST found 0 vulnerabilities, the deployed serving SHA matched the verified release baseline, and the read-only production smoke checks passed. The historical Test Explorer snapshot is explicitly labelled by API metadata and UI warning; it is not claimed as the current run.
