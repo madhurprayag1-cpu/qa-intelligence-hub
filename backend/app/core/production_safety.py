@@ -116,7 +116,7 @@ class ProductionSafetyMiddleware(BaseHTTPMiddleware):
             if name.lower() not in _BLOCKED_HEADERS
         ]
 
-        if method == "GET" and any(pattern.fullmatch(path) for pattern in _SENSITIVE_GET_PATTERNS):
+        if method in {"GET", "HEAD"} and any(pattern.fullmatch(path) for pattern in _SENSITIVE_GET_PATTERNS):
             return self._secure_headers(
                 JSONResponse(status_code=404, content={"detail": "Not found"})
             )
