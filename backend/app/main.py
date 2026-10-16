@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.observability import ObservabilityMiddleware
+from app.core.production_safety import ProductionSafetyMiddleware
 from app.db.database import engine
 from app.models.lifecycle import ensure_lifecycle_tables
 from app.routers import (
@@ -31,12 +32,14 @@ app = FastAPI(
 )
 
 app.add_middleware(ObservabilityMiddleware)
+app.add_middleware(ProductionSafetyMiddleware)
 app.add_middleware(
     CORSMiddleware,
+    # Exact origins only. The previous *.vercel.app regex trusted arbitrary
+    # preview projects and user-controlled Vercel subdomains.
     allow_origins=settings.cors_origins,
-    allow_origin_regex=r"^https://.*\.vercel\.app$",
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -56,6 +59,7 @@ app.include_router(healthcare.router)
 app.include_router(fintech.router)
 app.include_router(ecommerce.router)
 app.include_router(telecom.router)
+
 
 @app.on_event("startup")
 async def ensure_additive_lifecycle_schema() -> None:
