@@ -12,9 +12,9 @@ A production-grade, AI-powered Quality Engineering platform demonstrating modern
 
 Designed as a production-grade Quality Engineering platform demonstrating Senior SDET & Quality Platform Architecture.
 
-> **Latest verified main release baseline (2026-10-16)**: [GitHub Actions run #38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826) passed for main commit `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`. Backend: **447/447 Pytest passed**; Playwright: **82/82 E2E passed**; total **529 CI test items**. Backend and E2E `PRODUCTION_STRICT` quality gates were APPROVED; DAST reported **5/5 probes passed, 0 vulnerabilities**. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed.
+> **Latest verified main release baseline (2026-10-16)**: [GitHub Actions run #38863988873](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38863988873) passed for main commit `8c9eea1a8ca08301ffc8aea59639666f64a6f799`. Backend: **447/447 Pytest passed**; Playwright: **82/82 E2E passed**; total **529 CI test items**. Backend and E2E `PRODUCTION_STRICT` quality gates were APPROVED; DAST reported **5/5 probes passed, 0 vulnerabilities**. The required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all passed.
 >
-> **Production deployment and smoke (2026-10-16)**: Vercel production deployment was READY for `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`, and the live `/qa/release/serving-revision` endpoint returned the same SHA. Read-only GET checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: **0**.
+> **Production deployment and smoke (2026-10-16)**: Vercel production deployment was READY for `8c9eea1a8ca08301ffc8aea59639666f64a6f799`, and the live `/qa/release/serving-revision` endpoint returned the same SHA. Read-only GET checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: **0**.
 >
 > **Evidence-count and freshness note**: The live capability catalog contains **492 capabilities** across 11 layers. The Test Explorer's stored execution snapshot (`RUN-AUTO-20261007-115444`, **426/426 PASS**) is historical and tied to commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares snapshot and serving SHAs and the UI now explicitly warns when the snapshot is historical/unknown. Current release execution evidence comes from revision-bound CI artifacts, not the stored 426-test snapshot or the simulated `/qa/test-runner/execute` endpoint.
 >
@@ -102,7 +102,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The platform organizes validation across 11 architecture layers. The latest verified main CI run (#38862214826, commit `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
+The platform organizes validation across 11 architecture layers. The latest verified main CI run (#38863988873, commit `8c9eea1a8ca08301ffc8aea59639666f64a6f799`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
 
 ```
 tests/
@@ -185,10 +185,10 @@ The active production topology is a **unified Vercel deployment** serving the Re
 **https://qa-intelligence-hub-flax.vercel.app**
 
 Current production certification evidence (2026-10-16):
-- **Verified release baseline SHA:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
-- **GitHub Actions run #38862214826:** PASS — 447 backend tests + 82 Playwright E2E tests; backend/frontend/E2E/checkpoint jobs all passed.
+- **Verified release baseline SHA:** `8c9eea1a8ca08301ffc8aea59639666f64a6f799`.
+- **GitHub Actions run #38863988873:** PASS — 447 backend tests + 82 Playwright E2E tests; backend/frontend/E2E/checkpoint jobs all passed.
 - **Quality/security gates:** Backend and E2E `PRODUCTION_STRICT` APPROVED; DAST 5/5 probes passed with 0 vulnerabilities.
-- **Production deployment:** READY for `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`; the live serving-revision endpoint returned the same SHA.
+- **Production deployment:** READY for `8c9eea1a8ca08301ffc8aea59639666f64a6f799`; the live serving-revision endpoint returned the same SHA.
 - **Stored Test Explorer evidence:** Historical run `RUN-AUTO-20261007-115444`, 426/426 PASS, commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. API metadata and the UI now explicitly mark it historical when it does not match the serving revision.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK`; live Gemini/Claude/OpenAI providers are not configured or claimed as tested.
 - **Live smoke:** Read-only endpoints returned HTTP 200; open production incidents endpoint returned 0 incidents.
@@ -206,3 +206,4 @@ Complete deployment runbook and environment-variable reference: [`docs/DEPLOYMEN
 - [Domain Pack Extension Guide](docs/domain-extension-guide.md)
 - [Project Roadmap & Completed Milestones](docs/ROADMAP.md)
 - [Engineering Standards & Architectural Rules](AGENTS.md)
+- [Public API Security & Permission Inventory](docs/SECURITY_ENDPOINT_INVENTORY.md)

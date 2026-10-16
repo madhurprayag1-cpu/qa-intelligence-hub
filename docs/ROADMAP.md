@@ -270,13 +270,13 @@
 
 ### Canonical Project State — 2026-10-16 (Final release verification)
 
-* **Verified release baseline:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
-* **Revision-bound main CI:** [GitHub Actions run #38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
+* **Verified release baseline:** `8c9eea1a8ca08301ffc8aea59639666f64a6f799`.
+* **Revision-bound main CI:** [GitHub Actions run #38863988873](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38863988873) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
 * **Executed tests:** 447/447 Pytest backend tests passed and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass in both suites).
 * **Quality/security evidence:** Backend and E2E `PRODUCTION_STRICT` gates APPROVED. DAST reported 5/5 probes passed, 0 vulnerabilities, 0 PCI DSS violations, and 100% compliance.
 * **Current catalog:** 492 capabilities across 11 catalog layers. This is a capability inventory count, not a test-execution count.
 * **Test Explorer evidence:** Stored run `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares its snapshot SHA to the serving SHA, and the UI warns when the snapshot is historical/unknown. Current release execution evidence is the revision-bound CI run and its artifacts; the old snapshot is not misrepresented as current.
-* **Production deployment:** Vercel deployment was READY for `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
+* **Production deployment:** Vercel deployment was READY for `8c9eea1a8ca08301ffc8aea59639666f64a6f799`.
 * **Live serving revision:** Rechecked on 2026-10-16; `/qa/release/serving-revision` returned the same SHA as the production deployment.
 * **Live smoke:** Read-only checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: 0.
 * **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the current portfolio deployment. Live Gemini/Claude/OpenAI calls are not a requirement for this release and are not claimed as tested; live-provider integration remains a separate opt-in milestone.
