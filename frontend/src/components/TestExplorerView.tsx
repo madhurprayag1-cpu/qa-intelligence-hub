@@ -197,6 +197,33 @@ export function TestExplorerView({ initialStatusFilter = "ALL", onSelectRun }: T
         </div>
       </div>
 
+      {testData?.evidence_freshness && testData.evidence_freshness.status !== "CURRENT_REVISION" && (
+        <div
+          className="card"
+          data-testid="evidence-freshness-warning"
+          role="status"
+          style={{
+            marginBottom: "20px",
+            padding: "14px 16px",
+            border: "1px solid var(--warning)",
+            background: "var(--bg-surface)",
+          }}
+        >
+          <strong style={{ color: "var(--warning)" }}>Historical execution snapshot — not current-revision test evidence</strong>
+          <p style={{ margin: "8px 0", color: "var(--text-secondary)", fontSize: "13px" }}>
+            {testData.evidence_freshness.message}
+          </p>
+          <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "12px" }}>
+            Snapshot SHA: <code>{testData.evidence_freshness.snapshot_commit_sha || "unknown"}</code>
+            {" · "}Serving SHA: <code>{testData.evidence_freshness.serving_commit_sha || "unknown"}</code>
+            {" · "}Snapshot time: {testData.evidence_freshness.snapshot_timestamp || "unknown"}
+          </p>
+          <p style={{ margin: "8px 0 0", fontSize: "12px" }}>
+            Current release test results must be taken from <a href="https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions" target="_blank" rel="noreferrer">revision-bound GitHub Actions artifacts</a>.
+          </p>
+        </div>
+      )}
+
       {/* Filter Controls Bar */}
       <div className="card" style={{ marginBottom: "20px", padding: "16px" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", justifyContent: "space-between" }}>
