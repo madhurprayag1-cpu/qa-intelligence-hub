@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import json
 from pathlib import Path
 
 import pytest
@@ -171,3 +172,16 @@ def test_anonymous_recruiter_can_start_demo_but_cannot_read_records(client, prod
     )
     assert private_booking.status_code == 404
     assert private_booking.json() == {"detail": "Not found"}
+
+def test_bootstrap_failure_response_is_generic_and_non_cacheable():
+    api_module = importlib.import_module("api.index")
+    response = api_module._bootstrap_failure_response()
+    body = json.loads(response.body)
+    assert response.status_code == 503
+    assert body == {
+        "detail": "Service temporarily unavailable.",
+        "error_code": "APP_INITIALIZATION_FAILED",
+    }
+    assert response.headers["Cache-Control"] == "no-store"
+    assert "traceback" not in json.dumps(body).lower()
+    assert "working directory" not in json.dumps(body).lower()
