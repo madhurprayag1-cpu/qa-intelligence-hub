@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 from pathlib import Path
 
 import pytest
@@ -147,3 +148,13 @@ def test_public_post_allowlist_only_contains_documented_post_routes():
     assert PUBLIC_READ_ONLY_POST_PATHS
     for path in PUBLIC_READ_ONLY_POST_PATHS:
         assert path in paths and "post" in paths[path], f"Allowlist path is not a POST route: {path}"
+
+def test_deployed_startup_skips_runtime_schema_ddl(monkeypatch):
+    app_module = importlib.import_module("app.main")
+    monkeypatch.setattr(app_module, "is_production_runtime", lambda: True)
+
+    def unexpected_ddl(*args, **kwargs):
+        raise AssertionError("Runtime DDL must not run in Preview or Production.")
+
+    monkeypatch.setattr(app_module, "ensure_lifecycle_tables", unexpected_ddl)
+    asyncio.run(app_module.ensure_additive_lifecycle_schema())
