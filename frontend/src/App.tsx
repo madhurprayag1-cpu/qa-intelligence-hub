@@ -1943,7 +1943,7 @@ export function App() {
               >
                 <span className="stat-label">Automated Test Cases ➔</span>
                 <span className="stat-value">{catalogSummary?.total_capabilities || 492}</span>
-                <span className="stat-detail">427 Pytest + 65 Playwright (11 Layers)</span>
+                <span className="stat-detail">Catalog capabilities across 11 layers</span>
               </div>
               <div
                 className={`stat-card clickable-stat-card ${qaSubTab === "runs" ? "active-stat-card" : ""}`}
@@ -1984,7 +1984,7 @@ export function App() {
                 onClick={() => setQaSubTab("tests")}
                 data-testid="qa-subtab-tests"
               >
-                📋 Test Explorer (492)
+                📋 Test Explorer ({catalogSummary?.total_capabilities || 492})
               </button>
               <button
                 type="button"
@@ -2058,7 +2058,7 @@ export function App() {
                 }}
                 data-testid="qa-subtab-catalog"
               >
-                📚 Capability Catalog & Evidence ({catalogSummary?.total_capabilities || 475})
+                📚 Capability Catalog & Evidence ({catalogSummary?.total_capabilities || 492})
               </button>
             </div>
 
