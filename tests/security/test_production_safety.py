@@ -158,3 +158,16 @@ def test_deployed_startup_skips_runtime_schema_ddl(monkeypatch):
 
     monkeypatch.setattr(app_module, "ensure_lifecycle_tables", unexpected_ddl)
     asyncio.run(app_module.ensure_additive_lifecycle_schema())
+
+def test_anonymous_recruiter_can_start_demo_but_cannot_read_records(client, production_mode):
+    session = client.post("/auth/demo-session")
+    assert session.status_code == 200
+    token = session.json()["access_token"]
+    assert session.json()["user"]["role"] == "passenger"
+
+    private_booking = client.get(
+        "/bookings/1",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert private_booking.status_code == 404
+    assert private_booking.json() == {"detail": "Not found"}
