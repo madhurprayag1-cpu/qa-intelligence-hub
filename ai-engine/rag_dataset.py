@@ -104,10 +104,10 @@ RAG_EVALUATION_DATASET: List[RAGBenchmarkCase] = [
         id="RAG-PARA-01",
         dimension="PARAPHRASED",
         domain="airline",
-        query="Can I carry a second suitcase on an international flight without extra fees?",
+        query="Can I carry a second suitcase as additional baggage on an international flight without extra fees?",
         expected_refusal=False,
         required_keywords=["baggage", "allowance"],
-        expected_doc_citation="AIRLINE-ANCILLARIES-01",
+        expected_doc_citation="AIRLINE-BAGGAGE-01",
         min_groundedness=0.75,
         description="Paraphrased semantic query for baggage allowance."
     ),
