@@ -21,19 +21,17 @@ for entry in (ROOT, ROOT / "backend", ROOT / "ai-engine", ROOT / "qa-engine"):
 from app.core.ai_provider import MockAIProvider, MockEmbeddingProvider
 from domain_registry import domain_registry
 from evaluation import aggregate_rag_benchmark, context_relevance, evaluate_rag_result
+from quality_gate import PRESET_POLICIES
 from rag import RAGPipeline, VectorIndex
 from rag_dataset import get_evaluation_dataset
 
+STRICT_POLICY = PRESET_POLICIES["PRODUCTION_STRICT"]
 STRICT_THRESHOLDS = {
-    "groundedness": 0.85,
-    "context_relevance": 0.80,
-    "citation_accuracy": 0.85,
-    "truthful_refusal": 0.90,
+    "groundedness": STRICT_POLICY.min_rag_groundedness,
+    "context_relevance": STRICT_POLICY.min_rag_context_relevance,
+    "citation_accuracy": STRICT_POLICY.min_rag_citation_accuracy,
+    "truthful_refusal": STRICT_POLICY.min_rag_truthful_refusal,
 }
-REFUSAL_PHRASES = (
-    "cannot", "not found", "unable", "unsupported", "refuse",
-    "do not have", "no relevant",
-)
 
 
 async def run_benchmark() -> dict:
@@ -45,6 +43,9 @@ async def run_benchmark() -> dict:
     pipeline.bootstrap_registered_domains(domain_registry)
 
     dataset = get_evaluation_dataset()
+    if not dataset:
+        raise RuntimeError("RAG evaluation dataset is empty; refusing to approve the quality gate.")
+
     results = []
     case_reports = []
 
@@ -57,19 +58,23 @@ async def run_benchmark() -> dict:
             domain=domain,
         )
         answer_lower = result.answer.lower()
-        is_refusal = bool(
-            result.refusal
-            or not result.retrieved_chunks
-            or any(phrase in answer_lower for phrase in REFUSAL_PHRASES)
+        # A refusal is valid only when the pipeline explicitly refuses and provides
+        # no retrieved evidence, context, or citations.
+        no_evidence = (
+            not result.retrieved_chunks
+            and not result.context_text.strip()
+            and not result.citations
         )
+        is_refusal = bool(result.refusal and no_evidence)
 
         checks = []
         if case.expected_refusal:
             checks.append(is_refusal)
             checks.extend(word.lower() not in answer_lower for word in case.forbidden_keywords)
         else:
-            checks.append(not is_refusal)
+            checks.append(not result.refusal)
             checks.append(bool(result.retrieved_chunks))
+            checks.extend(keyword.lower() in answer_lower for keyword in case.required_keywords)
             if case.expected_doc_citation:
                 checks.append(
                     any(case.expected_doc_citation in citation for citation in result.citations)
@@ -166,7 +171,8 @@ def main() -> int:
     }, indent=2))
 
     return 0 if (
-        report["failed_queries"] == 0
+        report["total_queries"] > 0
+        and report["failed_queries"] == 0
         and report["aggregate_gate_passed"]
         and all(
             report["metrics"][name] >= threshold
