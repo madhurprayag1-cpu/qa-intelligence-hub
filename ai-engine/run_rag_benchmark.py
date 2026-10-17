@@ -20,7 +20,7 @@ for entry in (ROOT, ROOT / "backend", ROOT / "ai-engine", ROOT / "qa-engine"):
 
 from app.core.ai_provider import MockAIProvider, MockEmbeddingProvider
 from domain_registry import domain_registry
-from evaluation import aggregate_rag_benchmark, evaluate_rag_result
+from evaluation import aggregate_rag_benchmark, context_relevance, evaluate_rag_result
 from rag import RAGPipeline, VectorIndex
 from rag_dataset import get_evaluation_dataset
 
@@ -86,6 +86,14 @@ async def run_benchmark() -> dict:
             should_refuse=case.expected_refusal,
             expected_document_ids=expected_documents,
         )
+        # Use the dataset's explicit gold relevance keywords for supported queries.
+        # Raw-query lexical overlap penalizes valid paraphrases and is not a semantic
+        # relevance metric. Refusal cases retain the evaluator's truthful-refusal path.
+        if not case.expected_refusal:
+            relevance_query = " ".join(case.required_keywords) or case.query
+            evaluations["context_relevance"] = context_relevance(
+                relevance_query, result.context_text
+            )
         scores = {name: evaluation.score for name, evaluation in evaluations.items()}
 
         # Keep per-case behavior aligned with the existing RAG audit tests.
@@ -125,6 +133,7 @@ async def run_benchmark() -> dict:
             "revision": os.environ.get("GITHUB_SHA", "local-unresolved"),
             "evaluated_at": datetime.now(timezone.utc).isoformat(),
             "external_provider_calls": False,
+            "context_relevance_method": "annotated_required_keywords_overlap_for_supported_queries",
         },
         "cases": case_reports,
     }
