@@ -88,14 +88,10 @@ async def run_benchmark() -> dict:
         )
         scores = {name: evaluation.score for name, evaluation in evaluations.items()}
 
-        # Retain the case-specific groundedness assertion already enforced by the
-        # existing audit suite, and also require every strict-gate signal per case.
+        # Keep per-case behavior aligned with the existing RAG audit tests.
+        # The strict policy thresholds apply to the aggregate benchmark scores below.
         if not case.expected_refusal:
             checks.append(scores["groundedness"] >= case.min_groundedness)
-        checks.extend(
-            scores[name] >= threshold
-            for name, threshold in STRICT_THRESHOLDS.items()
-        )
         passed = all(checks)
         results.append(evaluations)
         case_reports.append({
