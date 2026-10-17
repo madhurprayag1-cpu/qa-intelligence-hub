@@ -15,8 +15,8 @@ TELECOM_KNOWLEDGE_DOCS: List[Dict[str, Any]] = [
         "title": "Fair Usage Policy (FUP) & Bandwidth Throttling Standards",
         "text": (
             "Under the 5G Fair Usage Policy (FUP), unlimited data plans include an unthrottled high-speed quota "
-            "up to 50GB per billing cycle. Once the subscriber exceeds 50GB of cumulative data transfer, bandwidth "
-            "is automatically shaped to a maximum throughput of 128 kbps for remaining traffic. Video streaming is "
+            "up to 50GB per billing cycle. Once the subscriber exceeds 50GB of cumulative data transfer, throttling reduces bandwidth "
+            "to a maximum throughput of 128 kbps for remaining traffic. Video streaming is "
             "capped at 480p resolution while throttled. High-speed capacity automatically resets at 00:00:00 UTC "
             "on the first calendar day of the next billing cycle. Subscribers may purchase high-speed speed passes "
             "to restore unshaped 5G connectivity immediately without waiting for billing reset."

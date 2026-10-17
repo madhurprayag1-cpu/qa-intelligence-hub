@@ -30,7 +30,7 @@ AIRLINE_KNOWLEDGE_DOCS: List[Dict[str, Any]] = [
     {
         "document_id": "AIRLINE-BAGGAGE-01",
         "text": (
-            "Passengers are entitled to one complimentary cabin baggage item up to 8kg with maximum "
+            "Economy Class standard baggage allowance includes one complimentary cabin baggage item up to 8kg with maximum "
             "dimensions of 55x40x23cm. Standard checked baggage up to 23kg costs 35 EUR per bag. "
             "Excess baggage over 23kg or additional pieces cost 45 EUR per piece. "
             "Sporting equipment and special items must be declared at least 24 hours prior to departure."
@@ -49,7 +49,7 @@ AIRLINE_KNOWLEDGE_DOCS: List[Dict[str, Any]] = [
             "Voluntary cancellations on refundable fares trigger automated refunds within 48 business "
             "hours to the original payment instrument. Non-refundable promotional tickets receive non-expiring "
             "travel credit vouchers. Upon cancellation, reserved seat inventory is immediately and synchronously "
-            "restored to available flight capacity in the inventory database."
+            "restored to available flight capacity in the inventory database. For flight delays of four hours or more, compensation eligibility is assessed under the applicable carrier policy; eligible ancillary compensation is evaluated separately from ticket refund eligibility and requires route-specific review."
         ),
         "metadata": {
             "title": "Cancellation, Refund & Seat Inventory Restitution",
@@ -65,7 +65,7 @@ AIRLINE_KNOWLEDGE_DOCS: List[Dict[str, Any]] = [
             "The airline reservation engine implements IATA NDC 21.3 schemas. The AirShopping service exposes "
             "multi-carrier flight offer discovery. The OfferPrice service guarantees 30-minute fare and seat locks "
             "for selected offers. The OrderCreate service generates confirmed Passenger Name Records (PNR) and "
-            "OrderIDs. The OrderCancel service executes synchronous reservation teardown and refund dispatch."
+            "OrderIDs. The OrderCancel service executes synchronous reservation teardown and refund dispatch. The NDC standard also defines ancillary offers (ancillaries), including baggage, seat selection, and meal services, alongside the core flight offer."
         ),
         "metadata": {
             "title": "IATA NDC 21.3 Distribution Protocols",
