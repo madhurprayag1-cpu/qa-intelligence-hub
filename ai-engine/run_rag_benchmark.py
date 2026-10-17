@@ -153,6 +153,7 @@ def main() -> int:
         "metrics": report["metrics"],
         "thresholds": report["thresholds"],
         "aggregate_gate_passed": report["aggregate_gate_passed"],
+        "cases": report["cases"],
     }, indent=2))
 
     return 0 if (
