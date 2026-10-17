@@ -53,6 +53,12 @@ jobs:
         run: |
           python qa-engine/security_scanner.py --mode gate --output-json test-results/security-dast-report.json
 
+      - name: Run deterministic RAG benchmark
+        env:
+          PYTHONPATH: backend:qa-engine:ai-engine
+        run: |
+          python ai-engine/run_rag_benchmark.py --output-json test-results/rag-eval-report.json
+
       - name: Evaluate Release Quality Gate
         env:
           PYTHONPATH: backend:qa-engine:ai-engine
@@ -61,6 +67,7 @@ jobs:
             --policy PRODUCTION_STRICT \
             --junit-xml test-results/pytest-report.xml \
             --security-json test-results/security-dast-report.json \
+            --rag-json test-results/rag-eval-report.json \
             --output-markdown test-results/quality-gate-summary.md
           cat test-results/quality-gate-summary.md >> $GITHUB_STEP_SUMMARY
 
