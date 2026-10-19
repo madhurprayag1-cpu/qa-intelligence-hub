@@ -1,4 +1,6 @@
-# QA Intelligence Hub — Release Evidence Report
+# QA Intelligence Hub — Historical Release Evidence Report (2026-10-16)
+
+> **Historical record:** This report documents the 2026-10-16 verification baseline only. It is not the latest release attestation. See [the 2026-10-17 release evidence report](RELEASE_EVIDENCE_2026-10-17.md) for the newer verified baseline.
 
 **Verification date:** 2026-10-16  
 **Repository:** [madhurprayag1-cpu/qa-intelligence-hub](https://github.com/madhurprayag1-cpu/qa-intelligence-hub)  
