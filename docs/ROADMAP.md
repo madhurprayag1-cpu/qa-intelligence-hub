@@ -268,7 +268,7 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-19 (CI evidence refresh in validation)
+### Canonical Project State — 2026-10-19 (evidence refresh deployed; security hardening separately gated)
 
 * **Verified source revision for the evidence run:** `b8405af4acbbaef6d46557a349af0782538b3382`.
 * **Revision-bound CI:** [GitHub Actions run #39219421663](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/39219421663) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs.
@@ -277,7 +277,10 @@
 * **Capability inventory:** 492 capabilities across 11 layers; this is not the number of executed tests.
 * **AI mode:** Retain `HERMETIC_OFFLINE_MOCK`. Gemini, Claude, and OpenAI are unconfigured; live-provider integration remains optional and is not claimed as tested.
 * **Security evidence:** Use the scoped DAST and deterministic RAG evidence from the CI artifact; do not claim external OWASP or PCI DSS certification.
-* **Release status:** The snapshot refresh and compressed-evidence loader are in a PR and are not released until the PR's required checks pass and the production serving SHA is verified. Local Windows workspace reconciliation still requires access to the user's local Git state.
+* **Evidence release status:** The compressed-evidence loader is merged and deployed on main revision `dda73ded3c5d156d3481603f97aabd4b421979af`; [CI run #39223713484](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/39223713484) passed the four required jobs, and the live serving revision was read-only verified.
+* **Security-boundary status:** The separate production-hardening change set is not included in the current deployed SHA until its own CI, preview checks, merge, and production smoke succeed. The reviewed CDR billing mutation is explicitly excluded from the public POST allowlist.
+* **Edge protection:** The Vercel Firewall configuration API returned `Seawall Config not found` on read and write attempts, so active edge rate-limiting configuration could not be created or verified through the connected integration. Do not claim distributed edge rate limiting is active; the remaining infrastructure gate requires resolving this in Vercel.
+* **Local workspace:** Windows workspace reconciliation still requires access to the user's local Git state and must preserve any uncommitted changes.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 

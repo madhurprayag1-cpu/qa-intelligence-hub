@@ -183,9 +183,48 @@ jobs:
           path: test-results/
           retention-days: 14
 
+
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install static analysis and dependency audit tools
+        run: python -m pip install --upgrade bandit pip-audit
+      - name: Python SAST
+        run: bandit -r backend/app api -ll -ii
+      - name: Python dependency vulnerability audit
+        run: pip-audit -r backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+      - name: Frontend dependency vulnerability audit
+        run: npm audit --prefix frontend --audit-level=high
+      - name: Install pinned Gitleaks binary
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          curl --fail --silent --show-error --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            --output /tmp/gitleaks.tar.gz
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version
+      - name: Secret scanning
+        run: /tmp/gitleaks detect --source . --redact --exit-code=2 --no-banner
+
   checkpoint:
     if: ${{ always() }}
-    needs: [backend, frontend, e2e]
+    needs: [backend, frontend, e2e, security]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -215,10 +254,12 @@ jobs:
           CI_BACKEND_RESULT: ${{ needs.backend.result }}
           CI_FRONTEND_RESULT: ${{ needs.frontend.result }}
           CI_E2E_RESULT: ${{ needs.e2e.result }}
+          CI_SECURITY_RESULT: ${{ needs.security.result }}
         run: |
+          test "$CI_SECURITY_RESULT" = "success"
           test -z "$(git status --porcelain)"
           python qa-engine/task_checkpoint.py \
             --ci-evidence-dir "$RUNNER_TEMP/ci-evidence" \
             --revision "$CI_REVISION" \
-            --job-results "backend=$CI_BACKEND_RESULT,frontend=$CI_FRONTEND_RESULT,e2e=$CI_E2E_RESULT" \
+            --job-results "backend=$CI_BACKEND_RESULT,frontend=$CI_FRONTEND_RESULT,e2e=$CI_E2E_RESULT,security=$CI_SECURITY_RESULT" \
             --ci-worktree-clean
