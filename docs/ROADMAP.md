@@ -268,19 +268,19 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-16 (Final release verification)
+### Canonical Project State — 2026-10-17 (Latest verified release baseline)
 
-* **Verified release baseline:** `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
-* **Revision-bound main CI:** [GitHub Actions run #38862214826](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/38862214826) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs for the stated SHA.
-* **Executed tests:** 447/447 Pytest backend tests passed and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass in both suites).
-* **Quality/security evidence:** Backend and E2E `PRODUCTION_STRICT` gates APPROVED. DAST reported 5/5 probes passed, 0 vulnerabilities, 0 PCI DSS violations, and 100% compliance.
-* **Current catalog:** 492 capabilities across 11 catalog layers. This is a capability inventory count, not a test-execution count.
-* **Test Explorer evidence:** Stored run `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares its snapshot SHA to the serving SHA, and the UI warns when the snapshot is historical/unknown. Current release execution evidence is the revision-bound CI run and its artifacts; the old snapshot is not misrepresented as current.
-* **Production deployment:** Vercel deployment was READY for `3f338cf75a869eb4c2db7f8637d4c6ccd2901a50`.
-* **Live serving revision:** Rechecked on 2026-10-16; `/qa/release/serving-revision` returned the same SHA as the production deployment.
-* **Live smoke:** Read-only checks of `/`, `/health`, `/qa/release/serving-revision`, `/openapi.json`, `/docs`, `/qa/catalog/summary`, `/qa/layers?include_all=true`, `/qa/ai/providers/status`, and `/qa/production/incidents?status=OPEN` returned HTTP 200. Open incidents: 0.
-* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the current portfolio deployment. Live Gemini/Claude/OpenAI calls are not a requirement for this release and are not claimed as tested; live-provider integration remains a separate opt-in milestone.
-* **Final release status:** **PASS for the implemented release scope**. Revision-bound CI, strict quality gates, deployment/serving-SHA match, read-only production smoke, documentation synchronization, and explicit historical-evidence labeling are verified. Mutating E2E tests remain restricted to isolated environments.
+* **Verified application baseline SHA:** `4fc56aabed1bca367a8510768243e1411cbd7bdf`.
+* **Revision-bound main CI:** [GitHub Actions run #39054140934](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/39054140934) passed for the exact SHA above; required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all succeeded.
+* **Executed tests:** 447/447 backend Pytest tests and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass rate).
+* **Quality/security evidence:** `PRODUCTION_STRICT` gates approved. Deterministic offline RAG benchmark passed 15/15 cases: groundedness 0.9685, context relevance 1.00, citation accuracy 0.90, truthful refusal 1.00. Scoped DAST passed 5/5 probes with 0 findings. These results do not represent external OWASP or PCI DSS certification.
+* **Current catalog:** 492 capabilities across 11 layers. This is a capability inventory count, not an execution-test count.
+* **Test Explorer evidence:** Stored run `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares its snapshot SHA with the serving SHA and the UI warns when the snapshot is historical/unknown. The stored snapshot is not current-release evidence.
+* **Production deployment:** Vercel deployment was READY for application SHA `4fc56aabed1bca367a8510768243e1411cbd7bdf`; production alias: [qa-intelligence-hub-flax.vercel.app](https://qa-intelligence-hub-flax.vercel.app/).
+* **Live serving revision and smoke:** The 2026-10-17 verification confirmed the serving-revision endpoint matched the deployment SHA. Nine read-only routes returned HTTP 200; the open-incidents endpoint reported 0. These checks are a dated verification, not a claim of continuous monitoring.
+* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the portfolio deployment. Gemini, Claude, and OpenAI are not configured; live-provider integration is an opt-in future milestone and is not claimed as tested.
+* **Branch governance:** Active `Protect main branch` ruleset requires a pull request, resolved review threads, and successful `backend`, `frontend`, `e2e`, and `checkpoint` status checks; deletion and force-push are blocked. Required checks do not require the branch to be strictly up to date, and zero approvals are configured.
+* **Release status:** **PASS for the verified application baseline**. Any documentation-only follow-up must still pass the required CI/checkpoint workflow before merge. Test Explorer snapshot remains explicitly historical; production-mutating checks remain restricted to isolated environments.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
