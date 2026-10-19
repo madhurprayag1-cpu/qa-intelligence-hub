@@ -10,6 +10,7 @@ from fastapi import Depends, Header, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from app.core.config import settings
+from app.core.production_safety import is_production_runtime
 
 def _jwt_secret() -> str:
     configured = os.getenv("JWT_SECRET", settings.jwt_secret)
@@ -194,6 +195,16 @@ async def get_current_domain_user(
     if credentials and credentials.credentials:
         payload = decode_access_token(credentials.credentials)
         return _user_from_payload(payload)
+
+    # Production must never infer identity or privilege from caller-controlled
+    # X-User-Role / X-User-Id headers. Local hermetic tests retain the synthetic
+    # identity fallback below.
+    if is_production_runtime():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization Bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if x_user_role in {"unauthorized", "guest", "foreign_user"}:
         return User(

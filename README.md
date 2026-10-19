@@ -184,16 +184,17 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 **https://qa-intelligence-hub-flax.vercel.app**
 
-Current production certification evidence (2026-10-17):
-- **Verified release baseline SHA:** `4fc56aabed1bca367a8510768243e1411cbd7bdf`.
-- **GitHub Actions run #39054140934:** PASS — 447 backend tests + 82 Playwright E2E tests; backend/frontend/E2E/checkpoint jobs all passed.
-- **Quality/security gates:** Backend and E2E `PRODUCTION_STRICT` APPROVED; deterministic offline RAG benchmark 15/15 passed (groundedness 0.9685, context relevance 1.00, citation accuracy 0.90, truthful refusal 1.00); scoped DAST 5/5 probes passed with 0 findings. These are scoped results, not external OWASP/PCI DSS certification.
-- **Production deployment:** READY for `4fc56aabed1bca367a8510768243e1411cbd7bdf`; the live serving-revision endpoint returned the same SHA.
-- **Stored Test Explorer evidence:** Historical run `RUN-AUTO-20261007-115444`, 426/426 PASS, commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. API metadata and the UI now explicitly mark it historical when it does not match the serving revision.
+Current production baseline before the security-hardening change set (2026-10-19):
+- **Serving revision:** `dda73ded3c5d156d3481603f97aabd4b421979af` ([commit](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/commit/dda73ded3c5d156d3481603f97aabd4b421979af)).
+- **GitHub Actions run #39223713484:** PASS — backend, frontend, E2E, and checkpoint jobs passed for current `main`.
+- **Current CI test totals:** 447 backend Pytest + 82 Playwright E2E = 529 passed test items.
+- **Capability catalog:** 492 capability entries across 11 layers; this catalog count is separate from executed tests.
+- **Test Explorer snapshot:** the 529 individual stored records are from run #39219421663 on source revision `b8405af4acbbaef6d46557a349af0782538b3382`. They remain correctly labelled historical relative to `dda73ded…`; do not claim they were executed against a later SHA.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK`; live Gemini/Claude/OpenAI providers are not configured or claimed as tested.
-- **Live smoke:** Read-only endpoints returned HTTP 200; open production incidents endpoint returned 0 incidents.
+- **Read-only production smoke:** 11/11 route checks returned HTTP 200; the open-incidents query returned zero open incidents at the time checked.
+- **Security boundary:** production hardening is proposed in a separate PR and is not part of this pre-hardening deployed revision. Its release requires passing CI, preview review, merge, and read-only production smoke against the eventual serving SHA.
 
-This release is certified for the implemented scope based on revision-bound CI, deployment/serving-SHA match, and read-only production smoke. Mutating E2E tests remain restricted to isolated environments.
+This baseline report is not external OWASP or PCI DSS certification. Mutating E2E tests remain restricted to isolated environments.
 
 Legacy deployment references elsewhere in the repository are historical or alternate deployment configurations; they are not the authoritative current topology.
 
@@ -205,4 +206,5 @@ Complete deployment runbook and environment-variable reference: [`docs/DEPLOYMEN
 - [Production Deployment Runbook](docs/DEPLOYMENT.md)
 - [Domain Pack Extension Guide](docs/domain-extension-guide.md)
 - [Project Roadmap & Completed Milestones](docs/ROADMAP.md)
+- [Public API Security & Permission Inventory](docs/SECURITY_ENDPOINT_INVENTORY.md)
 - [Engineering Standards & Architectural Rules](AGENTS.md)
