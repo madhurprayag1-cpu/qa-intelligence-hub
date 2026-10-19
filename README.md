@@ -184,8 +184,8 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 **https://qa-intelligence-hub-flax.vercel.app**
 
-Current production baseline before the security-hardening change set (2026-10-19):
-- **Serving revision:** `dda73ded3c5d156d3481603f97aabd4b421979af` ([commit](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/commit/dda73ded3c5d156d3481603f97aabd4b421979af)).
+Verified deployed application baseline before this documentation-only synchronization and the separate security-hardening change set (2026-10-19):
+- **Application baseline SHA at the time of verification:** `dda73ded3c5d156d3481603f97aabd4b421979af` ([commit](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/commit/dda73ded3c5d156d3481603f97aabd4b421979af)). The exact live serving revision is exposed by [`/qa/release/serving-revision`](https://qa-intelligence-hub-flax.vercel.app/qa/release/serving-revision); a docs-only deployment may advance the serving SHA without changing the application code baseline described here.
 - **GitHub Actions run #39223713484:** PASS — backend, frontend, E2E, and checkpoint jobs passed for current `main`.
 - **Current CI test totals:** 447 backend Pytest + 82 Playwright E2E = 529 passed test items.
 - **Capability catalog:** 492 capability entries across 11 layers; this catalog count is separate from executed tests.
