@@ -87,8 +87,11 @@ def _load_evidence_file(file_path: Path) -> Optional[Dict[str, Any]]:
         # the manifest reviewable while retaining every real JUnit/Playwright case.
         records_file = data.get("records_file")
         if records_file:
-            evidence_root = (_REPO_ROOT / ".qa" / "evidence").resolve()
-            records_path = (_REPO_ROOT / records_file).resolve()
+            evidence_root = file_path.parent.resolve()
+            records_name = Path(records_file).name
+            if records_name != records_file.rsplit("/", 1)[-1]:
+                return None
+            records_path = (evidence_root / records_name).resolve()
             if evidence_root not in records_path.parents:
                 return None
             if data.get("records_encoding") != "gzip+base64":
@@ -103,8 +106,10 @@ def _load_evidence_file(file_path: Path) -> Optional[Dict[str, Any]]:
 
         if "records" in data and isinstance(data["records"], list):
             return data
-    except Exception:
-        pass
+    except Exception as exc:
+        # Keep malformed/missing evidence fail-closed while leaving an actionable
+        # CI diagnostic instead of silently returning an empty Test Explorer.
+        print(f"Evidence snapshot load failed for {file_path}: {type(exc).__name__}: {exc}")
     return None
 
 
