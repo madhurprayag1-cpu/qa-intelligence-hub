@@ -268,19 +268,16 @@
 
 ## 📍 Checkpoint Status
 
-### Canonical Project State — 2026-10-17 (Latest verified release baseline)
+### Canonical Project State — 2026-10-19 (CI evidence refresh in validation)
 
-* **Verified application baseline SHA:** `4fc56aabed1bca367a8510768243e1411cbd7bdf`.
-* **Revision-bound main CI:** [GitHub Actions run #39054140934](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/39054140934) passed for the exact SHA above; required `backend`, `frontend`, `e2e`, and `checkpoint` jobs all succeeded.
-* **Executed tests:** 447/447 backend Pytest tests and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass rate).
-* **Quality/security evidence:** `PRODUCTION_STRICT` gates approved. Deterministic offline RAG benchmark passed 15/15 cases: groundedness 0.9685, context relevance 1.00, citation accuracy 0.90, truthful refusal 1.00. Scoped DAST passed 5/5 probes with 0 findings. These results do not represent external OWASP or PCI DSS certification.
-* **Current catalog:** 492 capabilities across 11 layers. This is a capability inventory count, not an execution-test count.
-* **Test Explorer evidence:** Stored run `RUN-AUTO-20261007-115444` reports 426/426 PASS for historical commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. The API compares its snapshot SHA with the serving SHA and the UI warns when the snapshot is historical/unknown. The stored snapshot is not current-release evidence.
-* **Production deployment:** Vercel deployment was READY for application SHA `4fc56aabed1bca367a8510768243e1411cbd7bdf`; production alias: [qa-intelligence-hub-flax.vercel.app](https://qa-intelligence-hub-flax.vercel.app/).
-* **Live serving revision and smoke:** The 2026-10-17 verification confirmed the serving-revision endpoint matched the deployment SHA. Nine read-only routes returned HTTP 200; the open-incidents endpoint reported 0. These checks are a dated verification, not a claim of continuous monitoring.
-* **AI provider decision:** Retain `HERMETIC_OFFLINE_MOCK` for deterministic CI and the portfolio deployment. Gemini, Claude, and OpenAI are not configured; live-provider integration is an opt-in future milestone and is not claimed as tested.
-* **Branch governance:** Active `Protect main branch` ruleset requires a pull request, resolved review threads, and successful `backend`, `frontend`, `e2e`, and `checkpoint` status checks; deletion and force-push are blocked. Required checks do not require the branch to be strictly up to date, and zero approvals are configured.
-* **Release status:** **PASS for the verified application baseline**. Any documentation-only follow-up must still pass the required CI/checkpoint workflow before merge. Test Explorer snapshot remains explicitly historical; production-mutating checks remain restricted to isolated environments.
+* **Verified source revision for the evidence run:** `b8405af4acbbaef6d46557a349af0782538b3382`.
+* **Revision-bound CI:** [GitHub Actions run #39219421663](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/actions/runs/39219421663) passed the required `backend`, `frontend`, `e2e`, and `checkpoint` jobs.
+* **Executed tests:** 447/447 backend Pytest tests and 82/82 Playwright E2E tests passed (529 CI test items; 100% pass rate, 0 skipped).
+* **Test Explorer:** `RUN-CI-39219421663-B8405AF4` is generated from the actual JUnit XML and Playwright JSON artifacts, with 529 individual test records, durations, statuses, timestamps, evidence references, and the tested SHA. The manifest references a gzip+base64 sidecar to keep Git review practical. This snapshot records the run on `b8405af4acbbaef6d46557a349af0782538b3382`; it must not be misrepresented as execution against a later source revision.
+* **Capability inventory:** 492 capabilities across 11 layers; this is not the number of executed tests.
+* **AI mode:** Retain `HERMETIC_OFFLINE_MOCK`. Gemini, Claude, and OpenAI are unconfigured; live-provider integration remains optional and is not claimed as tested.
+* **Security evidence:** Use the scoped DAST and deterministic RAG evidence from the CI artifact; do not claim external OWASP or PCI DSS certification.
+* **Release status:** The snapshot refresh and compressed-evidence loader are in a PR and are not released until the PR's required checks pass and the production serving SHA is verified. Local Windows workspace reconciliation still requires access to the user's local Git state.
 
 ## Final Production-Grade Lifecycle Scope [100% Complete]
 
