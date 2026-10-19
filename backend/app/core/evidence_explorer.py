@@ -112,10 +112,8 @@ def _load_evidence_file(file_path: Path) -> Optional[Dict[str, Any]]:
 
         if "records" in data and isinstance(data["records"], list):
             return data
-    except Exception as exc:
-        # Keep malformed/missing evidence fail-closed while leaving an actionable
-        # CI diagnostic instead of silently returning an empty Test Explorer.
-        print(f"Evidence snapshot load failed for {file_path}: {type(exc).__name__}: {exc}")
+    except Exception:
+        pass
     return None
 
 
