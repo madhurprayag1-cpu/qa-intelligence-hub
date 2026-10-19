@@ -6,6 +6,8 @@ Provides authoritative cross-referencing between:
 3. Structured Assertion Evidence (Expected vs Actual, API contracts, AppSec masking)
 """
 
+import base64
+import gzip
 import json
 import os
 import re
@@ -74,10 +76,41 @@ def get_capability_for_test(test_id: str) -> Optional[Dict[str, Any]]:
 
 
 def _load_evidence_file(file_path: Path) -> Optional[Dict[str, Any]]:
+    """Load an inline evidence run or a compressed, revision-bound CI snapshot."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        if isinstance(data, dict) and "records" in data:
+        if not isinstance(data, dict):
+            return None
+
+        # Large CI test-level records are stored as a gzip+base64 sidecar to keep
+        # the manifest reviewable while retaining every real JUnit/Playwright case.
+        records_file = data.get("records_file")
+        if records_file:
+            evidence_root = file_path.parent.resolve()
+            records_name = Path(records_file).name
+            if records_name != records_file.rsplit("/", 1)[-1]:
+                return None
+            records_path = (evidence_root / records_name).resolve()
+            if evidence_root not in records_path.parents:
+                return None
+            if data.get("records_encoding") != "gzip+base64":
+                return None
+            encoded = "".join(records_path.read_text(encoding="utf-8").split())
+            compressed = base64.b64decode(encoded, validate=True)
+            records_payload = gzip.decompress(compressed).decode("utf-8")
+            decoded = json.loads(records_payload)
+            # The sidecar stores the complete original snapshot document, so
+            # metadata and per-test records can be cross-checked independently.
+            if isinstance(decoded, dict) and isinstance(decoded.get("records"), list):
+                records = decoded["records"]
+            elif isinstance(decoded, list):
+                records = decoded
+            else:
+                return None
+            data["records"] = records
+
+        if "records" in data and isinstance(data["records"], list):
             return data
     except Exception:
         pass

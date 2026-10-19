@@ -50,6 +50,7 @@ from app.core.evidence_explorer import (
     get_detailed_test_evidence,
     get_paginated_tests,
     get_run_detail,
+    _load_evidence_file,
 )
 
 router = APIRouter(prefix="/qa", tags=["qa-engine"])
@@ -935,8 +936,9 @@ def get_latest_evidence(
             "message": "No evidence record file found. Run orchestrator to collect evidence.",
         }
 
-    with open(ev_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_evidence_file(ev_path)
+    if not data:
+        raise HTTPException(status_code=500, detail="Evidence snapshot could not be loaded")
 
     records = data.get("records", [])
     if domain and domain.lower() != "all":
