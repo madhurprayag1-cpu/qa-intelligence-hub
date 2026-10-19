@@ -102,7 +102,7 @@ Designed as a production-grade Quality Engineering platform demonstrating Senior
 
 ## 🧪 Comprehensive 11-Layer Test Pyramid
 
-The platform organizes validation across 11 architecture layers. The latest verified main CI run (#38862214826, commit `4fc56aabed1bca367a8510768243e1411cbd7bdf`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
+The platform organizes validation across 11 architecture layers. The latest verified main CI run (#39054140934, commit `4fc56aabed1bca367a8510768243e1411cbd7bdf`) executed **447 backend tests + 82 Playwright E2E tests = 529 CI test items**, all passing. The live capability catalog contains **492 capabilities**. The Test Explorer still serves a historical 426-test snapshot from 7 October 2026 and must not be described as the current CI run; the API and UI now label this evidence as historical when its SHA differs from the serving revision. These are separate evidence models:
 
 ```
 tests/
@@ -187,7 +187,7 @@ The active production topology is a **unified Vercel deployment** serving the Re
 Current production certification evidence (2026-10-17):
 - **Verified release baseline SHA:** `4fc56aabed1bca367a8510768243e1411cbd7bdf`.
 - **GitHub Actions run #39054140934:** PASS — 447 backend tests + 82 Playwright E2E tests; backend/frontend/E2E/checkpoint jobs all passed.
-- **Quality/security gates:** Backend and E2E `PRODUCTION_STRICT` APPROVED; DAST 5/5 probes passed with 0 vulnerabilities.
+- **Quality/security gates:** Backend and E2E `PRODUCTION_STRICT` APPROVED; deterministic offline RAG benchmark 15/15 passed (groundedness 0.9685, context relevance 1.00, citation accuracy 0.90, truthful refusal 1.00); scoped DAST 5/5 probes passed with 0 findings. These are scoped results, not external OWASP/PCI DSS certification.
 - **Production deployment:** READY for `4fc56aabed1bca367a8510768243e1411cbd7bdf`; the live serving-revision endpoint returned the same SHA.
 - **Stored Test Explorer evidence:** Historical run `RUN-AUTO-20261007-115444`, 426/426 PASS, commit `27848c25e9a88f17e6925b3e63c4d1032b1bc697`. API metadata and the UI now explicitly mark it historical when it does not match the serving revision.
 - **AI mode:** `HERMETIC_OFFLINE_MOCK`; live Gemini/Claude/OpenAI providers are not configured or claimed as tested.
