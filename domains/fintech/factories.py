@@ -7,7 +7,6 @@ Adheres strictly to AGENTS.md Section 12 and docs/ROADMAP.md Task 7.2:
 - Never uses real banking credentials, customer accounts, or production tokens.
 """
 
-import secrets
 import string
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -48,7 +47,8 @@ class AccountFactory:
     ) -> BankAccount:
         person = PersonGenerator.generate(index=index, email_domain="qahub-bank.io")
         holder = account_holder or person.full_name
-        acc_num = f"{10000000 + index * 17 + secrets.randbelow(500):08d}"
+        # Index-derived values keep synthetic IBANs deterministic and unique within a batch.
+        acc_num = f"{10000000 + index * 17:08d}"
         iban = f"GB29QAHB601613{acc_num}"
         bic = cls._SWIFT_BICS[index % len(cls._SWIFT_BICS)]
         acc_id = f"ACC-{IdentifierGenerator.generate_alphanumeric(8)}"
