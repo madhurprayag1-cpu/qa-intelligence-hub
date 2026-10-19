@@ -99,8 +99,14 @@ def _load_evidence_file(file_path: Path) -> Optional[Dict[str, Any]]:
             encoded = "".join(records_path.read_text(encoding="utf-8").split())
             compressed = base64.b64decode(encoded, validate=True)
             records_payload = gzip.decompress(compressed).decode("utf-8")
-            records = json.loads(records_payload)
-            if not isinstance(records, list):
+            decoded = json.loads(records_payload)
+            # The sidecar stores the complete original snapshot document, so
+            # metadata and per-test records can be cross-checked independently.
+            if isinstance(decoded, dict) and isinstance(decoded.get("records"), list):
+                records = decoded["records"]
+            elif isinstance(decoded, list):
+                records = decoded
+            else:
                 return None
             data["records"] = records
 
