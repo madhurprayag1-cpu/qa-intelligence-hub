@@ -175,3 +175,29 @@ def test_orchestrator_rejects_invalid_timeout_before_subprocess(monkeypatch, tmp
     assert "Execution policy rejected" in output
     assert "timeout_seconds must be between 1 and 600" in output
     assert not report_path.exists()
+
+
+def test_remediation_regression_is_blocked_in_production(monkeypatch):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qa-engine"))
+    from remediation import execute_in_process_regression
+
+    monkeypatch.setenv("QA_ENVIRONMENT", "production")
+    result = execute_in_process_regression(["tests/test_governance_controls.py"])
+    assert result[0] is False
+    assert result[1:4] == (0, 1, 0)
+    assert "prohibits autonomous remediation regression execution" in result[4][0]
+
+
+def test_remediation_regression_fails_closed_on_invalid_timeout(monkeypatch):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qa-engine"))
+    from remediation import execute_in_process_regression
+
+    monkeypatch.setenv("QA_ENVIRONMENT", "test")
+    monkeypatch.setenv("QA_REMEDIATION_TIMEOUT_SECONDS", "0")
+    result = execute_in_process_regression(["tests/test_governance_controls.py"])
+    assert result[0] is False
+    assert "timeout_seconds must be between 1 and 600" in result[4][0]
