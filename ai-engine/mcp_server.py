@@ -7,6 +7,7 @@ Adheres to AGENTS.md Section 7:
 
 import asyncio
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -24,6 +25,7 @@ if str(_REPO_ROOT / "ai-engine") not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT / "ai-engine"))
 
 from agents import DefectRCAAgent, ReportingAgent, RequirementAgent, SecurityTestingAgent, UIHealingAgent
+from governance_controls import authorize_action
 from quality_gate import PRESET_POLICIES, QualityGateInput, evaluate_policy_gate
 from rag import RAGPipeline
 
@@ -134,8 +136,35 @@ def list_tools() -> List[Dict[str, Any]]:
     return MCP_TOOLS
 
 
+def authorize_mcp_tool(name: str, environment: str = "test"):
+    """Authorize a registered MCP tool as a read-only analysis or proposal action.
+
+    MCP tools may analyze, test, report, or propose locator repairs; they cannot
+    mutate production. Unknown tools fail closed before dispatch.
+    """
+    registered = {tool["name"] for tool in MCP_TOOLS}
+    if name not in registered:
+        return authorize_action("unknown", environment)
+    action = {
+        "heal_playwright_selector": "generate_test_proposal",
+        "generate_release_report": "report",
+        "evaluate_quality_gate": "report",
+        "audit_security_vulnerabilities": "run_test",
+    }.get(name, "analyze")
+    return authorize_action(action, environment)
+
+
 def call_tool(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
-    """Dispatches a tool call and returns an MCP-compliant structured response."""
+    """Dispatches a tool call only after the runtime governance check passes."""
+    environment = (
+        os.getenv("QA_ENVIRONMENT")
+        or os.getenv("VERCEL_ENV")
+        or os.getenv("ENVIRONMENT")
+        or "test"
+    ).strip().lower()
+    authorization = authorize_mcp_tool(name, environment)
+    if not authorization.passed:
+        raise PermissionError("; ".join(authorization.errors))
     start_time = time.time()
 
     if name == "audit_security_vulnerabilities":
