@@ -87,6 +87,12 @@ class ToolRegistry:
             or "test"
         ).strip().lower()
 
+    def _runtime_timeout_seconds(self) -> int:
+        policy, result = self._runtime_policy()
+        if not result.passed:
+            raise ValueError("Invalid execution policy: " + "; ".join(result.errors))
+        return policy["timeout_seconds"]
+
     @staticmethod
     def _runtime_action(tool_name: str, kwargs: Dict[str, Any]) -> str:
         if tool_name == "api_client":
@@ -380,13 +386,13 @@ class ToolRegistry:
 
     def _tool_git_status(self) -> Dict[str, Any]:
         sha_out = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=str(_REPO_ROOT), text=True
+            ["git", "rev-parse", "HEAD"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         branch_out = subprocess.check_output(
-            ["git", "branch", "--show-current"], cwd=str(_REPO_ROOT), text=True
+            ["git", "branch", "--show-current"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         porcelain_out = subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=str(_REPO_ROOT), text=True
+            ["git", "status", "--porcelain"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         return {
             "commit_sha": sha_out,
@@ -434,6 +440,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         from evidence_engine import EvidenceEngine
         engine = EvidenceEngine()
@@ -482,6 +489,7 @@ class ToolRegistry:
             errors="replace",
             env=env,
             shell=(sys.platform == "win32"),
+            timeout=self._runtime_timeout_seconds(),
         )
 
         # Copy to custom report path if requested
@@ -595,7 +603,7 @@ class ToolRegistry:
             "tests/database/test_database_invariants.py",
             "-q",
         ]
-        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True)
+        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True, timeout=self._runtime_timeout_seconds())
         return {
             "exit_code": p.returncode,
             "passed": p.returncode == 0,
