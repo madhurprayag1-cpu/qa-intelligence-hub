@@ -527,6 +527,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         data = {}
         if out_json.exists():
@@ -578,6 +579,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         from rag_dataset import get_evaluation_dataset
         dataset = get_evaluation_dataset()
