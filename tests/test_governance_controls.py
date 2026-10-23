@@ -128,6 +128,11 @@ def test_tool_registry_denies_production_writes_before_handler(monkeypatch):
     )
     assert read_result["status"] == "SUCCESS"
 
+    catalog_result = registry.invoke(
+        "catalog_tool", AgentPermission.READ_ONLY, "test-agent"
+    )
+    assert catalog_result["status"] == "PERMISSION_DENIED"
+
     file_result = registry.invoke(
         "file_editor", AgentPermission.READ_WRITE_BRANCH, "test-agent",
         file_path="should-not-be-created.txt", content="blocked",
