@@ -88,7 +88,11 @@ test.describe("QA Platform Intelligence & Quality Gate E2E Suite", () => {
     // 3. Generate AI Release Sign-Off Report
     await page.locator('[data-testid="generate-release-report-btn"]').click();
     await expect(page.locator("body")).toContainText("Executive Release Report Generated");
-    await expect(page.locator("body")).toContainText("GO — APPROVED FOR RELEASE");
+    // Demo telemetry is not revision-bound release evidence; fail closed until
+    // security, coverage, human review, and retained evidence are supplied.
+    await expect(page.locator("body")).toContainText("NO-GO — RELEASE BLOCKED");
+    await expect(page.locator("body")).toContainText("review_approved must be true");
+    await expect(page.locator("body")).toContainText("evidence reference is required");
   });
 
   test("Scenario 6: Interactive Playwright Self-Healing Studio & Stress Benchmarks", async ({ page }) => {

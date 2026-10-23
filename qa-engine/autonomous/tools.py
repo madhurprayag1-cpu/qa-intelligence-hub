@@ -23,6 +23,7 @@ for _d in ["", "backend", "ai-engine", "qa-engine"]:
         sys.path.insert(0, _p)
 
 from autonomous.contracts import AgentPermission, ToolDefinition
+from governance_controls import authorize_action, validate_execution_policy
 
 
 def _resolve_python() -> str:
@@ -61,6 +62,51 @@ class ToolRegistry:
     def list_tools(self) -> List[ToolDefinition]:
         return list(self._tools.values())
 
+    def _runtime_policy(self) -> Tuple[Dict[str, Any], Any]:
+        """Load bounded execution policy from environment; invalid settings fail closed."""
+        try:
+            policy = {
+                "retries": int(os.getenv("QA_MAX_RETRIES", "0")),
+                "timeout_seconds": int(os.getenv("QA_TOOL_TIMEOUT_SECONDS", "60")),
+                "workers": int(os.getenv("QA_MAX_WORKERS", "1")),
+                "allow_production_mutations": os.getenv(
+                    "QA_ALLOW_PRODUCTION_MUTATIONS", "false"
+                ).strip().lower() in {"1", "true", "yes"},
+            }
+        except (TypeError, ValueError):
+            policy = {"retries": "invalid", "timeout_seconds": 0, "workers": 0,
+                      "allow_production_mutations": True}
+        return policy, validate_execution_policy(policy)
+
+    @staticmethod
+    def _runtime_environment() -> str:
+        return (
+            os.getenv("QA_ENVIRONMENT")
+            or os.getenv("VERCEL_ENV")
+            or os.getenv("ENVIRONMENT")
+            or "test"
+        ).strip().lower()
+
+    def _runtime_timeout_seconds(self) -> int:
+        policy, result = self._runtime_policy()
+        if not result.passed:
+            raise ValueError("Invalid execution policy: " + "; ".join(result.errors))
+        return policy["timeout_seconds"]
+
+    @staticmethod
+    def _runtime_action(tool_name: str, kwargs: Dict[str, Any]) -> str:
+        if tool_name == "api_client":
+            method = str(kwargs.get("method", "GET")).upper()
+            return "read" if method in {"GET", "HEAD", "OPTIONS"} else "write"
+        if tool_name in {"file_editor", "evidence_store", "catalog_tool"}:
+            return "write"
+        if tool_name in {"pytest_runner", "playwright_runner", "security_scanner",
+                         "performance_runner", "rag_evaluator", "database_inspector"}:
+            return "run_test"
+        if tool_name == "quality_gate_evaluator":
+            return "report"
+        return "analyze"
+
     def invoke(
         self,
         tool_name: str,
@@ -68,7 +114,7 @@ class ToolRegistry:
         caller_agent_id: str,
         **kwargs: Any,
     ) -> Dict[str, Any]:
-        """Invokes a tool with permission enforcement and telemetry recording."""
+        """Invoke only after role permissions and runtime governance both pass."""
         start = time.perf_counter()
         call_id = f"CALL-{int(time.time() * 1000)}"
 
@@ -93,6 +139,26 @@ class ToolRegistry:
                     f"Agent '{caller_agent_id}' with permission {caller_permission.value} "
                     f"cannot invoke '{tool_name}' requiring {definition.required_permission.value}"
                 ),
+                "duration_ms": 0.0,
+            }
+
+        policy, policy_result = self._runtime_policy()
+        if not policy_result.passed:
+            return {
+                "call_id": call_id, "tool_name": tool_name,
+                "status": "PERMISSION_DENIED",
+                "error": "Invalid execution policy: " + "; ".join(policy_result.errors),
+                "duration_ms": 0.0,
+            }
+
+        authorization = authorize_action(
+            self._runtime_action(tool_name, kwargs), self._runtime_environment()
+        )
+        if not authorization.passed:
+            return {
+                "call_id": call_id, "tool_name": tool_name,
+                "status": "PERMISSION_DENIED",
+                "error": "; ".join(authorization.errors),
                 "duration_ms": 0.0,
             }
 
@@ -320,13 +386,13 @@ class ToolRegistry:
 
     def _tool_git_status(self) -> Dict[str, Any]:
         sha_out = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=str(_REPO_ROOT), text=True
+            ["git", "rev-parse", "HEAD"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         branch_out = subprocess.check_output(
-            ["git", "branch", "--show-current"], cwd=str(_REPO_ROOT), text=True
+            ["git", "branch", "--show-current"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         porcelain_out = subprocess.check_output(
-            ["git", "status", "--porcelain"], cwd=str(_REPO_ROOT), text=True
+            ["git", "status", "--porcelain"], cwd=str(_REPO_ROOT), text=True, timeout=self._runtime_timeout_seconds()
         ).strip()
         return {
             "commit_sha": sha_out,
@@ -374,6 +440,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         from evidence_engine import EvidenceEngine
         engine = EvidenceEngine()
@@ -422,6 +489,7 @@ class ToolRegistry:
             errors="replace",
             env=env,
             shell=(sys.platform == "win32"),
+            timeout=self._runtime_timeout_seconds(),
         )
 
         # Copy to custom report path if requested
@@ -459,6 +527,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         data = {}
         if out_json.exists():
@@ -510,6 +579,7 @@ class ToolRegistry:
             text=True,
             encoding="utf-8",
             errors="replace",
+            timeout=self._runtime_timeout_seconds(),
         )
         from rag_dataset import get_evaluation_dataset
         dataset = get_evaluation_dataset()
@@ -535,7 +605,7 @@ class ToolRegistry:
             "tests/database/test_database_invariants.py",
             "-q",
         ]
-        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True)
+        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True, timeout=self._runtime_timeout_seconds())
         return {
             "exit_code": p.returncode,
             "passed": p.returncode == 0,

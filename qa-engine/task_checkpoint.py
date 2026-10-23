@@ -351,13 +351,43 @@ def collect_ci_evidence(
     evidence: Dict[str, Any] = {}
     blockers = []
     for key, (job_dir, filename) in report_specs.items():
-        path = artifact / job_dir / filename
+        job_root = artifact / job_dir
+        path = job_root / filename
         if filename == "dist":
-            passed = path.is_dir() and any(path.rglob("*"))
+            # upload-artifact/download-artifact may preserve different common-root
+            # layouts. Resolve the actual built dist directory, but fail closed if
+            # no unique, non-empty build can be identified.
+            candidates = []
+            if path.is_dir() and any(p.is_file() for p in path.rglob("*")):
+                candidates = [path]
+            else:
+                candidates = [
+                    candidate for candidate in job_root.rglob("dist")
+                    if candidate.is_dir() and any(p.is_file() for p in candidate.rglob("*"))
+                ] if job_root.is_dir() else []
+            direct_index = [candidate for candidate in candidates if (candidate / "index.html").is_file()]
+            if len(direct_index) == 1:
+                path = direct_index[0]
+                passed = True
+            elif len(direct_index) > 1:
+                passed = False
+                blockers.append("Frontend build evidence is ambiguous across multiple dist/index.html outputs.")
+            elif len(candidates) == 1:
+                path = candidates[0]
+                passed = True
+            else:
+                passed = False
+                blockers.append("Frontend build output missing, empty, or ambiguous.")
             evidence[key] = {"status": "PASSED" if passed else "FAILED", "revision": current_revision}
-            if not passed:
-                blockers.append("Frontend build output missing or empty.")
             continue
+
+        if not path.is_file() and job_root.is_dir():
+            candidates = sorted(candidate for candidate in job_root.rglob(filename) if candidate.is_file())
+            if len(candidates) == 1:
+                path = candidates[0]
+            elif len(candidates) > 1:
+                blockers.append(f"Required CI report path is ambiguous: {filename}.")
+                continue
         if not path.is_file() or path.stat().st_size == 0:
             blockers.append(f"Required CI report missing or empty: {filename}.")
             continue

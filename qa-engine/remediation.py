@@ -32,6 +32,7 @@ from quality_gate import (
     evaluate_policy_gate,
 )
 from regression_selector import RegressionPlan, select_regression_tests
+from governance_controls import validate_execution_policy
 
 
 @dataclass
@@ -268,6 +269,23 @@ def validate_defect_resolution(
     return True, f"Functional resolution verified for synthetic defect '{defect_id}'."
 
 
+def _remediation_timeout_seconds() -> int:
+    try:
+        timeout_seconds = int(os.getenv("QA_REMEDIATION_TIMEOUT_SECONDS", "300"))
+    except (TypeError, ValueError):
+        raise ValueError("Invalid remediation execution policy environment values")
+    policy = {
+        "retries": 0,
+        "timeout_seconds": timeout_seconds,
+        "workers": 1,
+        "allow_production_mutations": False,
+    }
+    result = validate_execution_policy(policy)
+    if not result.passed:
+        raise ValueError("; ".join(result.errors))
+    return timeout_seconds
+
+
 def execute_in_process_regression(
     test_files: List[str],
 ) -> Tuple[bool, int, int, int, List[str]]:
@@ -283,6 +301,21 @@ def execute_in_process_regression(
     import sys
     import tempfile
 
+    environment = (
+        os.getenv("QA_ENVIRONMENT")
+        or os.getenv("VERCEL_ENV")
+        or os.getenv("ENVIRONMENT")
+        or "test"
+    ).strip().lower()
+    if environment == "production":
+        return False, 0, 1, 0, [
+            "Production environment prohibits autonomous remediation regression execution"
+        ]
+    try:
+        timeout_seconds = _remediation_timeout_seconds()
+    except ValueError as exc:
+        return False, 0, 1, 0, [f"Execution policy rejected: {exc}"]
+
     valid_files = [f for f in test_files if Path(f).exists()]
     if not valid_files:
         return True, 0, 0, 0, []
@@ -294,13 +327,21 @@ def execute_in_process_regression(
         with tempfile.NamedTemporaryFile(prefix="qahub-remediation-", suffix=".xml", delete=False) as handle:
             junit_path = handle.name
         try:
-            proc = subprocess.run(
-                [sys.executable, "-m", "pytest", "-q", "--tb=short", f"--junitxml={junit_path}", test_file],
-                cwd=str(_REPO_ROOT),
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            try:
+                proc = subprocess.run(
+                    [sys.executable, "-m", "pytest", "-q", "--tb=short", f"--junitxml={junit_path}", test_file],
+                    cwd=str(_REPO_ROOT),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=timeout_seconds,
+                )
+            except subprocess.TimeoutExpired:
+                total_failed += 1
+                errors.append(
+                    f"{test_file}: regression subprocess timed out after {timeout_seconds} seconds"
+                )
+                continue
             summary = re.search(
                 r"(?:(\d+) passed)?(?:,?\s*(\d+) failed)?(?:,?\s*(\d+) skipped)?",
                 proc.stdout.splitlines()[-1] if proc.stdout.splitlines() else "",

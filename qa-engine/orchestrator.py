@@ -51,6 +51,7 @@ from quality_gate import (
 )
 from domain_registry import domain_registry
 from regression_selector import select_regression_tests
+from governance_controls import validate_execution_policy
 
 
 @dataclass
@@ -130,29 +131,65 @@ def _get_python_executable() -> str:
             return str(candidate)
     return sys.executable
 
+def _get_orchestration_timeout_seconds() -> int:
+    """Validate runtime execution bounds before starting subprocess work."""
+    try:
+        policy = {
+            "retries": int(os.getenv("QA_MAX_RETRIES", "0")),
+            "timeout_seconds": int(os.getenv("QA_ORCHESTRATOR_TIMEOUT_SECONDS", "600")),
+            "workers": int(os.getenv("QA_MAX_WORKERS", "1")),
+            "allow_production_mutations": os.getenv(
+                "QA_ALLOW_PRODUCTION_MUTATIONS", "false"
+            ).strip().lower() in {"1", "true", "yes"},
+        }
+    except (TypeError, ValueError):
+        raise ValueError("Invalid runtime execution policy environment values")
+    result = validate_execution_policy(policy)
+    if not result.passed:
+        raise ValueError("; ".join(result.errors))
+    return policy["timeout_seconds"]
+
 
 class ExecutionAgent:
     """Executes hermetic test suites, generates reports, and captures raw output."""
     def run_pytest(self, junit_xml_path: Path) -> Tuple[int, str]:
         """Runs pytest with JUnit XML output."""
+        try:
+            timeout_seconds = _get_orchestration_timeout_seconds()
+        except ValueError as exc:
+            return 1, f"Execution policy rejected: {exc}"
         junit_xml_path.parent.mkdir(parents=True, exist_ok=True)
         py_exe = _get_python_executable()
 
         cmd = [py_exe, "-m", "pytest", f"--junitxml={junit_xml_path}", "-q"]
-        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True)
+        try:
+            p = subprocess.run(
+                cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            return 124, f"Pytest execution timed out after {timeout_seconds} seconds."
         return p.returncode, p.stdout + "\n" + p.stderr
 
     def run_playwright(self, json_report_path: Path) -> Tuple[int, str]:
         """Runs Playwright E2E suite with JSON reporter."""
+        try:
+            timeout_seconds = _get_orchestration_timeout_seconds()
+        except ValueError as exc:
+            return 1, f"Execution policy rejected: {exc}"
         json_report_path.parent.mkdir(parents=True, exist_ok=True)
         cmd = f"npx playwright test --reporter=json={json_report_path}" if sys.platform == "win32" else ["npx", "playwright", "test", f"--reporter=json={json_report_path}"]
-        p = subprocess.run(
-            cmd,
-            cwd=str(_REPO_ROOT),
-            capture_output=True,
-            text=True,
-            shell=(sys.platform == "win32")
-        )
+        try:
+            p = subprocess.run(
+                cmd,
+                cwd=str(_REPO_ROOT),
+                capture_output=True,
+                text=True,
+                shell=(sys.platform == "win32"),
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            return 124, f"Playwright execution timed out after {timeout_seconds} seconds."
         return p.returncode, p.stdout + "\n" + p.stderr
 
 
@@ -163,13 +200,31 @@ class SecurityAuditAgent:
         json_output_path.parent.mkdir(parents=True, exist_ok=True)
         py_exe = _get_python_executable()
 
+        try:
+            timeout_seconds = _get_orchestration_timeout_seconds()
+        except ValueError as exc:
+            return {
+                "status": "FAILED", "elapsed_ms": (time.perf_counter() - start) * 1000,
+                "exit_code": 1, "compliance_rate": 0.0, "vulnerabilities": 1,
+                "output": f"Execution policy rejected: {exc}",
+            }
         cmd = [
             py_exe,
             str(_REPO_ROOT / "qa-engine" / "security_scanner.py"),
             "--mode", "gate",
             "--output-json", str(json_output_path)
         ]
-        p = subprocess.run(cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True)
+        try:
+            p = subprocess.run(
+                cmd, cwd=str(_REPO_ROOT), capture_output=True, text=True,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "status": "FAILED", "elapsed_ms": (time.perf_counter() - start) * 1000,
+                "exit_code": 124, "compliance_rate": 0.0, "vulnerabilities": 1,
+                "output": f"Security scan timed out after {timeout_seconds} seconds.",
+            }
         elapsed = (time.perf_counter() - start) * 1000
         
         status = "PASSED" if p.returncode == 0 else "FAILED"
