@@ -639,10 +639,33 @@ class ReportingAgent(BaseAgent):
         rag_groundedness = ctx.get("rag_groundedness_score", 0.95)
         policy_name = ctx.get("policy_name", "PRODUCTION_STRICT")
         gate_status = ctx.get("quality_gate_status", "PASSED")
-        violations = ctx.get("violations", [])
+        violations = list(ctx.get("violations") or [])
 
-        pass_rate = (passed_tests / total_tests * 100.0) if total_tests > 0 else 100.0
-        is_go = (gate_status == "PASSED" and critical_defects == 0 and security_vulnerabilities == 0 and failed_tests == 0)
+        from governance_controls import evaluate_definition_of_done
+        definition_of_done = evaluate_definition_of_done({
+            "tests_passed": total_tests > 0 and passed_tests == total_tests and failed_tests == 0,
+            "security_passed": ctx.get("security_passed") is True and security_vulnerabilities == 0,
+            "coverage_complete": ctx.get("coverage_complete") is True,
+            "review_approved": ctx.get("review_approved") is True,
+            "tested_revision": ctx.get("tested_revision"),
+            "release_revision": ctx.get("release_revision"),
+            "critical_defects": critical_defects,
+            "evidence_uri": ctx.get("evidence_uri"),
+            "skipped_tests": ctx.get("skipped_tests", 0),
+        })
+        if not definition_of_done.passed:
+            violations.extend(
+                message for message in definition_of_done.errors if message not in violations
+            )
+
+        pass_rate = (passed_tests / total_tests * 100.0) if total_tests > 0 else 0.0
+        is_go = (
+            gate_status == "PASSED"
+            and critical_defects == 0
+            and security_vulnerabilities == 0
+            and failed_tests == 0
+            and definition_of_done.passed
+        )
         decision = "GO — APPROVED FOR RELEASE" if is_go else "NO-GO — RELEASE BLOCKED"
 
         # Generate structured executive markdown report
