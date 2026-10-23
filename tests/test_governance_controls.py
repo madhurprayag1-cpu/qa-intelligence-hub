@@ -91,3 +91,24 @@ def test_definition_of_done_requires_revision_bound_evidence():
     assert evaluate_definition_of_done(complete).passed
     assert not evaluate_definition_of_done({**complete, "release_revision": "different"}).passed
     assert not evaluate_definition_of_done({**complete, "security_passed": False}).passed
+
+
+def test_mcp_runtime_authorization_allows_read_only_tools_in_production():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ai-engine"))
+    from mcp_server import authorize_mcp_tool
+
+    assert authorize_mcp_tool("audit_security_vulnerabilities", "production").passed
+    assert authorize_mcp_tool("generate_release_report", "production").passed
+    assert authorize_mcp_tool("heal_playwright_selector", "production").passed
+
+
+def test_mcp_runtime_authorization_fails_closed_for_unregistered_tools():
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ai-engine"))
+    from mcp_server import authorize_mcp_tool
+
+    result = authorize_mcp_tool("arbitrary_shell_or_write", "production")
+    assert not result.passed
