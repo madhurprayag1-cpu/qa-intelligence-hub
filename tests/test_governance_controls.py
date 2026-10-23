@@ -112,3 +112,46 @@ def test_mcp_runtime_authorization_fails_closed_for_unregistered_tools():
 
     result = authorize_mcp_tool("arbitrary_shell_or_write", "production")
     assert not result.passed
+
+
+def test_tool_registry_denies_production_writes_before_handler(monkeypatch):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qa-engine"))
+    from autonomous.contracts import AgentPermission
+    from autonomous.tools import ToolRegistry
+
+    monkeypatch.setenv("QA_ENVIRONMENT", "production")
+    registry = ToolRegistry()
+    read_result = registry.invoke(
+        "repo_reader", AgentPermission.READ_ONLY, "test-agent", file_path="README.md"
+    )
+    assert read_result["status"] == "SUCCESS"
+
+    file_result = registry.invoke(
+        "file_editor", AgentPermission.READ_WRITE_BRANCH, "test-agent",
+        file_path="should-not-be-created.txt", content="blocked",
+    )
+    assert file_result["status"] == "PERMISSION_DENIED"
+    assert "prohibited" in file_result["error"]
+
+    api_result = registry.invoke(
+        "api_client", AgentPermission.RELEASE, "test-agent",
+        method="POST", path="/health", json_data={},
+    )
+    assert api_result["status"] == "PERMISSION_DENIED"
+
+
+def test_tool_registry_fails_closed_for_invalid_runtime_policy(monkeypatch):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qa-engine"))
+    from autonomous.contracts import AgentPermission
+    from autonomous.tools import ToolRegistry
+
+    monkeypatch.setenv("QA_TOOL_TIMEOUT_SECONDS", "0")
+    result = ToolRegistry().invoke(
+        "repo_reader", AgentPermission.READ_ONLY, "test-agent", file_path="README.md"
+    )
+    assert result["status"] == "PERMISSION_DENIED"
+    assert "Invalid execution policy" in result["error"]
