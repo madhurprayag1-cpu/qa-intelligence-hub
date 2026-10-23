@@ -6,7 +6,7 @@ not considered end-to-end production verified until callers invoke them and evid
 | Policy | Executable control | Evidence | Status |
 |---|---|---|---|
 | SYSTEM_CONTEXT.md | Shared control functions and revision-bound release evidence | Unit tests | Shared helper implemented |
-| AGENTS.md | Action allowlist; unknown actions fail closed | Permission tests | Shared helper implemented; agent wiring pending |
+| AGENTS.md | Action allowlist; unknown MCP tools fail closed before dispatch; registered tools are classified as read-only analysis, testing, reporting, or proposal actions | Runtime dispatcher tests | MCP dispatcher integrated; other agent entry points still require verification |
 | TEST_STRATEGY.md | Traceability and coverage-gap checks | Mapping tests | Implemented |
 | REQUIREMENTS.md | Active requirement IDs linked to enabled tests | Missing/duplicate mapping tests | Implemented |
 | TEST_DATA.md | Synthetic-only and environment/data guards | Positive/negative tests | Implemented |
@@ -16,7 +16,7 @@ not considered end-to-end production verified until callers invoke them and evid
 | SELF_HEALING.md | Confidence threshold, protected-domain exclusion, approval, no auto-apply | Proposal tests | Proposal gate implemented |
 | FAILURE_ANALYSIS.md | Deterministic first-pass failure categories | Parameterized tests | Implemented; AI analysis remains advisory |
 | COVERAGE_MATRIX.md | Unmapped active requirement detection | Gap test | Implemented |
-| EXECUTION_POLICY.md | Retry, timeout, worker bounds and production mutation denial | Boundary/permission tests | Helper implemented; callers must enforce result |
+| EXECUTION_POLICY.md | Retry, timeout, worker bounds; MCP dispatcher enforces authorization before every tool call | Boundary/permission and dispatcher tests | MCP runtime enforcement integrated; other orchestration entry points remain unverified |
 | REPORTING.md | Release evidence evaluated against tested revision | Revision-match tests | Gate helper implemented |
 | SECURITY_GUARDRAILS.md | Production write denial and synthetic data constraints | Permission/data tests | Helper implemented; security scanners remain required |
 | DEFINITION_OF_DONE.md | Fail-closed evidence and quality checks | Missing/mismatch tests | Helper implemented; existing release gate remains authoritative |
