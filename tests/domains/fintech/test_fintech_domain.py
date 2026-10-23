@@ -115,6 +115,19 @@ def test_account_factory_build_and_batch():
     assert len(acc_ids) == 5
     assert len(ibans) == 5
 
+    # IBAN generation is deterministic across repeated batch builds.
+    repeated_batch = AccountFactory.build_batch(5)
+    assert [a.iban for a in batch] == [a.iban for a in repeated_batch]
+    assert len({a.iban for a in repeated_batch}) == 5
+
+
+def test_account_factory_rejects_invalid_indices():
+    """Negative or non-integer indices must not create ambiguous account identifiers."""
+    with pytest.raises(ValueError, match="non-negative integer"):
+        AccountFactory.build(index=-1)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        AccountFactory.build(index=1.5)
+
 
 def test_double_entry_ledger_invariant():
     """Verify double-entry ledger invariant: sum(debits) must equal sum(credits)."""
