@@ -17,9 +17,9 @@ not considered end-to-end production verified until callers invoke them and evid
 | FAILURE_ANALYSIS.md | Deterministic first-pass failure categories | Parameterized tests | Implemented; AI analysis remains advisory |
 | COVERAGE_MATRIX.md | Unmapped active requirement detection | Gap test | Implemented |
 | EXECUTION_POLICY.md | Bounded retry/timeout/worker settings fail closed; ToolRegistry applies the validated timeout to subprocess tools and denies production writes | Boundary tests, invalid-policy denial, production-write denial | Runtime ToolRegistry enforcement integrated; orchestration subprocesses outside the registry still require audit |
-| REPORTING.md | Release evidence evaluated against tested revision | Revision-match tests | Gate helper implemented |
+| REPORTING.md | ReportingAgent calls the Definition-of-Done gate and requires explicit security, coverage, human-review, matching tested/release revisions, zero skipped tests, and retained evidence before GO | Positive and missing-evidence reporting tests | Runtime report sign-off is evidence-bound; CI checkpoint remains independently authoritative |
 | SECURITY_GUARDRAILS.md | Production write denial and synthetic data constraints | Permission/data tests | Helper implemented; security scanners remain required |
-| DEFINITION_OF_DONE.md | Fail-closed evidence and quality checks | Missing/mismatch tests | Helper implemented; existing release gate remains authoritative |
+| DEFINITION_OF_DONE.md | ReportingAgent invokes evaluate_definition_of_done; missing or mismatched evidence forces NO-GO | Positive/missing-evidence report tests plus helper unit tests | Integrated into report generation; final CI checkpoint still validates actual artifacts and SHA |
 
 ## Integration contract
 
