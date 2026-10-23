@@ -48,7 +48,7 @@ class AccountFactory:
     ) -> BankAccount:
         person = PersonGenerator.generate(index=index, email_domain="qahub-bank.io")
         holder = account_holder or person.full_name
-        acc_num = f"{10000000 + index * 17 + secrets.randbelow(500):08d}"
+        # The index is the stable batch key: repeated builds for the same index\n        # produce the same IBAN, and distinct non-negative indices cannot collide.\n        if type(index) is not int or index < 0:\n            raise ValueError("index must be a non-negative integer")\n        acc_num = f"{10000000 + index * 17:08d}"
         iban = f"GB29QAHB601613{acc_num}"
         bic = cls._SWIFT_BICS[index % len(cls._SWIFT_BICS)]
         acc_id = f"ACC-{IdentifierGenerator.generate_alphanumeric(8)}"
