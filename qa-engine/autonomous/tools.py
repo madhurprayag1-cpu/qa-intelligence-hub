@@ -98,10 +98,10 @@ class ToolRegistry:
         if tool_name == "api_client":
             method = str(kwargs.get("method", "GET")).upper()
             return "read" if method in {"GET", "HEAD", "OPTIONS"} else "write"
-        if tool_name in {"file_editor", "evidence_store"}:
+        if tool_name in {"file_editor", "evidence_store", "catalog_tool"}:
             return "write"
         if tool_name in {"pytest_runner", "playwright_runner", "security_scanner",
-                         "performance_runner", "rag_evaluator"}:
+                         "performance_runner", "rag_evaluator", "database_inspector"}:
             return "run_test"
         if tool_name == "quality_gate_evaluator":
             return "report"
