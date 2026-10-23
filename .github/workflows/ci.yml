@@ -160,10 +160,16 @@ jobs:
         run: |
           cd frontend
           npm ci
-      - name: Install Playwright and browser dependencies
+      - name: Cache Playwright browser binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Playwright browser
+        timeout-minutes: 8
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Run Playwright E2E Suite
         env:
           DATABASE_URL: postgresql+psycopg://${{ secrets.CI_POSTGRES_USER }}:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/qa_intelligence
