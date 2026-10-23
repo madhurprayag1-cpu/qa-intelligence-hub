@@ -160,3 +160,18 @@ def test_tool_registry_fails_closed_for_invalid_runtime_policy(monkeypatch):
     )
     assert result["status"] == "PERMISSION_DENIED"
     assert "Invalid execution policy" in result["error"]
+
+
+def test_orchestrator_rejects_invalid_timeout_before_subprocess(monkeypatch, tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "qa-engine"))
+    from orchestrator import ExecutionAgent
+
+    monkeypatch.setenv("QA_ORCHESTRATOR_TIMEOUT_SECONDS", "0")
+    report_path = tmp_path / "pytest-report.xml"
+    code, output = ExecutionAgent().run_pytest(report_path)
+    assert code != 0
+    assert "Execution policy rejected" in output
+    assert "timeout_seconds must be between 1 and 600" in output
+    assert not report_path.exists()
