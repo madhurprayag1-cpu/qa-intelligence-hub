@@ -7,6 +7,7 @@ Adheres strictly to AGENTS.md Section 12 and docs/ROADMAP.md Task 7.2:
 - Never uses real banking credentials, customer accounts, or production tokens.
 """
 
+import secrets
 import string
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -45,9 +46,13 @@ class AccountFactory:
         account_type: AccountType = AccountType.CHECKING,
         index: int = 0,
     ) -> BankAccount:
+        # Validate before passing the index to any downstream indexed generator.
+        if type(index) is not int or index < 0:
+            raise ValueError("index must be a non-negative integer")
         person = PersonGenerator.generate(index=index, email_domain="qahub-bank.io")
         holder = account_holder or person.full_name
-        # Index-derived values keep synthetic IBANs deterministic and unique within a batch.
+        # The index is the stable batch key: repeated builds for the same index
+        # produce the same IBAN, and distinct non-negative indices cannot collide.
         acc_num = f"{10000000 + index * 17:08d}"
         iban = f"GB29QAHB601613{acc_num}"
         bic = cls._SWIFT_BICS[index % len(cls._SWIFT_BICS)]
