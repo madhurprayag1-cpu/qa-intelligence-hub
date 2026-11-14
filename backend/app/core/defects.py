@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 from fastapi import Request
+from app.core.production_safety import is_production_runtime
 
 
 class DefectType(str, Enum):
@@ -106,7 +107,9 @@ DEFECT_REGISTRY: dict[str, DefectDefinition] = {
 
 
 def get_active_defect(request: Request) -> Optional[DefectDefinition]:
-    """Inspect request headers and query parameters for intentional defect simulation flag."""
+    """Inspect test-only defect flags; never activate engineered defects in production."""
+    if is_production_runtime():
+        return None
     defect_id = request.headers.get("x-simulate-defect") or request.query_params.get("simulate_defect")
     if not defect_id:
         return None

@@ -184,9 +184,9 @@ The active production topology is a **unified Vercel deployment** serving the Re
 
 **https://qa-intelligence-hub-flax.vercel.app**
 
-Verified deployed application baseline before this documentation-only synchronization and the separate security-hardening change set (2026-10-19):
+Verified deployed application baseline before the separate security-hardening change set (2026-10-19):
 - **Application baseline SHA at the time of verification:** `dda73ded3c5d156d3481603f97aabd4b421979af` ([commit](https://github.com/madhurprayag1-cpu/qa-intelligence-hub/commit/dda73ded3c5d156d3481603f97aabd4b421979af)). The exact live serving revision is exposed by [`/qa/release/serving-revision`](https://qa-intelligence-hub-flax.vercel.app/qa/release/serving-revision); a docs-only deployment may advance the serving SHA without changing the application code baseline described here.
-- **GitHub Actions run #39223713484:** PASS — backend, frontend, E2E, and checkpoint jobs passed for current `main`.
+- **GitHub Actions run #39223713484:** PASS — backend, frontend, E2E, and checkpoint jobs passed for that application baseline.
 - **Current CI test totals:** 447 backend Pytest + 82 Playwright E2E = 529 passed test items.
 - **Capability catalog:** 492 capability entries across 11 layers; this catalog count is separate from executed tests.
 - **Test Explorer snapshot:** the 529 individual stored records are from run #39219421663 on source revision `b8405af4acbbaef6d46557a349af0782538b3382`. They remain correctly labelled historical relative to `dda73ded…`; do not claim they were executed against a later SHA.
@@ -206,4 +206,5 @@ Complete deployment runbook and environment-variable reference: [`docs/DEPLOYMEN
 - [Production Deployment Runbook](docs/DEPLOYMENT.md)
 - [Domain Pack Extension Guide](docs/domain-extension-guide.md)
 - [Project Roadmap & Completed Milestones](docs/ROADMAP.md)
+- [Public API Security & Permission Inventory](docs/SECURITY_ENDPOINT_INVENTORY.md)
 - [Engineering Standards & Architectural Rules](AGENTS.md)

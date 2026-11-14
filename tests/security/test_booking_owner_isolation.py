@@ -117,15 +117,15 @@ def test_production_environment_safeguards(client: TestClient, monkeypatch):
     demo_resp = client.get("/auth/demo-users")
     assert demo_resp.status_code == 404
 
-    # 2. Demo login is disabled (503)
+    # 2. Demo login is blocked by the production default-deny boundary (403)
     login_resp = client.post(
         "/auth/login",
         json={"email": "passenger@qahub.io", "password": "passenger123"},
     )
-    assert login_resp.status_code == 503
-    assert "disabled in production" in login_resp.json()["detail"]
+    assert login_resp.status_code == 403
+    assert login_resp.json()["detail"] == "This operation is disabled in the public production demo."
 
-    # 3. Booking creation disabled until prod auth configured (503)
+    # 3. Booking creation is denied before any database operation (403)
     owner = User(id=805, email="prod-test@example.test", name="Prod Test", role="passenger")
     with authenticated_as(client, owner):
         booking_resp = client.post(
@@ -137,17 +137,17 @@ def test_production_environment_safeguards(client: TestClient, monkeypatch):
                 "seats": 1,
             },
         )
-    assert booking_resp.status_code == 503
-    assert "production authentication is configured" in booking_resp.json()["detail"]
+    assert booking_resp.status_code == 403
+    assert booking_resp.json()["detail"] == "This operation is disabled in the public production demo."
 
-    # 4. Payment processing disabled until prod auth configured (503)
+    # 4. Payment processing is denied before any database operation (403)
     with authenticated_as(client, owner):
         pay_resp = client.post(
             "/payments",
             json={"booking_id": 1, "method": "CREDIT_CARD"},
         )
-    assert pay_resp.status_code == 503
-    assert "production authentication is configured" in pay_resp.json()["detail"]
+    assert pay_resp.status_code == 403
+    assert pay_resp.json()["detail"] == "This operation is disabled in the public production demo."
 
 
 def test_jwt_secret_production_validation(monkeypatch):
