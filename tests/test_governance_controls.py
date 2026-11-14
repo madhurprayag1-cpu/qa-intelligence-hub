@@ -253,3 +253,25 @@ def test_definition_of_done_rejects_whitespace_only_revision():
                 "tested_revision": "  ", "release_revision": "  ",
                 "critical_defects": 0, "evidence_uri": "evidence://run", "skipped_tests": 0}
     assert not evaluate_definition_of_done(evidence).passed
+
+
+def test_remediation_prod_alias_denied(monkeypatch):
+    from remediation import execute_in_process_regression
+    monkeypatch.setenv("QA_ENVIRONMENT", "prod")
+    result = execute_in_process_regression(["tests/test_governance_controls.py"])
+    assert result[0] is False
+    assert "prohibits" in result[4][0]
+
+
+def test_orchestrator_invalidates_stale_junit_before_timeout(monkeypatch, tmp_path):
+    import subprocess
+    from orchestrator import ExecutionAgent
+    from pathlib import Path
+    report = tmp_path / "stale.xml"
+    report.write_text("<testsuite tests=\"1\" failures=\"0\"/>")
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="pytest", timeout=1)
+    monkeypatch.setattr(subprocess, "run", timeout)
+    result = ExecutionAgent().run_pytest(report)
+    assert result[0] == 124
+    assert not report.exists()
