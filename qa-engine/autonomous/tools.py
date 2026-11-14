@@ -151,8 +151,23 @@ class ToolRegistry:
                 "duration_ms": 0.0,
             }
 
+        environment = self._runtime_environment()
+        # Test runners can execute arbitrary database-mutating tests. Never run
+        # them in production, even when their registry action is "run_test".
+        # Deny the whole runner family to avoid inherited production credentials.
+        if environment in {"production", "prod"} and tool_name in {
+            "pytest_runner", "playwright_runner", "security_scanner",
+            "performance_runner", "rag_evaluator", "database_inspector",
+        }:
+            return {
+                "call_id": call_id, "tool_name": tool_name,
+                "status": "PERMISSION_DENIED",
+                "error": "Test and inspection runners are prohibited in production",
+                "duration_ms": 0.0,
+            }
+
         authorization = authorize_action(
-            self._runtime_action(tool_name, kwargs), self._runtime_environment()
+            self._runtime_action(tool_name, kwargs), environment
         )
         if not authorization.passed:
             return {
