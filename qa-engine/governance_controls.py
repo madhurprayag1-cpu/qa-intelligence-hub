@@ -1,5 +1,6 @@
 """Shared deterministic controls for QA governance."""
 from dataclasses import dataclass
+import math
 from typing import Any, Mapping
 
 
@@ -31,6 +32,9 @@ def validate_execution_policy(policy: Mapping[str, Any]) -> GateResult:
 def authorize_action(action: str, environment: str, approved_by: str = "") -> GateResult:
     read_only = {"read", "inspect", "analyze", "report", "run_test", "generate_test_proposal"}
     mutating = {"write", "delete", "deploy", "migrate", "change_permissions", "apply_self_heal"}
+    environment = str(environment).strip().lower()
+    if environment == "prod":
+        environment = "production"
     if environment not in {"local", "test", "staging", "production"}:
         return GateResult(False, ("unknown environment",))
     if action in read_only:
@@ -39,15 +43,15 @@ def authorize_action(action: str, environment: str, approved_by: str = "") -> Ga
         return GateResult(False, ("unrecognized action",))
     if environment == "production":
         return GateResult(False, ("mutating production actions are prohibited",))
-    if action in {"deploy", "migrate", "change_permissions", "apply_self_heal"} and not approved_by.strip():
+    if action in {"delete", "deploy", "migrate", "change_permissions", "apply_self_heal"} and not str(approved_by).strip():
         return GateResult(False, ("named human approval is required",))
     return GateResult(True)
 
 
 def validate_test_data(data: Mapping[str, Any], environment: str) -> GateResult:
     errors = []
-    if environment == "production":
-        errors.append("test data cannot be generated or mutated in production")
+    if str(environment).strip().lower() not in {"local", "test", "staging"}:
+        errors.append("test data cannot be generated or mutated in production or unknown environment")
     if data.get("synthetic") is not True:
         errors.append("synthetic=true is required")
     sensitive_parts = ("pass" + "word", "sec" + "ret", "to" + "ken", "api" + "_key", "ssn", "cvv")
@@ -82,13 +86,14 @@ def validate_healing_proposal(proposal: Mapping[str, Any]) -> GateResult:
     if proposal.get("change_type") != "locator":
         errors.append("only locator proposals are allowed")
     confidence = proposal.get("confidence")
-    if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or confidence < 0.90 or confidence > 1:
+    if isinstance(confidence, bool) or not isinstance(confidence, (int, float)) or not math.isfinite(confidence) or confidence < 0.90 or confidence > 1:
         errors.append("confidence must be between 0.90 and 1")
-    if str(proposal.get("domain", "")).lower() in {"auth", "security", "payments"}:
+    domain = str(proposal.get("domain", "")).strip().lower()
+    if not domain or domain in {"auth", "security", "payments"}:
         errors.append("protected domains are excluded")
     if proposal.get("human_approved") is not True:
         errors.append("human approval is required")
-    if proposal.get("auto_apply") is True:
+    if proposal.get("auto_apply") is not False:
         errors.append("proposal cannot auto-apply")
     return GateResult(not errors, tuple(errors))
 
@@ -112,8 +117,9 @@ def classify_failure(message: str, status_code=None) -> str:
 
 def coverage_gaps(requirements, tests):
     linked = {str(t.get("requirement_id", "")) for t in tests if t.get("enabled", True) is True}
-    return [str(r.get("id", "<missing-id>")) for r in requirements
-            if r.get("active", True) is not False and str(r.get("id", "")) not in linked]
+    return [str(r.get("id") or "<missing-id>") for r in requirements
+            if r.get("active", True) is not False and
+            (not str(r.get("id", "")).strip() or str(r.get("id", "")).strip() not in linked)]
 
 
 def evaluate_definition_of_done(evidence: Mapping[str, Any]) -> GateResult:
@@ -122,7 +128,7 @@ def evaluate_definition_of_done(evidence: Mapping[str, Any]) -> GateResult:
         if evidence.get(key) is not True:
             errors.append(key + " must be true")
     tested, release = evidence.get("tested_revision"), evidence.get("release_revision")
-    if not tested or tested != release:
+    if not isinstance(tested, str) or not tested.strip() or not isinstance(release, str) or not release.strip() or tested != release:
         errors.append("tested revision must match release revision")
     if evidence.get("critical_defects", 1) != 0:
         errors.append("critical defects must be zero")
