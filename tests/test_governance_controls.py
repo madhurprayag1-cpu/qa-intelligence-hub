@@ -220,3 +220,36 @@ def test_production_runner_denied_before_handler(monkeypatch, environment, tool_
     assert result["status"] == "PERMISSION_DENIED"
     assert "prohibited in production" in result["error"]
     assert not invoked
+
+
+@pytest.mark.parametrize("action", ["delete", "deploy", "migrate", "change_permissions"])
+def test_destructive_actions_require_named_approval(action):
+    assert not authorize_action(action, "test").passed
+    assert authorize_action(action, "test", "reviewer").passed
+
+
+def test_production_aliases_and_unknown_environments_fail_closed():
+    assert not authorize_action("write", "prod").passed
+    assert not validate_test_data({"synthetic": True}, "prod").passed
+    assert not validate_test_data({"synthetic": True}, "unknown").passed
+
+
+def test_healing_rejects_invalid_domain_confidence_and_auto_apply():
+    good = {"change_type": "locator", "domain": "catalog", "confidence": 0.95,
+            "human_approved": True, "auto_apply": False}
+    for change in ({"domain": ""}, {"confidence": float("nan")},
+                   {"confidence": float("inf")}, {"auto_apply": 1},
+                   {"auto_apply": "true"}):
+        assert not validate_healing_proposal({**good, **change}).passed
+
+
+def test_missing_requirement_id_cannot_be_masked_by_empty_test_id():
+    assert coverage_gaps([{"active": True}], [{"enabled": True}]) == ["<missing-id>"]
+
+
+def test_definition_of_done_rejects_whitespace_only_revision():
+    evidence = {"tests_passed": True, "security_passed": True,
+                "coverage_complete": True, "review_approved": True,
+                "tested_revision": "  ", "release_revision": "  ",
+                "critical_defects": 0, "evidence_uri": "evidence://run", "skipped_tests": 0}
+    assert not evaluate_definition_of_done(evidence).passed
