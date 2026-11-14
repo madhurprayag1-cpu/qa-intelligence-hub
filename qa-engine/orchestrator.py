@@ -159,6 +159,8 @@ class ExecutionAgent:
         except ValueError as exc:
             return 1, f"Execution policy rejected: {exc}"
         junit_xml_path.parent.mkdir(parents=True, exist_ok=True)
+        # Never reuse evidence from a prior run, including timeout/failure paths.
+        junit_xml_path.unlink(missing_ok=True)
         py_exe = _get_python_executable()
 
         cmd = [py_exe, "-m", "pytest", f"--junitxml={junit_xml_path}", "-q"]
