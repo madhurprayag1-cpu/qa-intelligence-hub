@@ -27,6 +27,13 @@ async def test_reporting_agent_go_decision():
         "rag_groundedness_score": 0.95,
         "quality_gate_status": "PASSED",
         "violations": [],
+        "security_passed": True,
+        "coverage_complete": True,
+        "review_approved": True,
+        "tested_revision": "release-sha-123",
+        "release_revision": "release-sha-123",
+        "evidence_uri": "ci://runs/123/artifacts",
+        "skipped_tests": 0,
     }
     run = await agent.execute("Generate release sign-off", context)
 
@@ -77,6 +84,13 @@ def test_mcp_generate_release_report_tool():
         "security_vulnerabilities": 0,
         "rag_groundedness_score": 0.94,
         "quality_gate_status": "PASSED",
+        "security_passed": True,
+        "coverage_complete": True,
+        "review_approved": True,
+        "tested_revision": "release-sha-123",
+        "release_revision": "release-sha-123",
+        "evidence_uri": "ci://runs/123/artifacts",
+        "skipped_tests": 0,
     }
     res = call_tool("generate_release_report", args)
 
@@ -84,3 +98,21 @@ def test_mcp_generate_release_report_tool():
     assert res["tool"] == "generate_release_report"
     assert "report_markdown" in res["result"]
     assert "GO — APPROVED FOR RELEASE" in res["result"]["report_markdown"]
+
+
+@pytest.mark.anyio
+async def test_reporting_agent_blocks_go_when_revision_bound_evidence_is_missing():
+    agent = ReportingAgent()
+    context = {
+        "total_tests": 10,
+        "passed_tests": 10,
+        "failed_tests": 0,
+        "critical_defects": 0,
+        "security_vulnerabilities": 0,
+        "quality_gate_status": "PASSED",
+    }
+    run = await agent.execute("Generate release sign-off", context)
+    assert "NO-GO — RELEASE BLOCKED" in run.output
+    assert "tested revision must match release revision" in run.output
+    assert "review_approved must be true" in run.output
+    assert "evidence reference is required" in run.output
