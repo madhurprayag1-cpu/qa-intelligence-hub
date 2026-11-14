@@ -201,3 +201,22 @@ def test_remediation_regression_fails_closed_on_invalid_timeout(monkeypatch):
     result = execute_in_process_regression(["tests/test_governance_controls.py"])
     assert result[0] is False
     assert "timeout_seconds must be between 1 and 600" in result[4][0]
+
+
+@pytest.mark.parametrize("environment", ["production", "prod"])
+@pytest.mark.parametrize("tool_name", [
+    "pytest_runner", "playwright_runner", "security_scanner",
+    "performance_runner", "rag_evaluator", "database_inspector",
+])
+def test_production_runner_denied_before_handler(monkeypatch, environment, tool_name):
+    from autonomous.contracts import AgentPermission
+    from autonomous.tools import ToolRegistry
+
+    monkeypatch.setenv("QA_ENVIRONMENT", environment)
+    registry = ToolRegistry()
+    invoked = []
+    registry._handlers[tool_name] = lambda **kwargs: invoked.append(kwargs)
+    result = registry.invoke(tool_name, AgentPermission.RELEASE, "test-agent")
+    assert result["status"] == "PERMISSION_DENIED"
+    assert "prohibited in production" in result["error"]
+    assert not invoked
