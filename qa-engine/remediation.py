@@ -307,7 +307,7 @@ def execute_in_process_regression(
         or os.getenv("ENVIRONMENT")
         or "test"
     ).strip().lower()
-    if environment == "production":
+    if environment in {"production", "prod"}:
         return False, 0, 1, 0, [
             "Production environment prohibits autonomous remediation regression execution"
         ]
